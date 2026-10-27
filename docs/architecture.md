@@ -10,7 +10,9 @@ Phase 1 monitoring starts with checks **every couple of hours or daily**, with e
 
 Launch planning assumes **1,000 users**, with a **100,000-user growth target**. Whether these figures mean registered or active users remains undefined. They do not determine concurrent workload or worker count.
 
-[Requirements](requirements.md) owns product behavior. Decision rationale belongs to the [runtime ADR](ADRS/0001-custom-runtime-and-orchestration.md), [credentials ADR](ADRS/0002-backend-owned-financial-credentials.md), [code execution ADR](ADRS/0003-sandboxed-code-execution.md), [scheduling ADR](ADRS/0004-durable-scheduling-and-queued-execution.md), and [Mastra framework ADR](ADRS/0005-mastra-runtime-framework.md). This document owns component responsibilities and execution flows.
+[Requirements](requirements.md) owns product behavior. Decision rationale belongs to the [runtime ADR](ADRS/0001-custom-runtime-and-orchestration.md), [credentials ADR](ADRS/0002-backend-owned-financial-credentials.md), [code execution ADR](ADRS/0003-sandboxed-code-execution.md), [scheduling ADR](ADRS/0004-durable-scheduling-and-queued-execution.md), [Mastra framework ADR](ADRS/0005-mastra-runtime-framework.md), and [agent capabilities ADR](ADRS/0006-composable-agent-capabilities.md). This document owns component responsibilities and execution flows.
+
+The [user stories](user-stories/README.md) describe the complete Phase 1 experience. The [detailed technical designs](design/README.md) develop supporting contracts within this architecture, with proposed choices and unresolved policies kept explicit.
 
 ## 2. Components and responsibilities
 
@@ -48,7 +50,7 @@ Launch planning assumes **1,000 users**, with a **100,000-user growth target**. 
 
 The orchestration layer and custom runtime remain logically distinct even when they share a deployment. Routing work to the correct user does not require a separate LLM. Shared compute may be a fleet of processes or machines; it does not imply one large server.
 
-The service deploys common runtime code, curated tools, and skills. User preferences, task instructions, memory, and conversation context vary through durable user-scoped state. The runtime composes these capabilities for financial work without requiring a new hard-coded intent for each analysis. Data coverage and method correctness still limit which analyses it can complete.
+The service deploys common runtime code, curated tools, and skills. User preferences, task instructions, memory, and conversation context vary through durable user-scoped state. The runtime composes these capabilities for financial work without requiring a new hard-coded intent for each analysis. Data coverage and method correctness still limit which analyses it can complete. The [agent capabilities ADR](ADRS/0006-composable-agent-capabilities.md) defines this composition and keeps a credential-injecting API proxy as a future option for demonstrated tool gaps.
 
 ### 2.3 Mastra framework boundary
 

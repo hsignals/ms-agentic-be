@@ -17,6 +17,9 @@ The design uses **Mastra as the framework for the shared custom runtime**, durab
 | [Code execution ADR](docs/ADRS/0003-sandboxed-code-execution.md) | Why generated code runs in an E2B sandbox through a trusted backend tool. |
 | [Scheduling and execution ADR](docs/ADRS/0004-durable-scheduling-and-queued-execution.md) | Why durable schedules trigger shared workers, with BullMQ + Redis as a provisional implementation choice. |
 | [Runtime framework ADR](docs/ADRS/0005-mastra-runtime-framework.md) | Why the custom runtime uses Mastra's framework components, with E2B as its execution sandbox. |
+| [Agent capabilities ADR](docs/ADRS/0006-composable-agent-capabilities.md) | Why reusable backend tools and sandboxed analysis provide flexible agent capabilities, with a credential-injecting API proxy as a future option. |
+| [User stories](docs/user-stories/README.md) | The complete Phase 1 experience, proposed observable acceptance, and open product decisions. |
+| [Technical designs](docs/design/README.md) | Proposed detailed contracts and flows supporting the user stories, with implementation choices still open. |
 
 ## 3. Discussion boundaries
 
@@ -25,5 +28,7 @@ Read the requirements and architecture before extending the design. Keep **accep
 Product requirements remain authoritative. Phase 1 provides financial information and analysis with read-only financial access; financial execution and specific investment recommendations remain outside its scope. Architecture decisions must preserve the stated monitoring limits and partial-data behavior.
 
 Monitoring starts with checks every couple of hours or daily, with exact per-task cadence and timezone behavior open. The architecture separates shared backend financial evidence from personalization memory, standing tasks from execution attempts, and inexpensive monitoring from budgeted Mastra analysis. Financial-analysis sandboxes default to outbound internet off; required artifacts persist before disposable sandboxes terminate. Pause is not deletion.
+
+Current design work covers all Phase 1 user stories and their technical support. Progressive onboarding, portfolio understanding, conversational analysis, ongoing tasks, notification delivery, and memory form one complete product experience. User stories and technical design remain separate. Milestone sequencing and delivery timing belong to later planning after the design is sufficiently settled.
 
 The architecture owns the remaining decisions about package versions and integration, models, worker hosting, durable storage, memory policy, job lifecycle, sandbox configuration, tools, and provider data handling. Vendor documentation is evidence to evaluate, not a guarantee of deployed behavior or approval to send customer data.

@@ -7,6 +7,8 @@ MyStacks aims to become a **personal investing agent**. It must provide professi
 
 These requirements define the intended product behavior and business context. They do not claim that the capabilities are implemented or select an architecture, runtime, hosting service, or integration technology.
 
+The [user stories](user-stories/README.md) develop the complete Phase 1 experience. The [technical designs](design/README.md) describe how the accepted architecture can support those stories, with detailed product and implementation choices still open.
+
 ## 1. Purpose and users
 
 ### 1.1 Primary outcome
@@ -45,7 +47,7 @@ Specific investment recommendations remain deferred pending the business's **lic
 
 ### 3.1 Coverage
 
-**Initial coverage** must include on-chain wallet addresses, Binance accounts, and Hyperliquid positions. Connections must support the informational experience without requiring financial execution authority.
+**Phase 1 coverage** must include on-chain wallet addresses, Binance accounts, and Hyperliquid positions. Connections must support the informational experience without requiring financial execution authority.
 
 **Future coverage** is intended to include additional centralized exchanges, such as OKX, and traditional brokerage accounts. The exact supported chains, protocols, account types, instruments, and connection methods remain open.
 
@@ -77,6 +79,8 @@ Adding a relevant skill or tool should let the assistant handle new requests **w
 ### 4.2 Interaction surfaces and responsiveness
 
 **Messaging** must be the primary interaction surface. A **companion website** must support connecting accounts and viewing portfolios. The specific messaging channels and detailed website experience remain open.
+
+Onboarding must be progressive and usable on a phone. Users may connect one useful source and add others later; account setup and authorization may use mobile web or provider apps. The detailed entry, authentication, and channel-linking experience remains open.
 
 For difficult research or analysis, the assistant should provide a **useful initial response quickly** and continue deeper work afterward. It must make clear when work is ongoing and provide the resulting analysis when it is ready. Exact response-time targets remain open.
 
