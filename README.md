@@ -9,6 +9,7 @@
 - [Context](CONTEXT.md): project status, document ownership, and decision boundaries.
 - [Requirements](docs/requirements.md): product behavior, financial authority, and scale assumptions.
 - [Architecture](docs/architecture.md): Mastra-based shared runtime, scheduled execution, financial tools, and E2B sandboxed code execution.
+- [Architecture diagram](docs/architecture.html): browser-viewable conversation flow and trusted backend boundaries.
 - [Architecture decision records](docs/ADRS/): decisions, alternatives, and trade-offs.
 - [User stories](docs/user-stories/README.md): the complete Phase 1 experience, observable outcomes, and open product decisions.
 - [Technical designs](docs/design/README.md): detailed responsibilities and flows supporting those stories, with implementation choices still open.

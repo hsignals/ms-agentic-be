@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MyStacks Architecture</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background:
+        radial-gradient(ellipse 60% 50% at 47% 55%, #d9f3ea80, transparent 70%),
+        radial-gradient(#1b2a3a14 1px, transparent 1px) 0 0 / 28px 28px,
+        #f7f6f2;
+      color: #111a24;
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { height: 100svh; display: grid; grid-template-rows: auto 1fr; padding: clamp(20px, 3vw, 48px) clamp(20px, 4vw, 64px); gap: 12px; }
+    header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px 32px; }
+    .eyebrow { margin: 0 0 10px; font-size: 13px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: #0f8a6a; }
+    h1 { margin: 0; font-size: clamp(26px, 2.6vw, 40px); font-weight: 700; letter-spacing: -.02em; }
+    .lede { margin: 10px 0 0; max-width: 62ch; font-size: clamp(14px, 1.1vw, 17px); line-height: 1.5; color: #55606d; }
+    .legend { display: flex; gap: 22px; font-size: 13px; color: #55606d; white-space: nowrap; }
+    .legend span { display: inline-flex; align-items: center; gap: 8px; }
+    .swatch-edge { width: 26px; height: 0; border-top: 1.5px solid #8b96a3; }
+    .swatch-boundary { width: 18px; height: 12px; border: 1.5px dashed #b9c2cc; border-radius: 4px; }
+    svg { width: 100%; height: 100%; min-height: 0; overflow: visible; }
+
+    .group { fill: #ffffff80; stroke: #c6ced7; stroke-width: 1.5; stroke-dasharray: 6 6; }
+    .group-label { fill: #7a8592; font-size: 13px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    .edge { fill: none; stroke: #9aa5b1; stroke-width: 1.6; }
+    .flow { fill: none; stroke: #0f8a6a; stroke-width: 2; stroke-linecap: round; stroke-dasharray: 1 16; opacity: .55; animation: flow 1.6s linear infinite; }
+    @keyframes flow { to { stroke-dashoffset: -17; } }
+    @media (prefers-reduced-motion: reduce) { .flow { animation: none; opacity: 0; } }
+
+    .card { fill: #ffffff; stroke: #e1e5ea; stroke-width: 1; }
+    .kicker { fill: #8a94a0; font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    .title { fill: #111a24; font-size: 21px; font-weight: 600; letter-spacing: -.01em; }
+    .sub { fill: #5f6b78; font-size: 15px; }
+    .hero .card { fill: url(#hero-fill); stroke: #0b2a24; }
+    .hero .kicker { fill: #7ee0c3; }
+    .hero .title { fill: #ffffff; font-size: 27px; font-weight: 700; }
+    .hero .sub { fill: #a9c9bf; }
+
+    .badge rect { fill: #edf7f3; stroke: #d3ebe2; }
+    .badge path { fill: none; stroke: #0f8a6a; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .hero .badge rect { fill: #ffffff14; stroke: #7ee0c366; }
+    .hero .badge path { stroke: #7ee0c3; }
+    .figure { fill: #ffffff; stroke: #cfe6dd; stroke-width: 1.5; }
+    .figure-back { fill: #e6f1ec; stroke: #cfe6dd; stroke-width: 1.2; }
+    .figure-mid { fill: #f3f9f6; stroke: #cfe6dd; stroke-width: 1.2; }
+    .figure-line { fill: none; stroke: #e3ece8; stroke-width: 1.5; }
+    .figure-dot { fill: #0f8a6a; }
+    .ring { fill: none; stroke: #0f8a6a; stroke-opacity: .35; stroke-width: 1.3; stroke-dasharray: 3 7; }
+    .prompt { fill: #0f8a6a; font: 600 14px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .cube-top { fill: #ffffff; stroke: #cfe6dd; stroke-width: 1.5; stroke-linejoin: round; }
+    .cube-left { fill: #e6f4ee; stroke: #cfe6dd; stroke-width: 1.5; stroke-linejoin: round; }
+    .cube-right { fill: #0f8a6a; stroke: #0f8a6a; stroke-width: 1.5; stroke-linejoin: round; }
+    .cube-icon { fill: none; stroke: #ffffff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .figure-icon { fill: none; stroke: #0f8a6a; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; stroke-width: 3; }
+    .figure-bubble { fill: #0b1f1b; stroke: #ffffff; stroke-width: 3; }
+    .figure-bubble-icon { fill: none; stroke: #7ee0c3; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .orbit { fill: none; stroke: #0f8a6a; stroke-opacity: .32; stroke-width: 1.3; stroke-dasharray: 3 9; }
+    .orbit-dot { fill: #0f8a6a; opacity: .75; }
+    .spin { transform-box: view-box; transform-origin: 755px 450px; animation: spin 48s linear infinite; }
+    .spin.reverse { animation-duration: 72s; animation-direction: reverse; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .eyebrow svg { width: 14px; height: 14px; vertical-align: -2px; margin-right: 6px; fill: currentColor; }
+    @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+
+    @media print {
+      @page { size: landscape; margin: 0; }
+      body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      .flow { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <p class="eyebrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4z"/></svg>MyStacks · Agentic runtime · Phase 1</p>
+        <h1>Custom runtime architecture</h1>
+        <p class="lede">One shared runtime serves every user. Credentials stay in the trusted backend, and generated code runs in an isolated sandbox.</p>
+      </div>
+      <div class="legend" aria-hidden="true">
+        <span><i class="swatch-edge"></i>Request and response</span>
+        <span><i class="swatch-boundary"></i>Boundary</span>
+      </div>
+    </header>
+    <svg id="diagram" viewBox="0 0 1600 900" role="img" aria-labelledby="diagram-title diagram-desc">
+      <title id="diagram-title">MyStacks custom runtime architecture</title>
+      <desc id="diagram-desc">A user message goes to the orchestration layer, which talks to the MyStacks Agentic Runtime. The runtime talks to durable user-scoped state, the financial tools API, and the code execution tool. The financial tools API talks to financial providers. The code execution tool talks to a task-scoped sandbox. All connections are two-way. The orchestration layer, runtime, state, financial tools API, and code execution tool sit inside the trusted MyStacks backend; financial providers and the sandbox sit outside it.</desc>
+      <defs>
+        <linearGradient id="hero-fill" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#16362f"/>
+          <stop offset="1" stop-color="#0b1f1b"/>
+        </linearGradient>
+        <filter id="shadow" x="-30%" y="-40%" width="160%" height="200%">
+          <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#1b2a3a" flood-opacity=".08"/>
+        </filter>
+        <filter id="glow" x="-50%" y="-60%" width="200%" height="240%">
+          <feDropShadow dx="0" dy="0" stdDeviation="26" flood-color="#0f8a6a" flood-opacity=".22"/>
+          <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#0b1f1b" flood-opacity=".25"/>
+        </filter>
+        <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M1.5 1.5 L8.5 5 L1.5 8.5" fill="none" stroke="#7d8996" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <g id="groups"></g>
+      <!-- Decorative orbits around the runtime: the agent loop reaching its tools and state. -->
+      <g aria-hidden="true">
+        <g class="spin"><circle class="orbit" cx="755" cy="450" r="165"/><circle class="orbit-dot" cx="920" cy="450" r="4"/><circle class="orbit-dot" cx="590" cy="450" r="3"/></g>
+        <g class="spin reverse"><circle class="orbit" cx="755" cy="450" r="225"/><circle class="orbit-dot" cx="755" cy="225" r="3.5"/></g>
+      </g>
+      <g id="edges"></g>
+      <g id="nodes"></g>
+    </svg>
+  </main>
+  <script>
+    // Diagram data: positions are in viewBox units; every connection is two-way.
+    const NODES = {
+      // shape picks the drawing function in SHAPES; x, y, w, h is the box edges attach to.
+      U: { shape: 'avatar',   x: 88,   y: 398, w: 104, h: 104, kicker: 'Client',        title: ['User message'],                 sub: 'Chat and website' },
+      O: { shape: 'hex',      x: 310,  y: 380, w: 240, h: 140, kicker: 'Backend',       title: ['Orchestration', 'layer'],       sub: 'Auth, routing, delivery' },
+      R: { shape: 'card',     x: 610,  y: 355, w: 290, h: 190, kicker: 'Core · Mastra', title: ['MyStacks Agentic', 'Runtime'], sub: 'Agent loop, skills, tools', icon: 'spark', hero: true },
+      D: { shape: 'stack',    x: 960,  y: 115, w: 270, h: 140, kicker: 'State',         title: ['Durable', 'user-scoped state'], sub: 'Memory, tasks, and files', icon: 'db' },
+      F: { shape: 'card',     x: 960,  y: 380, w: 270, h: 140, kicker: 'Tool',          title: ['Financial tools API'],          sub: 'Authorized read-only access', icon: 'chart' },
+      P: { shape: 'bank',     x: 1370, y: 395, w: 120, h: 110, kicker: 'Provider',      title: ['Financial providers'],          sub: 'Connected accounts' },
+      E: { shape: 'terminal', x: 960,  y: 645, w: 270, h: 150, kicker: 'Tool',          title: ['Code execution tool'],          sub: 'Runs generated code' },
+      S: { shape: 'cube',     x: 1382, y: 665, w: 96,  h: 110, kicker: 'Sandbox',       title: ['Task-scoped sandbox'],      sub: 'Isolated, internet off' },
+    };
+    // 24x24 line icons for badges and figures.
+    const ICONS = {
+      person: 'M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M4.5 20.5c.9-3.8 3.9-6 7.5-6s6.6 2.2 7.5 6',
+      chat: 'M4 5h16v11H10l-5 4v-4H4z M8 10h8 M8 13h5',
+      route: 'M5 6v12 M5 12h12 M13 8l4 4-4 4 M5 6h4',
+      spark: 'M11 3l1.9 5.6L18.5 10.5l-5.6 1.9L11 18l-1.9-5.6L3.5 10.5l5.6-1.9z M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z',
+      db: 'M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3z M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6 M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3',
+      chart: 'M4 20h16 M6 16l4-5 3 3 5-7 M15 7h3v3',
+      bank: 'M3 9l9-5 9 5z M5 11v7 M9.5 11v7 M14.5 11v7 M19 11v7 M3 20h18',
+      code: 'M8 7l-5 5 5 5 M16 7l5 5-5 5 M13.5 5l-3 14',
+      lock: 'M7 11V8a5 5 0 0 1 10 0v3 M5 11h14v9H5z',
+    };
+    const EDGES = [['U', 'O'], ['O', 'R'], ['R', 'D'], ['R', 'F'], ['F', 'P'], ['R', 'E'], ['E', 'S']];
+    const GROUPS = [
+      { x: 285,  y: 60,  w: 970, h: 815, label: 'MyStacks backend · trusted' },
+      { x: 1275, y: 322, w: 310, h: 553, label: 'External · isolated' },
+    ];
+
+    const NS = 'http://www.w3.org/2000/svg';
+    function el(name, attrs, parent) {
+      const node = document.createElementNS(NS, name);
+      for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
+      parent.appendChild(node);
+      return node;
+    }
+
+    // Straight line for nodes on the same row; rounded elbow from the runtime up or down to its column.
+    function edgePath(a, b) {
+      const gap = 5, r = 22;
+      const ay = a.y + a.h / 2, by = b.y + b.h / 2;
+      if (Math.abs(ay - by) < 1) return `M ${a.x + a.w + gap} ${ay} H ${b.x - gap}`;
+      const x = a.x + a.w / 2, up = by < ay;
+      const startY = up ? a.y - gap : a.y + a.h + gap;
+      return `M ${x} ${startY} V ${up ? by + r : by - r} Q ${x} ${by} ${x + r} ${by} H ${b.x - gap}`;
+    }
+
+    const groups = document.getElementById('groups');
+    for (const g of GROUPS) {
+      el('rect', { x: g.x, y: g.y, width: g.w, height: g.h, rx: 28, class: 'group' }, groups);
+      el('text', { x: g.x + 24, y: g.y + 32, class: 'group-label' }, groups).textContent = g.label;
+    }
+
+    const edges = document.getElementById('edges');
+    for (const [from, to] of EDGES) {
+      const d = edgePath(NODES[from], NODES[to]);
+      el('path', { d, class: 'edge', 'marker-start': 'url(#arrow)', 'marker-end': 'url(#arrow)' }, edges);
+      el('path', { d, class: 'flow' }, edges);
+    }
+
+    // Kicker, title lines, and subtitle stacked from a top baseline; returns the y after the subtitle.
+    function textBlock(n, g, x, top, anchor = 'start', kicker = true) {
+      const lineH = n.hero ? 33 : 27;
+      let y = top;
+      if (kicker) { el('text', { x, y: y + 12, class: 'kicker', 'text-anchor': anchor }, g).textContent = n.kicker; y += 30; }
+      for (const line of n.title) { y += lineH; el('text', { x, y: y - 6, class: 'title', 'text-anchor': anchor }, g).textContent = line; }
+      el('text', { x, y: y + 21, class: 'sub', 'text-anchor': anchor }, g).textContent = n.sub;
+    }
+    // Height of a text block, used to centre it inside a shape.
+    const blockHeight = (n, kicker = true) => (kicker ? 30 : 0) + n.title.length * (n.hero ? 33 : 27) + 23;
+
+    // One drawing function per shape; every shape fits the node's x, y, w, h box so edges meet it cleanly.
+    const SHAPES = {
+      // Rounded card with an icon badge (used for the runtime and the financial tools API).
+      card(n, g) {
+        el('rect', { x: n.x, y: n.y, width: n.w, height: n.h, rx: n.hero ? 24 : 18, class: 'card', filter: n.hero ? 'url(#glow)' : 'url(#shadow)' }, g);
+        const size = n.hero ? 40 : 32, scale = n.hero ? .92 : .78;
+        const bx = n.x + n.w - 20 - size, by = n.y + (n.hero ? 20 : 16);
+        const badge = el('g', { class: 'badge' }, g);
+        el('rect', { x: bx, y: by, width: size, height: size, rx: 10 }, badge);
+        const off = (size - 24 * scale) / 2;
+        el('path', { d: ICONS[n.icon], transform: `translate(${bx + off} ${by + off}) scale(${scale})` }, badge);
+        textBlock(n, g, n.x + 26, n.y + (n.h - blockHeight(n)) / 2);
+      },
+      // Person avatar with a chat bubble; label sits underneath.
+      avatar(n, g) {
+        const cx = n.x + n.w / 2, cy = n.y + n.h / 2, r = n.w / 2;
+        el('circle', { cx, cy, r: r + 12, class: 'ring' }, g);
+        el('circle', { cx, cy, r, class: 'figure', filter: 'url(#shadow)' }, g);
+        el('path', { d: ICONS.person, class: 'figure-icon', transform: `translate(${cx - 30} ${cy - 31}) scale(2.5)` }, g);
+        const bx = cx + r * .62, by = cy - r * .78;
+        el('circle', { cx: bx, cy: by, r: 17, class: 'figure-bubble' }, g);
+        el('path', { d: ICONS.chat, class: 'figure-bubble-icon', transform: `translate(${bx - 9} ${by - 9}) scale(.75)` }, g);
+        el('text', { x: cx, y: n.y - 30, class: 'kicker', 'text-anchor': 'middle' }, g).textContent = n.kicker;
+        textBlock(n, g, cx, n.y + n.h + 20, 'middle', false);
+      },
+      // Hexagon: the routing hub between the user and the runtime.
+      hex(n, g) {
+        const i = 30, cy = n.y + n.h / 2;
+        el('path', { d: `M ${n.x} ${cy} L ${n.x + i} ${n.y} H ${n.x + n.w - i} L ${n.x + n.w} ${cy} L ${n.x + n.w - i} ${n.y + n.h} H ${n.x + i} Z`, class: 'figure', filter: 'url(#shadow)', 'stroke-linejoin': 'round' }, g);
+        textBlock(n, g, n.x + n.w / 2, n.y + (n.h - blockHeight(n)) / 2, 'middle');
+      },
+      // Stack of layered sheets for durable state: memory, tasks, and files kept across runs.
+      stack(n, g) {
+        [[28, 26, 'figure-back'], [14, 13, 'figure-mid']].forEach(([inset, lift, cls]) =>
+          el('rect', { x: n.x + inset, y: n.y - lift, width: n.w - 2 * inset, height: n.h, rx: 18, class: cls }, g));
+        SHAPES.card(n, g);
+      },
+      // Terminal window for the code execution tool.
+      terminal(n, g) {
+        el('rect', { x: n.x, y: n.y, width: n.w, height: n.h, rx: 14, class: 'figure', filter: 'url(#shadow)' }, g);
+        el('path', { d: `M ${n.x} ${n.y + 32} H ${n.x + n.w}`, class: 'figure-line' }, g);
+        ['#f2a49c', '#f3d38a', '#9fd8b4'].forEach((fill, k) => el('circle', { cx: n.x + 20 + k * 16, cy: n.y + 16, r: 5, fill }, g));
+        el('text', { x: n.x + n.w - 18, y: n.y + 21, class: 'prompt', 'text-anchor': 'end' }, g).textContent = '>_';
+        textBlock(n, g, n.x + 26, n.y + 32 + (n.h - 32 - blockHeight(n)) / 2);
+      },
+      // Bank building for financial providers; label sits underneath.
+      bank(n, g) {
+        const { x, y, w } = n, cx = x + w / 2;
+        const body = el('g', { class: 'figure', filter: 'url(#shadow)', 'stroke-linejoin': 'round' }, g);
+        el('path', { d: `M ${x + 4} ${y + 38} L ${cx} ${y} L ${x + w - 4} ${y + 38} Z`, class: 'figure' }, body);
+        el('rect', { x: x + 8, y: y + 42, width: w - 16, height: 10, rx: 2, class: 'figure' }, body);
+        for (let k = 0; k < 4; k++) el('rect', { x: x + 18 + k * ((w - 48) / 3), y: y + 56, width: 12, height: 38, rx: 2, class: 'figure' }, body);
+        el('rect', { x, y: y + n.h - 14, width: w, height: 14, rx: 3, class: 'figure' }, body);
+        el('circle', { cx, cy: y + 24, r: 5, class: 'figure-dot' }, g);
+        textBlock(n, g, cx, y + n.h + 14, 'middle', false);
+      },
+      // Isometric cube inside a dashed isolation outline for the sandbox; label sits underneath.
+      cube(n, g) {
+        const cx = n.x + n.w / 2, cy = n.y + n.h / 2, s = n.h / 2, k = s * .87;
+        const hex = (f) => `M ${cx} ${cy - s * f} L ${cx + k * f} ${cy - s * f / 2} V ${cy + s * f / 2} L ${cx} ${cy + s * f} L ${cx - k * f} ${cy + s * f / 2} V ${cy - s * f / 2} Z`;
+        el('path', { d: hex(1.3), class: 'ring' }, g);
+        el('path', { d: `M ${cx} ${cy - s} L ${cx + k} ${cy - s / 2} L ${cx} ${cy} L ${cx - k} ${cy - s / 2} Z`, class: 'cube-top', filter: 'url(#shadow)' }, g);
+        el('path', { d: `M ${cx - k} ${cy - s / 2} L ${cx} ${cy} V ${cy + s} L ${cx - k} ${cy + s / 2} Z`, class: 'cube-left' }, g);
+        el('path', { d: `M ${cx + k} ${cy - s / 2} L ${cx} ${cy} V ${cy + s} L ${cx + k} ${cy + s / 2} Z`, class: 'cube-right' }, g);
+        el('path', { d: ICONS.lock, class: 'cube-icon', transform: `translate(${cx + k / 2 - 8} ${cy + s / 4 - 8}) scale(.7)` }, g);
+        textBlock(n, g, cx, n.y + n.h + 32, 'middle', false);
+      },
+    };
+
+    const nodes = document.getElementById('nodes');
+    for (const n of Object.values(NODES)) {
+      SHAPES[n.shape](n, el('g', { class: n.hero ? 'hero' : '' }, nodes));
+    }
+  </script>
+</body>
+</html>

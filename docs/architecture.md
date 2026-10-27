@@ -66,6 +66,8 @@ Existing SDKs and native adapters should be used directly when they meet the con
 
 ### 3.1 Conversation and continued work
 
+The [architecture diagram](architecture.html) visualizes this flow and the trusted backend boundary. Open the HTML file in a browser to view it.
+
 ```mermaid
 flowchart LR
     U["User message"] --> O["Orchestration layer"]
