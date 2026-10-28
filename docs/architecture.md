@@ -2,15 +2,17 @@
 
 ## 1. Direction and scope
 
-**Accepted direction:** MyStacks builds its custom runtime with **Mastra**, runs it on shared application workers, persists user state outside worker processes, and uses durable scheduled jobs to trigger background work. **E2B is the chosen target for isolated generated-code execution. BullMQ with Redis is the provisional scheduling and queue technology.** Hosting, package versions, model providers, interfaces, and detailed operating policies remain open. No runtime implementation exists in this repository.
+**Status: tentative overall design, to be finalized in the architecture design round.** The working design incorporates the component and security decisions recorded in the ADRs: a custom runtime built with **Mastra** on shared application workers, durable state outside worker processes, and scheduled jobs for background work. **E2B is the selected generated-code sandbox; BullMQ with Redis remains the provisional queue choice.** Account, channel, context, and execution mappings below are tentative architectural choices. Hosting, package versions, model providers, interfaces, and detailed operating policies remain open. No runtime implementation exists in this repository.
 
-Phase 1 provides financial information, analysis, and proactive monitoring through **read-only financial access**. It excludes specific buy, sell, or rebalance recommendations and financial execution. Reports, memory, informational tasks, and messages remain in scope. The runtime must support flexible work within wealth and assets, useful partial answers with explicit data gaps, user-defined ongoing tasks, daily morning digests, and useful independent initiative.
+Phase 1 provides financial information, analysis, and proactive monitoring through **read-only financial access**. It excludes specific buy, sell, or rebalance recommendations and financial execution. Concise chat reports, memory, informational tasks, and messages remain in scope. The runtime must support flexible work within wealth and assets, useful partial answers from available evidence, user-defined ongoing tasks, daily morning digests, and useful independent initiative.
 
-Phase 1 monitoring starts with checks **every couple of hours or daily**, with exact per-task cadence and timezone behavior open. Checks and delivery are best effort. Precision takes priority over recall; some events may be missed. Hosting and queue choices do not strengthen these limits.
+Chat is the default assistant surface after required phone/SMS signup and channel linking. The persistent website dashboard manages financial connections and messaging channels through the same flow for new and returning users, with portfolio previews, Add more, and Continue to chat. Financial connections are optional. iMessage and WhatsApp are the launch channels, separately linked to the same stable MyStacks account. Chat manages its own tasks and shared personal memory; connection removal and channel-routing settings belong on the website.
+
+Phase 1 monitoring starts with checks **every couple of hours or daily**. Device timezone is captured once at onboarding; users explicitly change their default in the web app or chat, and task-specific overrides affect only that task. Existing schedules keep their assigned timezone unless edited. Automatic re-detection on later website visits is deferred. Confirmations show time and zone; exact cadence and recurrence/daylight-saving mechanics remain open. Checks and delivery are best effort. Precision takes priority over recall; some events may be missed. Hosting and queue choices do not strengthen these limits.
 
 Launch planning assumes **1,000 users**, with a **100,000-user growth target**. Whether these figures mean registered or active users remains undefined. They do not determine concurrent workload or worker count.
 
-[Requirements](requirements.md) owns product behavior. Decision rationale belongs to the [runtime ADR](ADRS/0001-custom-runtime-and-orchestration.md), [credentials ADR](ADRS/0002-backend-owned-financial-credentials.md), [code execution ADR](ADRS/0003-sandboxed-code-execution.md), [scheduling ADR](ADRS/0004-durable-scheduling-and-queued-execution.md), [Mastra framework ADR](ADRS/0005-mastra-runtime-framework.md), and [agent capabilities ADR](ADRS/0006-composable-agent-capabilities.md). This document owns component responsibilities and execution flows.
+[Requirements](requirements.md) owns product behavior. Decision rationale belongs to the [runtime ADR](ADRS/0001-custom-runtime-and-orchestration.md), [credentials ADR](ADRS/0002-backend-owned-financial-credentials.md), [code execution ADR](ADRS/0003-sandboxed-code-execution.md), [scheduling ADR](ADRS/0004-durable-scheduling-and-queued-execution.md), [Mastra framework ADR](ADRS/0005-mastra-runtime-framework.md), [agent capabilities ADR](ADRS/0006-composable-agent-capabilities.md), [verified EVM connections ADR](ADRS/0007-verified-evm-wallet-connections.md), and [channel scope ADR](ADRS/0008-channel-scoped-work-and-shared-memory.md). This document owns component responsibilities and execution flows.
 
 The [user stories](user-stories/README.md) describe the complete Phase 1 experience. The [detailed technical designs](design/README.md) develop supporting contracts within this architecture, with proposed choices and unresolved policies kept explicit.
 
@@ -23,10 +25,13 @@ The [user stories](user-stories/README.md) describe the complete Phase 1 experie
 | **MyStacks backend** | Trusted application code that provides orchestration, runtime execution, tools, authorization, and durable state access. These responsibilities need not be separate services. |
 | **Existing agentic runtime** | The shared-machine approach represented by `mystacks-be` and `hs-llm-service`, where application orchestration handles conversations and trusted tools execute on shared compute. The approach can support the requirements; the reference implementations do not establish that all required features exist. |
 | **Orchestration layer** | Binds incoming work to an authenticated user, routes chat and background jobs, and delivers progress and results to authorized product surfaces. |
+| **MyStacks account** | Stable owner of personal memory, financial connections, conversations, and tasks. Its primary verified login phone number is a changeable binding. |
+| **Channel binding** | A separately verified relationship between a messaging sender or conversation and a MyStacks account. It does not follow merely from matching phone numbers or email addresses. |
+| **Conversation thread** | A channel conversation's messages and current conversational context. Its history and compaction remain separate from other linked channels. |
 | **Custom runtime** | MyStacks-owned application built with Mastra's regular `Agent` and native context, tool, skill, and memory facilities. A runtime run is an invocation of this software, not a permanent process assigned to a user. |
-| **RequestContext** | Mastra's per-request context. MyStacks creates a fresh instance for each run and binds authorized user, resource, and thread identifiers from trusted backend context. It is distinct from durable memory. |
+| **RequestContext** | Mastra's per-request context. MyStacks creates a fresh instance for each run and binds authorized account, channel, resource, and thread identifiers from trusted backend context. It is distinct from durable memory. |
 | **Worker** | A long-lived MyStacks application process that claims queued jobs and runs work. It can handle concurrent runs with separate user contexts; it is not a cloud resource created for each job. |
-| **Task** | A durable standing request with intent, current status, user, trigger, and delivery destination. It remains distinct from the attempts that execute it. |
+| **Task** | A durable standing request with intent, current status, user, originating channel, and trigger. Its channel fixes delivery and chat control scope. It remains distinct from the attempts that execute it. |
 | **Schedule** | A durable definition of when an informational task becomes eligible to run. |
 | **Job** | A queued unit of work that a worker claims for execution. A schedule can produce many jobs over time. |
 | **Run attempt** | One execution of queued work, with its own progress and outcome. Retrying work does not create a new standing task. |
@@ -39,13 +44,13 @@ The [user stories](user-stories/README.md) describe the complete Phase 1 experie
 
 | Owner | Responsibility |
 | --- | --- |
-| Orchestration layer | Authenticate channel and website requests; establish trusted user context; route work; recheck current permissions, task status, and destination before delivering task results and notifications. |
+| Orchestration layer | Authenticate channel and website requests; resolve and authorize the stable account, channel, and conversation thread; supply trusted run context; route work; recheck current permissions, task status, and channel before delivery. |
 | Custom runtime | Use Mastra to execute the agent loop, load relevant context and memory, and compose skills and tools; apply MyStacks financial logic and output limits; check results; maintain informational tasks and required outputs through durable state interfaces. |
-| Task boundary | Persist standing task intent, status, user, trigger, and destination separately from execution attempts; apply task-management policy. |
+| Task boundary | Persist standing task intent, status, user, originating channel, and trigger separately from attempts; enforce current-channel task access and accepted lifecycle policy. |
 | Scheduling and queue layer | Persist scheduling and queue state, produce eligible jobs, and coordinate worker claims. It triggers runs rather than reasoning about a user's portfolio. |
 | Worker | Execute claimed work through the runtime or a predefined calculation, with the bound user context and configured concurrency. |
-| Financial tools API | Verify user, account, and object access; use backend-held credentials; return the shared financial evidence contract to authorized product consumers. |
-| E2B execution tool | Accept generated code and selected input; enforce sandbox network and resource policy; return outputs, errors, and artifacts; persist required artifacts and terminate the disposable sandbox when analysis ends. |
+| Financial tools API | Verify user, account, and object access; use backend-held connected-account credentials, which no other runtime tool receives; return the shared financial evidence contract to authorized product consumers. |
+| E2B execution tool | Accept generated code and selected input, with financial data already returned by the financial tools API; enforce sandbox network and resource policy; return outputs, errors, and artifacts; persist required artifacts and terminate the disposable sandbox when analysis ends. |
 | Hosting providers | Supply the selected compute, isolation, storage, and network capabilities. MyStacks retains responsibility for application behavior and authorization. |
 
 The orchestration layer and custom runtime remain logically distinct even when they share a deployment. Routing work to the correct user does not require a separate LLM. Shared compute may be a fleet of processes or machines; it does not imply one large server.
@@ -61,6 +66,18 @@ A common `Agent` definition can serve many users. Each run receives a **fresh tr
 Mastra loads curated skill folders containing `SKILL.md` and any references or scripts. Backend tool modules are explicitly registered trusted code; their availability may vary by authorized user context. Loading a skill does not grant tool rights or execute its scripts or backend code. MyStacks may use native tool hooks and processors for policy and observability, while protected-action authorization remains inside tool handlers or the financial tools API on every path. [Skills](https://mastra.ai/docs/skills), [Filesystem skills](https://mastra.ai/docs/sandbox/skills)
 
 Existing SDKs and native adapters should be used directly when they meet the contract. The E2B execution tool is a necessary application boundary for authorized user data, outbound access, sandbox lifecycle, and artifact persistence. It may use `@mastra/e2b` or the direct E2B SDK; that adapter choice remains an implementation detail. A static shared workspace or live sandbox must not expose private files or execution state across users. [Mastra E2B integration](https://mastra.ai/integrations/sandboxes/e2b)
+
+### 2.4 Tentative account, channel, and context mapping
+
+The orchestrator selects and authorizes the account, channel, and conversation; Mastra loads and manages the selected context through its configured memory facilities. Mastra does not need channel-provider identity rules to distinguish iMessage from WhatsApp. The tentative mapping uses the stable account as the memory resource and the verified channel conversation as its thread. Framework identifiers do not replace authorization.
+
+The [onboarding design](design/onboarding.md) owns signup, button-based linking messages, channel bindings, and website connection controls. The [runtime design](design/runtime.md) owns separate channel histories and compaction, shared account personal memory, and the handoff to Mastra. Both channels read the same logical personal memory and authorized financial evidence. Useful user facts can carry across channels; transcripts, task logs, and results remain in their originating channel. Current financial facts and task state continue to come from protected backend operations.
+
+Background work uses independent agent runs with its own working context while the main chat remains available. Chat lists and manages only jobs and tasks originating in its channel. Task tools derive channel scope from trusted backend context and expose no destination selector or cross-channel transfer. Ordinary chat does not steer an active run; live steering is low priority. These scopes share worker infrastructure and require no permanent runtime or queue per channel.
+
+The [task design](design/tasks.md) owns fixed task delivery and separate proactive routing. Disconnecting a task's channel pauses the task; relinking leaves it paused until the user resumes it from that channel. Proactive messages instead use one preferred channel, initially the first linked channel, with website routing controls and fallback to the remaining linked channel. Account-wide proactive on/off remains a chat preference. The website shows connection previews; portfolio answers in chat are user-requested.
+
+These mappings preserve the agreed product experience and are **tentative until the overall architecture review**. They do not select database schemas, a memory merge mechanism, channel-provider adapters, or live-steering APIs.
 
 ## 3. Execution flows
 
@@ -81,32 +98,38 @@ flowchart LR
     O --> U
 ```
 
-The orchestration layer establishes trusted user context before routing work. For each run, it supplies fresh `RequestContext` and authorized resource and thread bindings. Mastra loads the configured history and memory and runs the agent with the available skills and tools. Exact interfaces and whether chat runs enter through the queue remain open.
+The orchestration layer establishes trusted account and channel context before routing work. For each run, it supplies fresh `RequestContext` and authorized resource and thread bindings. Mastra loads shared personal memory and that channel's history, then runs the agent with authorized skills and tools. Cross-channel transcript or task retrieval is outside the Phase 1 tool surface. Exact interfaces and whether chat runs enter through the queue remain open.
 
-For deeper work, the runtime can produce a useful initial response and continue analysis, with progress and final results delivered through the product's messaging path. Required conversation state, task progress, and outputs must survive the worker process that handled them.
+For longer work, the assistant briefly acknowledges the request, explains the intended work, and provides useful initial information when available. Independent background runs let the user continue chatting, leave and receive results later, or list, check, and cancel work from that channel. Ordinary new messages do not redirect or cancel active runs. Progress messages contain meaningful updates. Required conversation state, task progress, and outputs must survive the worker process that handled them while retaining channel scope. Exact cancellation mechanics remain open; live steering is low priority.
+
+All responses and reports use concise, precise text that is readable in chat, including scheduled results and proactive insights. The runtime leads with the main finding, key numbers, and necessary explanation or evidence; follow-ups provide deeper detail. Substantial source research and code execution remain available behind that output. Image replies are low priority; extensive deep-research reports and polished website report artifacts are deferred. The [runtime design](design/runtime.md) owns response composition within this scope.
 
 ### 3.2 Scheduled and proactive work
 
 ```mermaid
 flowchart LR
-    T["Durable task intent, status, user, trigger, and destination"] --> Q["BullMQ job scheduling and queue<br/>Redis: provisional backing store"]
+    T["Durable task intent, status, user, channel, and trigger"] --> Q["BullMQ job scheduling and queue<br/>Redis: provisional backing store"]
     Q --> W["Shared workers claim eligible jobs"]
     W --> R["Predefined monitoring or budgeted Mastra analysis"]
     R <--> D["Durable user-scoped state"]
     R --> O["Orchestration and authorized delivery"]
 ```
 
-Task intent, current status, user, trigger, and delivery destination persist between runs. Run attempts retain their own progress and outcomes without replacing the standing task. **No LLM needs to keep thinking between runs.** Under the provisional technology choice, BullMQ Job Schedulers produce jobs from repeat settings, and workers claim eligible work. MyStacks uses that scheduling capability rather than building a separate scheduler engine. Current BullMQ does not require a separate legacy `QueueScheduler`. [Job Schedulers](https://docs.bullmq.io/guide/job-schedulers/), [QueueScheduler](https://docs.bullmq.io/guide/queuescheduler)
+Task intent, current status, user, originating channel, and trigger persist between runs. The channel fixes delivery and chat access. Run attempts retain their own instructions, progress, and outcomes without replacing the standing task; edits affect future runs. **No LLM needs to keep thinking between runs.** Under the provisional technology choice, BullMQ Job Schedulers produce jobs from repeat settings, and workers claim eligible work. MyStacks uses that scheduling capability rather than building a separate scheduler engine. Current BullMQ does not require a separate legacy `QueueScheduler`. [Job Schedulers](https://docs.bullmq.io/guide/job-schedulers/), [QueueScheduler](https://docs.bullmq.io/guide/queuescheduler)
 
 The queue owns scheduled-job eligibility and job retries; Mastra performs agent execution inside a claimed job. Mastra scheduling or background retry must not independently manage the same work. Advanced facilities such as `AgentController`, durable agents, workflows, or signals may be adopted when a concrete requirement needs them; they are not required by the framework selection.
 
-A schedule establishes eligibility, not an exact execution instant. BullMQ can produce recurring jobs less frequently when preceding work has not begun processing because workers or concurrency are insufficient. Recovery, retry, overlap, pause, cancellation, and duplicate-notification semantics need explicit policies; the architecture does not promise exactly-once execution or delivery. [Job production behavior](https://docs.bullmq.io/guide/job-schedulers/)
+A schedule establishes eligibility, not an exact execution instant. BullMQ can produce recurring jobs less frequently when preceding work has not begun processing because workers or concurrency are insufficient. Retry, recovery, overlap, interruption, and duplicate-notification mechanisms must implement the accepted lifecycle in the task design; the architecture does not promise exactly-once execution or delivery. [Job production behavior](https://docs.bullmq.io/guide/job-schedulers/)
 
 Risk alerts, morning digests, flexible user-defined tasks, and independent useful initiative use the same financial authority and notification controls. **Routine monitoring uses inexpensive predefined reads and calculations** without a full agent run. Research and flexible or deeper analysis invoke Mastra when needed. Monitoring, agent runs, and sandbox execution must have resource budgets; their limits and behavior on exhaustion remain open. Data collection, risk calculations, agent analysis, and message delivery remain distinct responsibilities whose exact placement is open.
 
-Before delivering task results, the orchestration layer rechecks current permissions, task status, and destination. Queued task data and permissions captured at run start do not establish delivery authority. Policies must define how edits, pauses, retries, and repeated delivery affect in-flight work; exact cancellation, recovery, and duplicate-handling rules remain open.
+Before delivering task results, the orchestration layer rechecks current permissions, task status, and channel binding. Queued data and permissions captured at run start do not establish delivery authority. A future-only task edit preserves active-run instructions; pause or channel disconnection holds delivery that has not started. Resume schedules the next occurrence without a backlog; cancellation ends recurrence and requests active-run cancellation. Exact interruption, recovery, and duplicate-handling mechanisms remain open.
 
-Users must be able to change or pause ongoing tasks and notifications. Task pause, account disconnection, and worker shutdown are separate actions. Pausing a task does not delete its durable state. Notification frequency controls must preserve low-noise behavior and the accepted precision and monitoring limits.
+Users manage their current channel's ongoing tasks in chat; clear supported requests create, change, pause, resume, or cancel tasks immediately and receive a concise confirmation. Material ambiguity requires clarification. An isolated failure keeps recurrence active; recovery should happen automatically where supported, with a brief explanation when requested output cannot be produced and no repeated identical failure notices. **Agent-initiated messages are on by default**, with one account-wide binary on/off setting in chat and preferred-channel routing managed on the website. Task pause, source disconnection, and worker shutdown are separate actions. Pausing a task preserves its durable state. Internal relevance and repeat-suppression policies must preserve low-noise behavior and accepted monitoring limits.
+
+For proactive insights, portfolio evidence, goals, and remembered interests inform relevance. Send only meaningfully new, useful findings supported by strong evidence and meeting attention criteria; otherwise remain quiet. High precision is prioritized while accepting lower recall, without an unvalidated numeric guarantee. Explain why the finding matters and suppress uncertain, minor, repetitive, or low-value findings. Explicitly requested updates remain governed by task intent, including quiet-day summaries. The task design owns the tentative evidence, relevance, and repeat-suppression mechanisms.
+
+When a financial source is explicitly disconnected, a task continues only if remaining authorized evidence still fulfills its request. Otherwise pause it and explain why once in its originating channel. Restoring that source does not resume the task automatically; the user resumes it from that channel at the next scheduled occurrence without a backlog. Temporary provider outages remain failure-recovery cases. The task design owns the tentative mechanism for applying these rules to affected work.
 
 ### 3.3 Generated-code analysis
 
@@ -130,28 +153,31 @@ Sandbox pause is not a deletion action. Session limits, interruption cleanup, pe
 | State | Logical owner |
 | --- | --- |
 | Identity, connected-account bindings, and financial credentials | MyStacks backend account and authorization boundary. |
-| Portfolio observations and evidence used by the portfolio website, chat, reports, and digests | MyStacks backend financial data boundary, separate from personalization memory. |
-| Conversation history, context summaries, memory, and user preferences | Runtime state boundary using Mastra memory and storage facilities, stored durably and scoped to the user. MyStacks owns memory policy. |
-| Standing task intent, current status, user, trigger, and delivery destination | Task boundary, with one authority for each record. |
+| Portfolio observations and evidence used by the connection preview, chat, reports, and digests | MyStacks backend financial data boundary, separate from personalization memory. |
+| Conversation history and context summaries | Runtime state boundary using Mastra memory and storage facilities, scoped to the account and originating channel. |
+| Personal memory and user preferences | Shared account-level runtime state using Mastra facilities. MyStacks owns selection, update, retention, and forgetting policy. |
+| Standing task intent, current status, user, originating channel, and trigger | Task boundary, with one authority for each record and fixed channel delivery. |
 | Schedule eligibility, queue claims, and run-attempt progress and outcomes | Scheduling and execution boundaries, distinct from the standing task, under the provisional BullMQ + Redis choice. |
-| Required working files, reports, and generated artifacts | Durable user-scoped storage, accessible through authorized product interfaces. |
+| Required working files, chat results, and enabled generated outputs | Durable storage scoped to the account and originating job/channel, accessible through authorized product interfaces. Image replies are low priority; polished website report artifacts are deferred. |
 | Notification preferences and delivery records | MyStacks backend delivery boundary. |
 
 These are logical responsibilities, not a settled database schema. Concrete records, storage engines, and synchronization interfaces remain open. An application database and Redis must not become independent authorities for the same schedule; the implementation must define ownership and any derived scheduling state before introducing copies.
 
 The financial tools API returns a consistent evidence contract for portfolio surfaces and analysis: **source, as-of time or unknown freshness, coverage gaps, and native values and units**. Conversions and aggregation must retain the evidence needed to interpret the result. Missing data remains explicit; it must not become a zero balance or absence of risk. Exact schemas, collection ownership, reuse, and claim-specific freshness policies remain open.
 
+**Tentative calculation direction:** Phase 1 uses provider data without a MyStacks indexer. Reuse suitable provider-calculated values; common calculation code and definitions serve website previews, chat, and monitoring, while E2B handles flexible generated-code analysis. Display values default to USD and preserve native quantities. Distinguish balance changes from investment returns using supported cash-flow evidence. Fetch only needed data and report supported results; exact formulas and historical capabilities depend on provider coverage. Add historical storage or indexing infrastructure only for concrete capability needs, while retaining required durable evidence and outcomes.
+
 ### 4.2 Memory policy and user control
 
-MyStacks reuses **Mastra message history, working memory, and storage adapters** with explicit durability and user/thread scopes. Structured preferences and goals must use a backend-owned write policy and validated tools for model-initiated changes. The schema and native configuration for controlling those writes remain open. Live holdings and account permissions come from fresh backend evidence; remembered information cannot override them. [Working memory](https://mastra.ai/docs/memory/working-memory)
+MyStacks reuses **Mastra message history, working memory, and storage adapters** with shared personal memory under the account and separate history and compaction per channel conversation. Structured preferences and goals use a backend-owned write policy and validated tools. Useful personal facts learned in one channel can help another; the shared profile must not become a copy of channel transcripts, task records, or results. The schema and native configuration remain open. Live holdings and account permissions come from backend evidence; remembered information cannot override them. [Working memory](https://mastra.ai/docs/memory/working-memory)
 
-Automatic observations and semantic recall are optional capabilities, not selected memory policies. Their storage adapters, enabled layers, and update rules remain implementation decisions. Prompt trimming changes what enters a model request; it does not delete stored information. Forgetting must cover every enabled derived layer, including profiles, summaries, and vectors, as well as source records where required. Inspection, correction, deletion controls, and retention rules remain open.
+The assistant **automatically remembers useful personal context**. Clear new user statements update older personal facts; unclear conflicts prompt clarification only when material to the answer. Assistant interpretations remain distinguishable from user-confirmed facts. Users can inspect and correct memory in chat, forget a specific detail, or clear all remembered personal context. Selection, storage adapters, enabled layers, semantic recall, concurrent-write ordering, retention, and deletion completion remain open. Prompt trimming changes what enters a model request; it does not delete stored information. Forgetting must cover every enabled derived layer, including profiles, summaries, and vectors, as well as source records where required. Clearing personal context must not be presented as deletion of all conversation, financial, or provider records.
 
 ### 4.3 Process and sandbox lifecycle
 
 Authoritative conversation, memory, task, and file state lives outside worker processes. A worker may keep temporary context during a run, and an execution sandbox may keep temporary analysis files, but neither replaces durable user-scoped state.
 
-Workers can restart or be replaced without assigning a permanent machine to each user. Application health, interrupted-run recovery, state compatibility, backup/restore, export, and deletion still need policies. Durable state does not by itself settle whether an interrupted run resumes, restarts, or reports failure.
+Workers can restart or be replaced without assigning a permanent machine to each user. Application health, interrupted-run recovery, state compatibility, backup/restore, and retention still need policies. Account deletion is deferred; export remains proposed. Memory forgetting retains its accepted scope and completion requirements. Durable state does not by itself settle whether an interrupted run resumes, restarts, or reports failure.
 
 When chat and background runs update the same user's memory or tasks, their updates must preserve consistent user state. The concurrency and ordering policy remains open; a worker or sandbox boundary alone does not settle it.
 
@@ -213,14 +239,15 @@ A persistent isolated agent may be reconsidered if installed user code or proces
 | --- | --- |
 | Framework implementation and interfaces | Mastra package versions, model/provider configuration, chat routing, continued work, native adapters, and any requirement for advanced execution facilities. |
 | Scheduling technology | Confirm or replace provisional BullMQ + Redis; settle durable configuration and the authoritative task/schedule record contract. |
-| Run semantics | Policies for retries and recovery, overlapping runs, task edits and pauses during execution, cancellation, and duplicate-notification handling. |
+| Run semantics | Mechanisms for future-only edits, pause/resume/cancel, retries and recovery, concurrent background runs, exact interruption, and duplicate-notification handling. Live steering remains low priority. |
 | Hosting and capacity | Provider, regions, worker topology, concurrency, scaling, resource fairness, quotas, resource-budget limits, and operating cost. |
 | E2B configuration | Templates, data transfer, enforcement of default network isolation and any permitted exceptions, resource limits, session lifetime, interruption cleanup, permitted pause/resume use, and required provider evidence and terms. |
 | Persistence and portability | Mastra storage adapters and user/thread scopes, other storage engines and formats, retention, backup/restore, export, deletion, and state compatibility. |
-| Financial evidence and proactivity | Evidence schemas, collection ownership, public data reuse, valuation and risk methods, claim-specific freshness, per-task cadence and timezone behavior, digest timing, independent triggers, and notification frequency controls. |
-| Personalization | Memory schema, validated writes, automatic observations and recall, enabled derived layers, user controls, and task and preference interfaces. |
+| Financial evidence and proactivity | Provider coverage, evidence schemas, collection ownership, public data reuse, valuation and risk methods, claim-specific freshness, recurrence/daylight-saving mechanics, independent triggers, relevance, and repeat suppression. |
+| Personalization | Memory schema, selection and retrieval, validated writes, concurrent-write ordering, enabled derived layers, retention, deletion completion, and implementation of the accepted update and chat-control rules. |
+| Account and channel mapping | Validate the tentative account/resource and channel/thread split; settle signup/linking mechanics, channel adapters and device handoff, concurrent memory updates, and enforcement of channel-scoped task access and fixed delivery. Phone changes and recovery are low priority. |
 | Security and product enforcement | Runtime authentication, credential storage, permission boundaries, domain enforcement, and informational output controls. |
 | Operations | Observability for runs, tool calls, queue delay, costs, and deliveries; deployment and interrupted-run policies. |
 | Business assumptions | Registered versus active user targets, workload distribution, geographic scope, and per-user cost limits. |
 
-These decisions refine the accepted direction within Phase 1 authority and monitoring limits. They do not constitute an implementation plan.
+The architecture design round must finalize these tentative choices together within Phase 1 authority and monitoring limits. This document does not constitute an implementation plan.

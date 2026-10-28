@@ -2,17 +2,17 @@
 
 ## 1. Status and scope
 
-**Status: PROPOSED — discussion draft.** These stories describe the complete Phase 1 portfolio experience; their detailed choices are not approved requirements.
+**Status: Phase 1 discussion draft.** The dashboard flow, shared account evidence, USD display default, and provider-based calculation direction are agreed. Exact coverage and financial methods remain open.
 
 The governing [product requirements](../requirements.md) define read-only financial information, analysis, and monitoring. Portfolio answers must exclude specific buy, sell, or rebalance recommendations and financial actions.
 
 The portfolio combines the **supported, connected portion** of on-chain wallets, Binance accounts, and Hyperliquid positions. It must not imply coverage of accounts, networks, instruments, or assets the user has not connected or the product does not support.
 
-Messaging is the primary interaction surface. The companion website provides a portfolio view. Both must explain the same financial facts, with source coverage and freshness visible.
+Chat is the default for portfolio questions and updates, and portfolio answers in chat follow user requests. The persistent website dashboard manages financial connections and shows the available portfolio preview after each connection. Chat and that preview must explain the same financial facts, with scope and freshness represented accurately.
 
-The [technical design](../design/portfolio.md) owns the shared financial evidence and read boundaries. [Onboarding](onboarding.md) owns connecting, reconnecting, and disconnecting sources.
+Portfolio answers and reports must be concise, precise, and readable directly in chat, with key numbers and necessary explanation or evidence. Follow-up questions provide deeper detail. Image replies are low priority; extensive deep-research reports and polished website report artifacts are deferred. The [technical design](../design/portfolio.md) owns shared financial evidence and read boundaries. [Onboarding](onboarding.md) owns connecting, reconnecting, and disconnecting sources.
 
-## 2. Proposed user stories
+## 2. User stories
 
 ### 2.1 US-PORT-01 — See the combined portfolio
 
@@ -20,8 +20,9 @@ The [technical design](../design/portfolio.md) owns the shared financial evidenc
 
 - The view identifies the included wallet addresses, accounts, and position coverage across supported wallet networks, Binance, and Hyperliquid.
 - Holdings and positions remain distinguishable, and the user can see which source contributes each item.
-- When supported valuation evidence is available, the view shows a total for the included coverage and identifies its valuation currency and basis.
+- When supported valuation evidence is available, the view shows a total for the included coverage and identifies its valuation basis. Display values default to USD while native asset quantities, such as BTC, ETH, and shares, remain available.
 - When part of the portfolio cannot be valued or read, the view names the gap and labels affected totals as partial rather than implying complete wealth coverage.
+- After each connection, the dashboard shows the connection result and available preview, with **Add more** and **Continue to chat**. New and returning users use the same **Add account** flow and can keep adding sources.
 
 ### 2.2 US-PORT-02 — Understand composition and concentration
 
@@ -37,15 +38,16 @@ The [technical design](../design/portfolio.md) owns the shared financial evidenc
 **As a user, I want to see supported portfolio changes over 24 hours so that I can understand what changed and what remains unexplained.**
 
 - A reported 24-hour change identifies the comparison period and the sources, holdings, or positions included in both observations.
+- Available provider history and inputs determine which comparisons are supported; connecting a source does not guarantee an earlier observation.
 - If the required earlier observation, prices, or comparable coverage is missing, the product marks the affected change as unavailable or partial and explains why.
 - When a connection or its supported coverage changes, the explanation distinguishes that change from a supported change in the assets being observed.
-- A change in portfolio value is not labeled investment return or profit unless an agreed method supports that claim, including its treatment of deposits and withdrawals.
+- When the available data supports it, the answer separates deposits and withdrawals from investment gains or losses. A portfolio-value change is not labeled investment return or profit unless an agreed method supports that claim; if only balance change is supported, the answer labels it as balance change.
 
 ### 2.4 US-PORT-04 — Inspect an account or position
 
 **As a user, I want to drill into a source, holding, or position so that I can check the facts behind a portfolio answer.**
 
-- From a combined answer or website view, the user can inspect the contributing source and its supported holdings or positions.
+- In chat, the user can ask about a source contributing to a combined answer or the connection preview and inspect its supported holdings or positions.
 - The detail identifies the account or address, network where relevant, native quantity and unit, valuation evidence when available, and as-of time or unknown freshness.
 - Supported position details identify their source and limits; risk information such as proximity to liquidation appears only when the required evidence is available.
 - If a requested detail is unsupported or unavailable, the product explains the gap without presenting it as a zero value or evidence of safety.
@@ -55,18 +57,21 @@ The [technical design](../design/portfolio.md) owns the shared financial evidenc
 **As a user, I want useful portfolio information when one source is stale or unavailable so that I can understand what is known without mistaking it for a complete picture.**
 
 - Available sources remain usable when another source fails, is stale, or needs attention.
-- The answer identifies included and missing coverage, with source as-of times or an explicit statement that freshness is unknown.
+- The portfolio view identifies included and missing coverage, with source as-of times or an explicit statement that freshness is unknown. Conversational answers use the [assistant story's](assistant.md#21-us-chat-01--ask-questions-and-follow-up-naturally) best-effort presentation and describe their actual scope.
 - Previously observed information is identified as such; it is not presented as a fresh read or silently substituted for an unavailable value.
-- When access needs attention, the user can reach the connection controls, and the portfolio reflects the resulting connection status without treating a failed read as zero assets or no risk.
+- When provider access requires user action, chat links to the same website dashboard for connection controls. Supported renewal is automatic, and temporary outages appear as unavailable; a failed read is not zero assets or no risk.
 
 ### 2.6 US-PORT-06 — Get consistent facts across surfaces
 
-**As a user, I want the website, chat, reports, and digests to use the same portfolio facts so that I can understand and verify their conclusions.**
+**As a user, I want the connection preview, chat, reports, and digests to use the same portfolio facts so that I can understand and verify their conclusions.**
 
 - For the same observations and calculation basis, the surfaces report consistent holdings, positions, valuations, and coverage.
 - If two outputs use different observation times or coverage, each makes that difference clear enough to explain a changed result.
+- Linked channels can use the same account-wide financial connections and portfolio evidence. Conversation history, jobs, scheduled tasks, and their results remain within their originating channel.
 - A portfolio explanation or digest identifies the underlying sources and distinguishes reported facts, calculations, assumptions, and uncertain conclusions.
 - A remembered preference may change presentation, but it cannot replace current financial evidence or expand account access.
+
+Phase 1 uses provider data and best-effort calculations in code, without a MyStacks indexer. Suitable provider-calculated values may be reused; additional supported calculations use common definitions across the preview, chat, and tasks. Available inputs limit the answers the product can support.
 
 ## 3. Open product decisions
 
@@ -75,7 +80,7 @@ The [technical design](../design/portfolio.md) owns the shared financial evidenc
 | Decision | What needs agreement |
 | --- | --- |
 | Supported coverage | Exact networks, protocols, Binance account types, Hyperliquid position types, instruments, and exclusions. |
-| Valuation | Display currency, price sources, valuation basis, treatment of unpriced assets, liabilities, and positions, and any conversion rules. |
+| Valuation | Price sources, valuation basis, treatment of unpriced assets, liabilities, and positions, and conversion rules. USD is the default display currency; alternate display currencies are low priority. |
 | Composition and concentration | Which measures to offer, what constitutes exposure, and which holdings or positions may share a comparison total. |
 | Position risk | Supported position details, risk measures, evidence requirements, and language for incomplete risk information. |
 
@@ -84,7 +89,7 @@ The [technical design](../design/portfolio.md) owns the shared financial evidenc
 | Decision | What needs agreement |
 | --- | --- |
 | Comparison periods | Meaning of a 24-hour comparison, acceptable earlier observations, and how changed connection coverage is explained. |
-| Historical baseline | When collection starts, whether supported historical data is obtained, and what users see before a baseline exists. |
+| Historical baseline | Which provider history is available, whether a comparison can be supported, and what users see before a baseline exists. Additional history collection or infrastructure needs a concrete capability requirement. |
 | Cash flows and performance | Treatment of deposits, withdrawals, transfers, fees, and other external flows; definitions of return, profit, and performance. |
 | Freshness | When each claim may use an earlier observation and how stale or unknown freshness is shown. |
 

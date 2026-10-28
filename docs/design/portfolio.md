@@ -2,11 +2,13 @@
 
 ## 1. Status, scope, and ownership
 
-**Status: PROPOSED — discussion draft.** This design refines Phase 1 portfolio behavior; exact interfaces, schemas, storage, and financial methods remain open.
+**Status: TENTATIVE — architecture discussion draft.** The portfolio product direction is agreed; the technical mappings below remain tentative pending the overall architecture round. Exact interfaces, schemas, storage choices, and financial methods remain open.
 
 The [product requirements](../requirements.md) govern behavior, and the [portfolio user stories](../user-stories/portfolio.md) describe observable outcomes. The [architecture](../architecture.md) is authoritative for the Mastra runtime, shared workers, durable state, and trusted financial tools API.
 
-The **financial tools API** owns authorized provider reads and the evidence used by the website, chat, reports, and background work. The portfolio boundary normalizes that evidence and performs supported calculations. Personalization memory cannot supply current holdings, prices, positions, or permissions.
+The **financial tools API** owns authorized provider reads and the evidence used by the persistent website dashboard's portfolio preview, chat, reports, and background work. The portfolio boundary normalizes that evidence and performs supported calculations. Personalization memory cannot supply current holdings, prices, positions, or permissions. Portfolio answers and reports use concise, precise text in chat, with deeper detail through follow-ups. Image replies are low priority; extensive deep-research reports and polished website report artifacts are deferred.
+
+Financial connections and portfolio evidence belong to the account and are available from its linked channels. Conversation history, jobs, scheduled tasks, and their results remain within their originating channel; access to shared evidence does not grant access to another channel's work.
 
 [Onboarding design](onboarding.md) owns connection setup, credential intake, account binding, reconnect, and disconnect. This document owns the connector read boundary and financial evidence contract after a connection has been established.
 
@@ -14,7 +16,9 @@ The **financial tools API** owns authorized provider reads and the evidence used
 
 ### 2.1 Supported capabilities and provider adapters
 
-Phase 1 includes supported on-chain wallet reads, Binance account reads, and Hyperliquid position reads. Exact networks, protocols, account types, instruments, endpoints, and SDKs require confirmation before implementation.
+Phase 1 includes supported on-chain wallet reads, Binance account reads, and Hyperliquid position reads. **Hyperliquid remains low priority and in scope.** Exact networks, protocols, account types, instruments, endpoints, and SDKs require confirmation before implementation.
+
+Phase 1 uses provider data and best-effort calculations in code, without a MyStacks indexer. A read requests the supported data needed for the question, preview, or task rather than collecting every available account or historical record.
 
 Provider adapters must:
 
@@ -27,11 +31,11 @@ Capability coverage must accompany adapter results so consumers can explain whic
 
 ### 2.2 Public reads and private accounts
 
-Public wallet or position data may be read for a supported address without private financial credentials. Following an address does not prove ownership or grant control. The connection boundary determines the user's selected address and network; a public address cannot authorize access to another user's saved connections or private data.
+Public blockchain data may be available without private financial credentials, but MyStacks portfolio tracking requires a connection established through the source's setup flow. For EVM wallets, the backend must resolve an active **verified EVM connection** belonging to the current user before importing holdings or starting tracking. A raw address, wallet-connect event, uploaded file, model argument, or queued input cannot substitute for wallet-control verification. The [onboarding design](onboarding.md) owns that verification, accepted reuse of eligible verified wallets for Hyperliquid setup, and remaining source-connection mechanics.
 
-For private account reads, the backend must authorize the current user, connected account, requested object, and read operation before using backend-held credentials. Chat, website, jobs, and predefined monitoring use the same authorization boundary. Model-supplied account IDs and queued inputs do not establish authority.
+Before a connection-scoped read, the backend must authorize the current user, connected account or wallet, requested object, and read operation. Private account reads use backend-held credentials after those checks. Chat, website, jobs, and predefined monitoring use the same authorization boundary. A public address cannot authorize access to another user's saved connection or private data.
 
-Reads must respect current connection access. Once a source is disconnected, new reads through that connection stop. Presentation and retention of observations obtained before disconnection follow the data policy owned by onboarding and the architecture's state boundary.
+Reads must respect current connection access. Financial connections can be removed only on the website; chat links to the same dashboard for connection management. Once a source is disconnected, new reads stop and the source is excluded from the current portfolio while other sources continue. Scheduled work may continue only when remaining authorized evidence fulfills its request; otherwise the task pauses and explains why once, with manual resume after restoration. The [task design](tasks.md) owns that lifecycle. Past reports are retained under the separate data policy owned by onboarding and the architecture's state boundary.
 
 ### 2.3 Untrusted inputs and informational authority
 
@@ -49,7 +53,7 @@ Each financial observation or derived result must carry enough context to establ
 
 | Evidence | Required meaning |
 | --- | --- |
-| Source and scope | Provider, authorized account or selected public address, network where relevant, and supported coverage included in the read. |
+| Source and scope | Provider, connection-bound account or wallet address, network where relevant, and supported coverage included in the read. |
 | Financial identity | Asset, holding, or position identity, with provider distinctions retained until an approved mapping establishes equivalence. |
 | Native values and units | Original financial quantities, currencies, price units, position direction, and other semantics needed to interpret the value. |
 | Time | Provider as-of time when available, collection time, and explicit unknown freshness when an as-of time cannot be established. |
@@ -68,7 +72,7 @@ Asset and position identity mappings must prevent unsupported merging across net
 
 Totals and concentration calculations may combine only values compatible with the approved measure and valuation basis. Derived values must retain the contributing evidence and identify excluded or unpriced portions. Native amounts remain available even when a conversion or aggregate cannot be produced.
 
-Display currency, price sources, position valuation, liability treatment, conversion rules, exposure measures, and rounding policy require explicit decisions. This design does not select a financial method by default.
+Display values default to USD while native asset quantities and units remain available. Alternate display currencies are low priority. Price sources, cost basis, position valuation, liability treatment, conversion rules, supported exposure measures, and rounding policy require explicit decisions.
 
 ### 3.3 Partial information and freshness
 
@@ -76,7 +80,7 @@ Every portfolio result must state the coverage actually included. A connected so
 
 Earlier observations may support a useful partial answer only when their age and coverage are visible and the selected claim permits their use. Unknown freshness must remain unknown. Claim-specific freshness policies and refresh behavior remain open.
 
-Consumers must explain what a gap limits. A partial holdings total cannot establish total wealth; missing position risk inputs cannot establish that no risk exists. Useful supported information remains available without waiting for every source to become current.
+Consumers must describe the scope actually covered. A partial holdings total cannot establish total wealth; missing position risk inputs cannot establish that no risk exists. Conversational answers use available information without routine missing-data warnings and explain unavailable information when the user explicitly asks for it. Useful supported information remains available without waiting for every source to become current.
 
 ## 4. Snapshots, comparison, and consumer flow
 
@@ -86,28 +90,37 @@ A portfolio snapshot is a view assembled from identified observations; it must n
 
 A comparison must retain both observations, their periods, coverage, units, and method. It must identify changes in connection scope or supported coverage instead of treating newly observed assets as investment gains or disappeared coverage as losses.
 
-The historical baseline, availability of provider history, definition of a 24-hour interval, acceptable comparison times, and handling of missing baseline evidence remain open. Until the required comparison exists, the affected measure is unavailable or explicitly partial.
+Provider history and available inputs determine which comparisons are possible. The historical baseline, definition of a 24-hour interval, acceptable comparison times, and handling of missing baseline evidence remain open. Until the required comparison exists, the affected measure is unavailable or explicitly partial; a connection does not itself guarantee historical analytics.
 
-Changes in value, cash flows, investment return, and profit must remain distinct claims. Deposits, withdrawals, internal transfers, fees, and position accounting require agreed treatment before performance can be computed. No return formula or historical reconstruction policy is selected here.
+Changes in value, cash flows, investment return, and profit must remain distinct claims. When provider data supports the distinction, calculations separate deposits and withdrawals from investment gains or losses. If the available inputs support only balance change, consumers label it as balance change. Exact treatment of internal transfers, fees, cash flows, and position accounting, along with return formulas and historical reconstruction, remains open.
 
 ### 4.2 Shared use across product surfaces
 
 The authorized consumer requests the required supported scope, the financial boundary obtains or selects permitted evidence, and the portfolio boundary produces the requested view or calculation. The response carries its sources, times, coverage, and derivation through to presentation.
 
-The website, chat, reports, digests, and monitoring must reuse this boundary and the same approved calculation meanings. They may select different views or observation times; they cannot silently redefine a measure. Generated-code analysis receives authorized selected evidence through the architecture's execution boundary.
+After each connection, the website dashboard shows the connection result and available portfolio preview, with **Add more** and **Continue to chat**. New and returning users use the same **Add account** flow. Chat requests to add or manage financial connections link to this dashboard.
 
-Evidence needed to explain a retained result must remain associated with that result under the agreed data policy. Exact persistence, history collection, refresh ownership, reusable public data, private-data reuse, and retention remain open.
+The preview, chat, reports, digests, and monitoring must reuse this boundary, common financial definitions, and reusable calculation code. Suitable provider-calculated values may be reused when their meaning, units, scope, and observation time support the requested claim; code computes additional supported results. Consumers may select different views or observation times, but cannot silently redefine a measure. E2B supports flexible analysis of authorized selected evidence through the architecture's execution boundary.
+
+Backend access to a job, scheduled task, or result must bind both the account and its originating channel. Shared portfolio evidence can support a new request in either linked channel without loading another channel's conversation, task records, or results.
+
+Evidence needed to explain a retained result must remain associated with that result under the agreed data policy. The provider-based calculation approach preserves the architecture's required durable data, results, and generated artifacts. Additional historical storage, an indexer, or other infrastructure requires a concrete data or capability need. Exact persistence mappings, refresh ownership, reusable public data, private-data reuse, and retention remain open.
 
 ## 5. Acceptance evidence and open decisions
 
 ### 5.1 Required design checks
 
 - With supported wallet, Binance, and Hyperliquid evidence, a combined view preserves source contributions and does not merge incompatible holdings or positions.
+- After a new or returning user adds a source, the dashboard shows the result and available preview and allows another source through the same flow or continuation to chat.
+- With supported valuation data, USD display values preserve the native quantities and units used to explain holdings and positions.
 - With a successful empty read, a failed read, and an unknown as-of time, consumers distinguish zero, unavailable coverage, and unknown freshness.
-- With matching observations and methods, website, chat, and digest calculations agree; changed times or coverage remain visible.
+- With matching observations and methods, calculations in the preview, chat, scheduled tasks, and digests agree; changed times or coverage remain visible.
 - With missing historical evidence or changed connection coverage, a 24-hour explanation does not invent investment performance.
-- With unauthorized account input or disconnected access, every entry path denies new private reads without exposing another user's evidence or credentials.
+- With provider-supported cash-flow data, an explanation separates deposits and withdrawals from investment gains or losses; balance-only inputs produce a balance-change claim.
+- With the same linked account in two channels, each can use shared financial evidence, while job, scheduled-task, and result access remains restricted to its originating channel.
+- With unverified EVM input, every entry path refuses wallet import or tracking until wallet-control verification succeeds. Supplying an address through chat, a file, or a scheduled task cannot bypass the connection flow.
+- With unauthorized account input or disconnected access, every entry path denies new reads through that connection without exposing another user's evidence or credentials.
 
 ### 5.2 Decisions required before implementation
 
-Coverage, provider APIs and SDKs, evidence schemas, identity mappings, valuation and risk methods, freshness policies, comparison and cash-flow semantics, persistence, data reuse, retention, and operational metrics remain open. These decisions must preserve the requirements' read-only authority, useful partial answers, and accepted best-effort monitoring limits.
+Coverage, provider APIs and SDKs, evidence schemas, identity mappings, supported metrics and formulas, cost basis, valuation and risk methods, freshness policies, comparison and cash-flow semantics, persistence mappings, data reuse, retention, and operational metrics remain open. These decisions must preserve the requirements' read-only authority, useful partial answers, and accepted best-effort monitoring limits.

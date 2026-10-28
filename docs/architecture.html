@@ -7,7 +7,17 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root { color-scheme: light; }
+    :root {
+      color-scheme: light;
+      --surface: #ffffff;
+      --line: #cddfd6;
+      --tint: #e7f5ef;
+      --tint-2: #c9e9dc;
+      --accent: #0f8a6a;
+      --ink: #0b1f1b;
+      --mint: #22d3ae;
+      --text: #111a24;
+    }
     * { box-sizing: border-box; }
     html, body { margin: 0; height: 100%; }
     body {
@@ -22,49 +32,89 @@
     header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px 32px; }
     .eyebrow { margin: 0 0 10px; font-size: 13px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: #0f8a6a; }
     h1 { margin: 0; font-size: clamp(26px, 2.6vw, 40px); font-weight: 700; letter-spacing: -.02em; }
-    .lede { margin: 10px 0 0; max-width: 62ch; font-size: clamp(14px, 1.1vw, 17px); line-height: 1.5; color: #55606d; }
-    .legend { display: flex; gap: 22px; font-size: 13px; color: #55606d; white-space: nowrap; }
+    .lede { margin: 10px 0 0; max-width: 70ch; font-size: clamp(14px, 1.1vw, 17px); line-height: 1.5; color: #55606d; }
+    .legend { display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: 13px; color: #55606d; white-space: nowrap; }
     .legend span { display: inline-flex; align-items: center; gap: 8px; }
     .swatch-edge { width: 26px; height: 0; border-top: 1.5px solid #8b96a3; }
+    .swatch-trigger { width: 26px; height: 0; border-top: 1.5px dashed #0f8a6a; }
     .swatch-boundary { width: 18px; height: 12px; border: 1.5px dashed #b9c2cc; border-radius: 4px; }
-    svg { width: 100%; height: 100%; min-height: 0; overflow: visible; }
+    .stage { position: relative; min-height: 0; }
+    #diagram { display: block; width: 100%; height: 100%; overflow: visible; }
 
+    /* Section picker: pill toggles over the empty top-right corner of the diagram. */
+    .sections { position: absolute; top: 0; right: 0; z-index: 1; display: flex; gap: 6px; }
+    .sections button {
+      display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px 5px 6px;
+      font: 500 13px/1.2 inherit; color: #3b4652; background: #ffffffd9;
+      border: 1px solid var(--line); border-radius: 999px; cursor: pointer; transition: background .2s, color .2s, border-color .2s;
+    }
+    .sections button:hover { border-color: var(--accent); }
+    .sections button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .sections button[aria-pressed="true"] { color: #ffffff; background: var(--accent); border-color: var(--accent); }
+    .sections kbd { display: grid; place-items: center; min-width: 18px; height: 18px; border-radius: 9px; font: 600 11px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--accent); background: var(--tint); }
+    .sections button[aria-pressed="true"] kbd { color: #ffffff; background: #ffffff2e; }
+    @media (max-width: 959px) {
+      .sections { position: static; flex-wrap: wrap; margin-bottom: 12px; }
+      #diagram { height: auto; }
+    }
+
+    /* Parts outside the chosen sections fade back; layout never moves. */
+    [data-node], [data-edge], [data-members] { transition: opacity .35s ease; }
+    .is-dim { opacity: .12; }
+    @media (prefers-reduced-motion: reduce) { [data-node], [data-edge], [data-members] { transition: none; } }
+
+    /* Shared palette: neutral boundaries and edges, one accent family for every figure, dark ink and mint for emphasis. */
     .group { fill: #ffffff80; stroke: #c6ced7; stroke-width: 1.5; stroke-dasharray: 6 6; }
     .group-label { fill: #7a8592; font-size: 13px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    .group.nested { fill: #eaf5f0b3; stroke: var(--tint-2); }
+    .group-label.nested { fill: var(--accent); }
     .edge { fill: none; stroke: #9aa5b1; stroke-width: 1.6; }
-    .flow { fill: none; stroke: #0f8a6a; stroke-width: 2; stroke-linecap: round; stroke-dasharray: 1 16; opacity: .55; animation: flow 1.6s linear infinite; }
+    .edge.link { stroke: #b4bec8; stroke-width: 1.3; }
+    .edge.trigger { stroke: var(--accent); stroke-opacity: .7; stroke-dasharray: 5 5; }
+    .edge-label { fill: var(--accent); font-size: 13px; font-weight: 600; paint-order: stroke; stroke: #edf6f2; stroke-width: 4px; }
+    .flow { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 1 16; opacity: .55; animation: flow 1.6s linear infinite; }
     @keyframes flow { to { stroke-dashoffset: -17; } }
     @media (prefers-reduced-motion: reduce) { .flow { animation: none; opacity: 0; } }
 
-    .card { fill: #ffffff; stroke: #e1e5ea; stroke-width: 1; }
     .kicker { fill: #8a94a0; font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
-    .title { fill: #111a24; font-size: 21px; font-weight: 600; letter-spacing: -.01em; }
+    .title { fill: var(--text); font-size: 21px; font-weight: 600; letter-spacing: -.01em; }
     .sub { fill: #5f6b78; font-size: 15px; }
+    .small .title { font-size: 18px; }
+    .small .sub { font-size: 14px; }
+
+    /* Flat 2D surfaces: every light shape (cards, medallions, chips, workers) shares one fill and hairline, with no shadows. */
+    .card, .figure, .medallion, .chip, .worker { fill: var(--surface); stroke: var(--line); stroke-width: 1.3; }
+    .figure-line { fill: none; stroke: var(--line); stroke-width: 1.3; }
+    .term-dot { fill: var(--tint-2); }
+    .prompt { fill: var(--accent); font: 600 14px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .job, .cpu-die { fill: var(--accent); }
+    .key-disc { fill: var(--tint); stroke: var(--tint-2); }
+    .ring { fill: none; stroke: var(--accent); stroke-opacity: .35; stroke-width: 1.3; stroke-dasharray: 3 7; }
     .hero .card { fill: url(#hero-fill); stroke: #0b2a24; }
-    .hero .kicker { fill: #7ee0c3; }
+    .hero .kicker { fill: var(--mint); }
     .hero .title { fill: #ffffff; font-size: 27px; font-weight: 700; }
     .hero .sub { fill: #a9c9bf; }
+    .brand-mark { fill: var(--mint); filter: drop-shadow(0 0 10px #22d3ae55); }
 
-    .badge rect { fill: #edf7f3; stroke: #d3ebe2; }
-    .badge path { fill: none; stroke: #0f8a6a; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-    .hero .badge rect { fill: #ffffff14; stroke: #7ee0c366; }
-    .hero .badge path { stroke: #7ee0c3; }
-    .figure { fill: #ffffff; stroke: #cfe6dd; stroke-width: 1.5; }
-    .figure-back { fill: #e6f1ec; stroke: #cfe6dd; stroke-width: 1.2; }
-    .figure-mid { fill: #f3f9f6; stroke: #cfe6dd; stroke-width: 1.2; }
-    .figure-line { fill: none; stroke: #e3ece8; stroke-width: 1.5; }
-    .figure-dot { fill: #0f8a6a; }
-    .ring { fill: none; stroke: #0f8a6a; stroke-opacity: .35; stroke-width: 1.3; stroke-dasharray: 3 7; }
-    .prompt { fill: #0f8a6a; font: 600 14px ui-monospace, SFMono-Regular, Menlo, monospace; }
-    .cube-top { fill: #ffffff; stroke: #cfe6dd; stroke-width: 1.5; stroke-linejoin: round; }
-    .cube-left { fill: #e6f4ee; stroke: #cfe6dd; stroke-width: 1.5; stroke-linejoin: round; }
-    .cube-right { fill: #0f8a6a; stroke: #0f8a6a; stroke-width: 1.5; stroke-linejoin: round; }
-    .cube-icon { fill: none; stroke: #ffffff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .figure-icon { fill: none; stroke: #0f8a6a; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; stroke-width: 3; }
-    .figure-bubble { fill: #0b1f1b; stroke: #ffffff; stroke-width: 3; }
-    .figure-bubble-icon { fill: none; stroke: #7ee0c3; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-    .orbit { fill: none; stroke: #0f8a6a; stroke-opacity: .32; stroke-width: 1.3; stroke-dasharray: 3 9; }
-    .orbit-dot { fill: #0f8a6a; opacity: .75; }
+    /* Icons: tinted tiles on cards, duotone glyphs in medallions, dark badges with mint glyphs on figure corners. */
+    .badge rect { fill: var(--tint); stroke: var(--tint-2); }
+    .badge path, .badge-icon { fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .glyph { fill: var(--tint); stroke: var(--accent); stroke-width: 1.8; stroke-linejoin: round; }
+    .glyph.dashed { stroke-dasharray: 4 3; }
+    .glyph-stroke { fill: none; stroke: var(--accent); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+    .glyph-solid { fill: var(--accent); stroke: var(--accent); stroke-width: 1.8; stroke-linejoin: round; }
+    .figure-bubble { fill: var(--ink); stroke: var(--surface); stroke-width: 3; }
+    .figure-bubble-icon { fill: none; stroke: var(--mint); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .medallion.whatsapp { fill: #25d366; stroke: none; }
+    .medallion.imessage { fill: #0a84ff; stroke: none; }
+    .channel-icon { fill: #ffffff; }
+    .channel-icon.other { fill: none; stroke: var(--accent); stroke-width: 1.3; }
+    .mark-plain { fill: var(--surface); stroke: var(--line); stroke-width: 1.2; }
+    .mark-plus { fill: none; stroke: var(--accent); stroke-width: 2.4; stroke-linecap: round; }
+    .chip-label { fill: var(--text); font-size: 16px; font-weight: 500; }
+
+    .orbit { fill: none; stroke: var(--accent); stroke-opacity: .32; stroke-width: 1.3; stroke-dasharray: 3 9; }
+    .orbit-dot { fill: var(--accent); opacity: .75; }
     .spin { transform-box: view-box; transform-origin: 755px 450px; animation: spin 48s linear infinite; }
     .spin.reverse { animation-duration: 72s; animation-direction: reverse; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -84,30 +134,36 @@
       <div>
         <p class="eyebrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4z"/></svg>MyStacks · Agentic runtime · Phase 1</p>
         <h1>Custom runtime architecture</h1>
-        <p class="lede">One shared runtime serves every user. Credentials stay in the trusted backend, and generated code runs in an isolated sandbox.</p>
+        <p class="lede">One shared runtime serves every user, live and on schedule. Credentials stay in the backend; generated code runs in an isolated sandbox.</p>
       </div>
       <div class="legend" aria-hidden="true">
         <span><i class="swatch-edge"></i>Request and response</span>
+        <span><i class="swatch-trigger"></i>Scheduled work</span>
         <span><i class="swatch-boundary"></i>Boundary</span>
       </div>
     </header>
-    <svg id="diagram" viewBox="0 0 1600 900" role="img" aria-labelledby="diagram-title diagram-desc">
+    <div class="stage">
+    <nav class="sections" aria-label="Diagram sections"></nav>
+    <svg id="diagram" viewBox="0 0 1800 900" role="img" aria-labelledby="diagram-title diagram-desc">
       <title id="diagram-title">MyStacks custom runtime architecture</title>
-      <desc id="diagram-desc">A user message goes to the orchestration layer, which talks to the MyStacks Agentic Runtime. The runtime talks to durable user-scoped state, the financial tools API, and the code execution tool. The financial tools API talks to financial providers. The code execution tool talks to a task-scoped sandbox. All connections are two-way. The orchestration layer, runtime, state, financial tools API, and code execution tool sit inside the trusted MyStacks backend; financial providers and the sandbox sit outside it.</desc>
+      <desc id="diagram-desc">User messages arrive from WhatsApp, iMessage, and other channels such as Telegram, Discord, and the app, and go to the orchestration layer, which talks to the MyStacks Agentic Runtime. The runtime talks to durable user-scoped state, the financial tools API, and the code execution tool. The financial tools API talks to financial providers, which connect to Binance, Robinhood, Coinbase, and IBKR accounts, EVM and Solana addresses, and other accounts. The code execution tool talks to a task-scoped E2B sandbox. These connections are two-way. A keys and credentials store inside the backend feeds only the financial tools API; the agent never sees the keys and reaches financial data only through those tools. For background work, the runtime schedules tasks into a scheduler and job queue (BullMQ with Redis), which hands jobs to a shared worker pool that runs the runtime; the queue and workers sit in a background-work group. The orchestration layer, runtime, state, financial tools API, code execution tool, and background work sit inside the trusted MyStacks backend; financial providers and the sandbox sit outside it.</desc>
       <defs>
+        <linearGradient id="solana" x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0" stop-color="#9945ff"/>
+          <stop offset="1" stop-color="#14f195"/>
+        </linearGradient>
         <linearGradient id="hero-fill" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stop-color="#16362f"/>
           <stop offset="1" stop-color="#0b1f1b"/>
         </linearGradient>
-        <filter id="shadow" x="-30%" y="-40%" width="160%" height="200%">
-          <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#1b2a3a" flood-opacity=".08"/>
-        </filter>
         <filter id="glow" x="-50%" y="-60%" width="200%" height="240%">
           <feDropShadow dx="0" dy="0" stdDeviation="26" flood-color="#0f8a6a" flood-opacity=".22"/>
-          <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#0b1f1b" flood-opacity=".25"/>
         </filter>
         <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M1.5 1.5 L8.5 5 L1.5 8.5" fill="none" stroke="#7d8996" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+        <marker id="arrow-trigger" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M1.5 1.5 L8.5 5 L1.5 8.5" fill="none" stroke="#0f8a6a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
         </marker>
       </defs>
       <g id="groups"></g>
@@ -119,36 +175,68 @@
       <g id="edges"></g>
       <g id="nodes"></g>
     </svg>
+    </div>
   </main>
   <script>
-    // Diagram data: positions are in viewBox units; every connection is two-way.
+    // Diagram data: positions are in viewBox units; connections are two-way unless marked as a one-way trigger.
     const NODES = {
       // shape picks the drawing function in SHAPES; x, y, w, h is the box edges attach to.
-      U: { shape: 'avatar',   x: 88,   y: 398, w: 104, h: 104, kicker: 'Client',        title: ['User message'],                 sub: 'Chat and website' },
+      C1: { shape: 'medallion', x: 93, y: 258, w: 84,  h: 84,  title: ['WhatsApp'],       icon: 'whatsapp', tone: 'whatsapp', small: true, fan: true },
+      C2: { shape: 'medallion', x: 93, y: 408, w: 84,  h: 84,  title: ['iMessage'],       icon: 'imessage', tone: 'imessage', small: true, fan: true },
+      C3: { shape: 'medallion', x: 93, y: 558, w: 84,  h: 84,  title: ['Other channels'], sub: 'Telegram, Discord, app', icon: 'apps', tone: 'other', small: true, fan: true },
       O: { shape: 'hex',      x: 310,  y: 380, w: 240, h: 140, kicker: 'Backend',       title: ['Orchestration', 'layer'],       sub: 'Auth, routing, delivery' },
-      R: { shape: 'card',     x: 610,  y: 355, w: 290, h: 190, kicker: 'Core · Mastra', title: ['MyStacks Agentic', 'Runtime'], sub: 'Agent loop, skills, tools', icon: 'spark', hero: true },
-      D: { shape: 'stack',    x: 960,  y: 115, w: 270, h: 140, kicker: 'State',         title: ['Durable', 'user-scoped state'], sub: 'Memory, tasks, and files', icon: 'db' },
+      R: { shape: 'card',     x: 610,  y: 355, w: 290, h: 190, kicker: 'Core · Mastra', title: ['MyStacks Agentic', 'Runtime'], sub: 'Agent loop, skills, tools', hero: true },
+      D: { shape: 'folder',   x: 960,  y: 115, w: 270, h: 140, kicker: 'State',         title: ['Durable', 'user-scoped state'], sub: 'Memory, tasks, and files', icon: 'db' },
       F: { shape: 'card',     x: 960,  y: 380, w: 270, h: 140, kicker: 'Tool',          title: ['Financial tools API'],          sub: 'Authorized read-only access', icon: 'chart' },
-      P: { shape: 'bank',     x: 1370, y: 395, w: 120, h: 110, kicker: 'Provider',      title: ['Financial providers'],          sub: 'Connected accounts' },
+      P: { shape: 'medallion', x: 1382, y: 402, w: 96, h: 96, glyph: 'bank', kicker: 'Provider',      title: ['Financial providers'],          sub: 'Connected accounts' },
       E: { shape: 'terminal', x: 960,  y: 645, w: 270, h: 150, kicker: 'Tool',          title: ['Code execution tool'],          sub: 'Runs generated code' },
-      S: { shape: 'cube',     x: 1382, y: 665, w: 96,  h: 110, kicker: 'Sandbox',       title: ['Task-scoped sandbox'],      sub: 'Isolated, internet off' },
+      K: { shape: 'keys',     x: 970,  y: 553, w: 250, h: 58,  title: ['Keys & credentials'], sub: 'Hidden from the agent', small: true },
+      S: { shape: 'medallion', x: 1382, y: 672, w: 96, h: 96, glyph: 'sandbox', badge: 'lock', kicker: 'Sandbox',       title: ['Task-scoped sandbox'],      sub: 'E2B · isolated, internet off' },
+      Q: { shape: 'queue',    x: 360,  y: 690, w: 120, h: 56,  title: ['Scheduler & job queue'], sub: 'BullMQ · Redis', small: true },
+      W: { shape: 'workers',  x: 579,  y: 688, w: 122, h: 60,  title: ['Shared worker pool'],    sub: 'Claim and run jobs', small: true },
     };
     // 24x24 line icons for badges and figures.
     const ICONS = {
-      person: 'M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M4.5 20.5c.9-3.8 3.9-6 7.5-6s6.6 2.2 7.5 6',
-      chat: 'M4 5h16v11H10l-5 4v-4H4z M8 10h8 M8 13h5',
-      route: 'M5 6v12 M5 12h12 M13 8l4 4-4 4 M5 6h4',
-      spark: 'M11 3l1.9 5.6L18.5 10.5l-5.6 1.9L11 18l-1.9-5.6L3.5 10.5l5.6-1.9z M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z',
+      whatsapp: 'M12 2.8a9.2 9.2 0 0 0-7.9 13.9L2.8 21.2l4.6-1.2A9.2 9.2 0 1 0 12 2.8z M12 4.6a7.4 7.4 0 1 1-3.8 13.8l-.3-.2-2.6.7.7-2.5-.2-.3A7.4 7.4 0 0 1 12 4.6z M9.1 7.6c.2 0 .4 0 .6.4l.8 1.9c.1.2.1.4 0 .6l-.4.6-.4.4c-.1.1-.2.3-.1.5.4.8 1 1.5 1.6 2.1.7.6 1.4 1 2.2 1.3.2.1.4.1.5-.1l.7-.9c.2-.2.4-.2.6-.1l1.8.9c.2.1.4.2.4.3.1.4 0 1-.3 1.5-.4.6-1.4 1.1-2 1.1-.6.1-1.1.2-3.5-.8-2.6-1.1-4.2-3.7-4.4-3.9-.1-.2-1-1.4-1-2.6s.6-1.8.9-2.1c.2-.3.5-.3.7-.3z',
+      imessage: 'M12 4.5c-4.8 0-8.5 3.1-8.5 7 0 2.3 1.3 4.3 3.4 5.6-.2 1.3-.9 2.4-1.9 3.3 2 0 3.7-.7 5-1.9.7.1 1.3.2 2 .2 4.8 0 8.5-3.1 8.5-7.1S16.8 4.5 12 4.5z',
+      apps: 'M5.5 4.5h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z M14.5 4.5h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z M5.5 13.5h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z M14.5 13.5h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z',
       db: 'M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3z M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6 M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3',
       chart: 'M4 20h16 M6 16l4-5 3 3 5-7 M15 7h3v3',
-      bank: 'M3 9l9-5 9 5z M5 11v7 M9.5 11v7 M14.5 11v7 M19 11v7 M3 20h18',
-      code: 'M8 7l-5 5 5 5 M16 7l5 5-5 5 M13.5 5l-3 14',
       lock: 'M7 11V8a5 5 0 0 1 10 0v3 M5 11h14v9H5z',
+      clock: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M12 7v5l3.5 2',
+      key: 'M15.5 3.5a5 5 0 1 1 0 10 5 5 0 0 1 0-10z M12 12l-8.5 8.5 M6.5 17.5L9 20 M9 15l2 2 M16.5 7.5h.01',
+      eyeOff: 'M3 3l18 18 M10.6 5.1A10.6 10.6 0 0 1 12 5c6 0 9.5 7 9.5 7a17 17 0 0 1-2.6 3.5 M6.6 6.6C3.9 8.3 2.5 12 2.5 12S6 19 12 19a9.7 9.7 0 0 0 5.4-1.6 M9.9 9.9a3 3 0 0 0 4.2 4.2',
+      cpu: 'M8.5 6h7A2.5 2.5 0 0 1 18 8.5v7a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 6 15.5v-7A2.5 2.5 0 0 1 8.5 6z M10 2.5V6 M14 2.5V6 M10 18v3.5 M14 18v3.5 M2.5 10H6 M2.5 14H6 M18 10h3.5 M18 14h3.5',
     };
-    const EDGES = [['U', 'O'], ['O', 'R'], ['R', 'D'], ['R', 'F'], ['F', 'P'], ['R', 'E'], ['E', 'S']];
+    // MyStacks brand mark, copied from the favicon at docs.mystacks.ai; it spans 14.15 to 49.85 in a 64-unit box.
+    const MYSTACKS_MARK = 'M21.5 14.15L42.5 14.15C46.56 14.15 49.85 17.44 49.85 21.5L49.85 42.5C49.85 46.56 46.56 49.85 42.5 49.85L21.5 49.85C17.44 49.85 14.15 46.56 14.15 42.5L14.15 21.5C14.15 17.44 17.44 14.15 21.5 14.15ZM21.5 40.4L32 33.05L42.5 40.4L42.5 33.05L32 25.7L21.5 33.05Z';
+    const EDGES = [['C1', 'O'], ['C2', 'O'], ['C3', 'O'], ['O', 'R'], ['R', 'D'], ['R', 'F'], ['F', 'P'], ['R', 'E'], ['E', 'S'], ['R', 'Q', 'trigger', { label: 'Schedules tasks', at: [497, 662] }], ['Q', 'W', 'trigger'], ['W', 'R', 'trigger'], ['K', 'F', 'key']];
+    // Account chips fan out from the providers figure. Each mark is the brand's own logo in a 32-unit circle:
+    // Binance, Robinhood, and Solana glyphs from Simple Icons 16.36.0 (CC0); Ethereum from cryptocurrency-icons 0.18.1 (CC0);
+    // the Coinbase C from Coinbase's static assets; IBKR from the interactivebrokers.com home-screen icon.
+    const MARKS = {
+      binance: '<circle cx="16" cy="16" r="16" fill="#181a20"/><path fill="#f0b90b" transform="translate(6.4 6.4) scale(.8)" d="M16.624 13.9202l2.7175 2.7154-7.353 7.353-7.353-7.352 2.7175-2.7164 4.6355 4.6595 4.6356-4.6595zm4.6366-4.6366L24 12l-2.7154 2.7164L18.5682 12l2.6924-2.7164zm-9.272.001l2.7163 2.6914-2.7164 2.7174v-.001L9.2721 12l2.7164-2.7154zm-9.2722-.001L5.4088 12l-2.6914 2.6924L0 12l2.7164-2.7164zM11.9885.0115l7.353 7.329-2.7174 2.7154-4.6356-4.6356-4.6355 4.6595-2.7174-2.7154 7.353-7.353z"/>',
+      robinhood: '<circle cx="16" cy="16" r="16" fill="#000"/><path fill="#ccff00" transform="translate(6.4 6.4) scale(.8)" d="M2.84 24h.53c.096 0 .192-.048.224-.128C7.591 13.696 11.94 8.656 14.67 5.638c.112-.128.064-.225-.096-.225h-4.88a.55.55 0 0 0-.45.225L5.746 9.972c-.514.642-.642 1.236-.642 2.086v4.43c-1.14 3.194-1.862 5.361-2.392 7.32-.032.125.016.192.129.192M20.447.646c-.754-.802-4.157-.834-5.73-.224a3 3 0 0 0-.786.465 41 41 0 0 0-3.323 3.178c-.112.113-.064.225.097.225h5.409c.497 0 .786.289.786.786v6.1c0 .16.128.208.225.064l3.258-4.254c.53-.69.69-.898.835-1.861.192-1.413.08-3.58-.77-4.479m-6.982 16.18 2.231-3.676a.7.7 0 0 0 .064-.29V6.73c0-.16-.112-.225-.224-.097-3.355 3.74-5.971 7.672-8.395 12.407-.06.12.016.225.16.177l5.009-1.54c.565-.174.882-.402 1.155-.852"/>',
+      coinbase: '<circle cx="16" cy="16" r="16" fill="#0052ff"/><path fill="#fff" transform="translate(4 4) scale(.6)" d="M20.032 28.5c-4.705 0-8.516-3.804-8.516-8.5s3.81-8.5 8.516-8.5a8.51 8.51 0 0 1 8.388 7.083H37C36.276 9.857 28.96 3 20.032 3 10.629 3 3 10.615 3 20s7.629 17 17.032 17C28.959 37 36.276 30.143 37 21.417h-8.58a8.51 8.51 0 0 1-8.388 7.083"/>',
+      ibkr: '<clipPath id="ibkr-clip"><circle cx="16" cy="16" r="16"/></clipPath><image width="32" height="32" clip-path="url(#ibkr-clip)" href="data:image/png;base64,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"/>',
+      ethereum: '<g fill="none" fill-rule="evenodd"><circle cx="16" cy="16" r="16" fill="#627EEA"/><g fill="#FFF" fill-rule="nonzero"><path fill-opacity=".602" d="M16.498 4v8.87l7.497 3.35z"/><path d="M16.498 4L9 16.22l7.498-3.35z"/><path fill-opacity=".602" d="M16.498 21.968v6.027L24 17.616z"/><path d="M16.498 27.995v-6.028L9 17.616z"/><path fill-opacity=".2" d="M16.498 20.573l7.497-4.353-7.497-3.348z"/><path fill-opacity=".602" d="M9 16.22l7.498 4.353v-7.701z"/></g></g>',
+      solana: '<circle cx="16" cy="16" r="16" fill="#000"/><path fill="url(#solana)" transform="translate(7.6 7.6) scale(.7)" d="m23.8764 18.0313-3.962 4.1393a.9201.9201 0 0 1-.306.2106.9407.9407 0 0 1-.367.0742H.4599a.4689.4689 0 0 1-.2522-.0733.4513.4513 0 0 1-.1696-.1962.4375.4375 0 0 1-.0314-.2545.4438.4438 0 0 1 .117-.2298l3.9649-4.1393a.92.92 0 0 1 .3052-.2102.9407.9407 0 0 1 .3658-.0746H23.54a.4692.4692 0 0 1 .2523.0734.4531.4531 0 0 1 .1697.196.438.438 0 0 1 .0313.2547.4442.4442 0 0 1-.1169.2297zm-3.962-8.3355a.9202.9202 0 0 0-.306-.2106.941.941 0 0 0-.367-.0742H.4599a.4687.4687 0 0 0-.2522.0734.4513.4513 0 0 0-.1696.1961.4376.4376 0 0 0-.0314.2546.444.444 0 0 0 .117.2297l3.9649 4.1394a.9204.9204 0 0 0 .3052.2102c.1154.049.24.0744.3658.0746H23.54a.469.469 0 0 0 .2523-.0734.453.453 0 0 0 .1697-.1961.4382.4382 0 0 0 .0313-.2546.4444.4444 0 0 0-.1169-.2297zM.46 6.7225h18.7815a.9411.9411 0 0 0 .367-.0742.9202.9202 0 0 0 .306-.2106l3.962-4.1394a.4442.4442 0 0 0 .117-.2297.4378.4378 0 0 0-.0314-.2546.453.453 0 0 0-.1697-.196.469.469 0 0 0-.2523-.0734H4.7596a.941.941 0 0 0-.3658.0745.9203.9203 0 0 0-.3052.2102L.1246 5.9687a.4438.4438 0 0 0-.1169.2295.4375.4375 0 0 0 .0312.2544.4512.4512 0 0 0 .1692.196.4689.4689 0 0 0 .2518.0739z"/>',
+      other: '<circle class="mark-plain" cx="16" cy="16" r="15.4"/><path class="mark-plus" d="M16 10v12M10 16h12"/>',
+    };
+    const ACCOUNTS = [
+      { name: 'Binance',        mark: 'binance' },
+      { name: 'Robinhood',      mark: 'robinhood' },
+      { name: 'Coinbase',       mark: 'coinbase' },
+      { name: 'IBKR',           mark: 'ibkr' },
+      { name: 'EVM address',    mark: 'ethereum' },
+      { name: 'Solana address', mark: 'solana' },
+      { name: 'Other accounts', mark: 'other' },
+    ];
     const GROUPS = [
+      { x: 30,   y: 215, w: 210, h: 500, label: 'User channels', members: ['C1', 'C2', 'C3'] },
       { x: 285,  y: 60,  w: 970, h: 815, label: 'MyStacks backend · trusted' },
-      { x: 1275, y: 322, w: 310, h: 553, label: 'External · isolated' },
+      { x: 1275, y: 240, w: 505, h: 635, label: 'External · isolated', members: ['P', 'S'] },
+      { x: 305,  y: 590, w: 430, h: 262, label: 'Background work', nested: true, members: ['Q', 'W'] },
     ];
 
     const NS = 'http://www.w3.org/2000/svg';
@@ -159,113 +247,246 @@
       return node;
     }
 
-    // Straight line for nodes on the same row; rounded elbow from the runtime up or down to its column.
+    // Straight line for nodes on the same row or column; rounded elbow from the runtime up or down to its column.
     function edgePath(a, b) {
       const gap = 5, r = 22;
       const ay = a.y + a.h / 2, by = b.y + b.h / 2;
+      // Channels fan into one trunk just before the orchestration layer.
+      if (a.fan) {
+        const mx = b.x - 45, k = 16, dir = Math.sign(by - ay), sx = a.x + a.w + gap;
+        if (!dir) return `M ${sx} ${ay} H ${b.x - gap}`;
+        return `M ${sx} ${ay} H ${mx - k} Q ${mx} ${ay} ${mx} ${ay + dir * k} V ${by - dir * k} Q ${mx} ${by} ${mx + k} ${by} H ${b.x - gap}`;
+      }
       if (Math.abs(ay - by) < 1) return `M ${a.x + a.w + gap} ${ay} H ${b.x - gap}`;
       const x = a.x + a.w / 2, up = by < ay;
+      if (x > b.x && x < b.x + b.w) return up ? `M ${x} ${a.y - gap} V ${b.y + b.h + gap}` : `M ${x} ${a.y + a.h + gap} V ${b.y - gap}`;
+      // Target below and left: leave the lower left side, drop between the orchestration hex and the worker pool, then into the target's top.
+      if (!up && b.x + b.w < a.x) {
+        const k = 15, sy = a.y + a.h - 35, cx = a.x - 35, my = b.y - 45, bx = b.x + b.w / 2;
+        return `M ${a.x - gap} ${sy} H ${cx + k} Q ${cx} ${sy} ${cx} ${sy + k} V ${my - k} Q ${cx} ${my} ${cx - k} ${my} H ${bx + k} Q ${bx} ${my} ${bx} ${my + k} V ${b.y - gap}`;
+      }
       const startY = up ? a.y - gap : a.y + a.h + gap;
       return `M ${x} ${startY} V ${up ? by + r : by - r} Q ${x} ${by} ${x + r} ${by} H ${b.x - gap}`;
     }
 
     const groups = document.getElementById('groups');
     for (const g of GROUPS) {
-      el('rect', { x: g.x, y: g.y, width: g.w, height: g.h, rx: 28, class: 'group' }, groups);
-      el('text', { x: g.x + 24, y: g.y + 32, class: 'group-label' }, groups).textContent = g.label;
+      const box = el('g', g.members ? { 'data-members': g.members.join(' ') } : {}, groups);
+      el('rect', { x: g.x, y: g.y, width: g.w, height: g.h, rx: 28, class: g.nested ? 'group nested' : 'group' }, box);
+      el('text', { x: g.x + 24, y: g.y + 32, class: g.nested ? 'group-label nested' : 'group-label' }, box).textContent = g.label;
     }
 
     const edges = document.getElementById('edges');
-    for (const [from, to] of EDGES) {
-      const d = edgePath(NODES[from], NODES[to]);
-      el('path', { d, class: 'edge', 'marker-start': 'url(#arrow)', 'marker-end': 'url(#arrow)' }, edges);
-      el('path', { d, class: 'flow' }, edges);
+    for (const [from, to, kind, note] of EDGES) {
+      const d = edgePath(NODES[from], NODES[to]), line = el('g', { 'data-edge': `${from} ${to}` }, edges);
+      if (note) el('text', { x: note.at[0], y: note.at[1], class: 'edge-label', 'text-anchor': 'middle' }, line).textContent = note.label;
+      if (kind === 'trigger') el('path', { d, class: 'edge trigger', 'marker-end': 'url(#arrow-trigger)' }, line);
+      // Keys only flow one way, into the tools that use them, so they get a quiet line without traffic dots.
+      else if (kind === 'key') el('path', { d, class: 'edge link', 'marker-end': 'url(#arrow)' }, line);
+      else el('path', { d, class: 'edge', 'marker-start': 'url(#arrow)', 'marker-end': 'url(#arrow)' }, line);
+      if (kind !== 'key') el('path', { d, class: 'flow' }, line);
     }
 
-    // Kicker, title lines, and subtitle stacked from a top baseline; returns the y after the subtitle.
+    // Kicker, title lines, and optional subtitle stacked from a top baseline.
     function textBlock(n, g, x, top, anchor = 'start', kicker = true) {
       const lineH = n.hero ? 33 : 27;
       let y = top;
       if (kicker) { el('text', { x, y: y + 12, class: 'kicker', 'text-anchor': anchor }, g).textContent = n.kicker; y += 30; }
       for (const line of n.title) { y += lineH; el('text', { x, y: y - 6, class: 'title', 'text-anchor': anchor }, g).textContent = line; }
-      el('text', { x, y: y + 21, class: 'sub', 'text-anchor': anchor }, g).textContent = n.sub;
+      if (n.sub) el('text', { x, y: y + 21, class: 'sub', 'text-anchor': anchor }, g).textContent = n.sub;
     }
     // Height of a text block, used to centre it inside a shape.
     const blockHeight = (n, kicker = true) => (kicker ? 30 : 0) + n.title.length * (n.hero ? 33 : 27) + 23;
 
+    // Dark round badge with a mint glyph, pinned to a figure's corner.
+    function badge(g, cx, cy, icon) {
+      el('circle', { cx, cy, r: 16, class: 'figure-bubble' }, g);
+      el('path', { d: ICONS[icon], class: 'figure-bubble-icon', transform: `translate(${cx - 9} ${cy - 9}) scale(.75)` }, g);
+    }
+
+    // Duotone drawings for medallions, centred on (cx, cy); the medallion scales them to fill its 40-unit radius.
+    const GLYPHS = {
+      bank(g, cx, cy) {
+        el('path', { d: `M ${cx - 23} ${cy - 7} L ${cx} ${cy - 22} L ${cx + 23} ${cy - 7} Z`, class: 'glyph' }, g);
+        el('circle', { cx, cy: cy - 12, r: 2.6, class: 'glyph-solid' }, g);
+        for (const dx of [-15, -5, 5, 15]) el('rect', { x: cx + dx - 2.5, y: cy - 3, width: 5, height: 15, rx: 1.5, class: 'glyph' }, g);
+        el('rect', { x: cx - 25, y: cy + 15, width: 50, height: 6, rx: 2, class: 'glyph-solid' }, g);
+      },
+      // Code brackets inside a dashed frame: generated code running in isolation.
+      sandbox(g, cx, cy) {
+        el('rect', { x: cx - 22, y: cy - 20, width: 44, height: 40, rx: 8, class: 'glyph dashed' }, g);
+        el('path', { d: `M ${cx - 7} ${cy - 7} L ${cx - 14} ${cy} L ${cx - 7} ${cy + 7} M ${cx + 7} ${cy - 7} L ${cx + 14} ${cy} L ${cx + 7} ${cy + 7} M ${cx + 3} ${cy - 9} L ${cx - 3} ${cy + 9}`, class: 'glyph-stroke' }, g);
+      },
+    };
+
     // One drawing function per shape; every shape fits the node's x, y, w, h box so edges meet it cleanly.
     const SHAPES = {
-      // Rounded card with an icon badge (used for the runtime and the financial tools API).
-      card(n, g) {
-        el('rect', { x: n.x, y: n.y, width: n.w, height: n.h, rx: n.hero ? 24 : 18, class: 'card', filter: n.hero ? 'url(#glow)' : 'url(#shadow)' }, g);
-        const size = n.hero ? 40 : 32, scale = n.hero ? .92 : .78;
-        const bx = n.x + n.w - 20 - size, by = n.y + (n.hero ? 20 : 16);
+      // Rounded card with an icon badge, or the MyStacks mark on the runtime; outlined shapes reuse it with surface = false.
+      card(n, g, surface = true) {
+        if (surface) el('rect', { x: n.x, y: n.y, width: n.w, height: n.h, rx: n.hero ? 24 : 18, class: 'card', ...(n.hero && { filter: 'url(#glow)' }) }, g);
+        textBlock(n, g, n.x + 26, n.y + (n.h - blockHeight(n)) / 2);
+        // The runtime carries the MyStacks mark; other cards carry an icon badge.
+        if (n.hero) {
+          const size = 42, scale = size / 35.7, mx = n.x + n.w - 22 - size, my = n.y + 22;
+          el('path', { d: MYSTACKS_MARK, class: 'brand-mark', 'fill-rule': 'evenodd', transform: `translate(${mx - 14.15 * scale} ${my - 14.15 * scale}) scale(${scale})` }, g);
+          return;
+        }
+        const size = 32, scale = .78;
+        const bx = n.x + n.w - 20 - size, by = n.y + 16;
         const badge = el('g', { class: 'badge' }, g);
         el('rect', { x: bx, y: by, width: size, height: size, rx: 10 }, badge);
         const off = (size - 24 * scale) / 2;
         el('path', { d: ICONS[n.icon], transform: `translate(${bx + off} ${by + off}) scale(${scale})` }, badge);
-        textBlock(n, g, n.x + 26, n.y + (n.h - blockHeight(n)) / 2);
       },
-      // Person avatar with a chat bubble; label sits underneath.
-      avatar(n, g) {
-        const cx = n.x + n.w / 2, cy = n.y + n.h / 2, r = n.w / 2;
-        el('circle', { cx, cy, r: r + 12, class: 'ring' }, g);
-        el('circle', { cx, cy, r, class: 'figure', filter: 'url(#shadow)' }, g);
-        el('path', { d: ICONS.person, class: 'figure-icon', transform: `translate(${cx - 30} ${cy - 31}) scale(2.5)` }, g);
-        const bx = cx + r * .62, by = cy - r * .78;
-        el('circle', { cx: bx, cy: by, r: 17, class: 'figure-bubble' }, g);
-        el('path', { d: ICONS.chat, class: 'figure-bubble-icon', transform: `translate(${bx - 9} ${by - 9}) scale(.75)` }, g);
-        el('text', { x: cx, y: n.y - 30, class: 'kicker', 'text-anchor': 'middle' }, g).textContent = n.kicker;
-        textBlock(n, g, cx, n.y + n.h + 20, 'middle', false);
+      // Medallion inside a dashed ring for every component outside the backend; label sits underneath.
+      medallion(n, g) {
+        const cx = n.x + n.w / 2, cy = n.y + n.h / 2, r = n.w / 2 - 8;
+        el('circle', { cx, cy, r: n.w / 2, class: 'ring' }, g);
+        el('circle', { cx, cy, r, class: `medallion ${n.tone || ''}` }, g);
+        if (n.glyph) GLYPHS[n.glyph](el('g', { transform: `translate(${cx} ${cy}) scale(1.2) translate(${-cx} ${-cy})` }, g), cx, cy);
+        else el('path', { d: ICONS[n.icon], class: `channel-icon ${n.tone}`, 'fill-rule': 'evenodd', transform: `translate(${cx - 18} ${cy - 18}) scale(1.5)` }, g);
+        if (n.badge) badge(g, cx + r * .72, cy - r * .72, n.badge);
+        textBlock(n, g, cx, n.y + n.h + 6, 'middle', false);
       },
       // Hexagon: the routing hub between the user and the runtime.
       hex(n, g) {
         const i = 30, cy = n.y + n.h / 2;
-        el('path', { d: `M ${n.x} ${cy} L ${n.x + i} ${n.y} H ${n.x + n.w - i} L ${n.x + n.w} ${cy} L ${n.x + n.w - i} ${n.y + n.h} H ${n.x + i} Z`, class: 'figure', filter: 'url(#shadow)', 'stroke-linejoin': 'round' }, g);
+        el('path', { d: `M ${n.x} ${cy} L ${n.x + i} ${n.y} H ${n.x + n.w - i} L ${n.x + n.w} ${cy} L ${n.x + n.w - i} ${n.y + n.h} H ${n.x + i} Z`, class: 'figure', 'stroke-linejoin': 'round' }, g);
         textBlock(n, g, n.x + n.w / 2, n.y + (n.h - blockHeight(n)) / 2, 'middle');
       },
-      // Stack of layered sheets for durable state: memory, tasks, and files kept across runs.
-      stack(n, g) {
-        [[28, 26, 'figure-back'], [14, 13, 'figure-mid']].forEach(([inset, lift, cls]) =>
-          el('rect', { x: n.x + inset, y: n.y - lift, width: n.w - 2 * inset, height: n.h, rx: 18, class: cls }, g));
-        SHAPES.card(n, g);
+      // Folder silhouette for durable state: memory, tasks, and files kept across runs. The tab rises above the box.
+      folder(n, g) {
+        const { x, y, w, h } = n, t = 14, tw = 96, r = 18;
+        el('path', { d: `M ${x + 8} ${y - t} H ${x + tw - 8} Q ${x + tw} ${y - t} ${x + tw + 5} ${y - t + 6} L ${x + tw + 12} ${y} H ${x + w - r} Q ${x + w} ${y} ${x + w} ${y + r} V ${y + h - r} Q ${x + w} ${y + h} ${x + w - r} ${y + h} H ${x + r} Q ${x} ${y + h} ${x} ${y + h - r} V ${y - t + 8} Q ${x} ${y - t} ${x + 8} ${y - t} Z`, class: 'card' }, g);
+        SHAPES.card(n, g, false);
       },
       // Terminal window for the code execution tool.
       terminal(n, g) {
-        el('rect', { x: n.x, y: n.y, width: n.w, height: n.h, rx: 14, class: 'figure', filter: 'url(#shadow)' }, g);
+        el('rect', { x: n.x, y: n.y, width: n.w, height: n.h, rx: 14, class: 'figure' }, g);
         el('path', { d: `M ${n.x} ${n.y + 32} H ${n.x + n.w}`, class: 'figure-line' }, g);
-        ['#f2a49c', '#f3d38a', '#9fd8b4'].forEach((fill, k) => el('circle', { cx: n.x + 20 + k * 16, cy: n.y + 16, r: 5, fill }, g));
+        [0, 1, 2].forEach(k => el('circle', { cx: n.x + 20 + k * 16, cy: n.y + 16, r: 5, class: 'term-dot' }, g));
         el('text', { x: n.x + n.w - 18, y: n.y + 21, class: 'prompt', 'text-anchor': 'end' }, g).textContent = '>_';
         textBlock(n, g, n.x + 26, n.y + 32 + (n.h - 32 - blockHeight(n)) / 2);
       },
-      // Bank building for financial providers; label sits underneath.
-      bank(n, g) {
-        const { x, y, w } = n, cx = x + w / 2;
-        const body = el('g', { class: 'figure', filter: 'url(#shadow)', 'stroke-linejoin': 'round' }, g);
-        el('path', { d: `M ${x + 4} ${y + 38} L ${cx} ${y} L ${x + w - 4} ${y + 38} Z`, class: 'figure' }, body);
-        el('rect', { x: x + 8, y: y + 42, width: w - 16, height: 10, rx: 2, class: 'figure' }, body);
-        for (let k = 0; k < 4; k++) el('rect', { x: x + 18 + k * ((w - 48) / 3), y: y + 56, width: 12, height: 38, rx: 2, class: 'figure' }, body);
-        el('rect', { x, y: y + n.h - 14, width: w, height: 14, rx: 3, class: 'figure' }, body);
-        el('circle', { cx, cy: y + 24, r: 5, class: 'figure-dot' }, g);
-        textBlock(n, g, cx, y + n.h + 14, 'middle', false);
+      // Credential store: pill with a key icon and an eye-off badge, because the agent never sees what is inside.
+      keys(n, g) {
+        el('rect', { x: n.x, y: n.y, width: n.w, height: n.h, rx: n.h / 2, class: 'card' }, g);
+        const ix = n.x + n.h / 2, iy = n.y + n.h / 2;
+        el('circle', { cx: ix, cy: iy, r: 18, class: 'key-disc' }, g);
+        el('path', { d: ICONS.key, class: 'badge-icon', transform: `translate(${ix - 10.8} ${iy - 10.8}) scale(.9)` }, g);
+        textBlock(n, g, n.x + n.h + 4, n.y + (n.h - blockHeight(n, false)) / 2, 'start', false);
+        badge(g, n.x + n.w - 10, n.y + 4, 'eyeOff');
       },
-      // Isometric cube inside a dashed isolation outline for the sandbox; label sits underneath.
-      cube(n, g) {
-        const cx = n.x + n.w / 2, cy = n.y + n.h / 2, s = n.h / 2, k = s * .87;
-        const hex = (f) => `M ${cx} ${cy - s * f} L ${cx + k * f} ${cy - s * f / 2} V ${cy + s * f / 2} L ${cx} ${cy + s * f} L ${cx - k * f} ${cy + s * f / 2} V ${cy - s * f / 2} Z`;
-        el('path', { d: hex(1.3), class: 'ring' }, g);
-        el('path', { d: `M ${cx} ${cy - s} L ${cx + k} ${cy - s / 2} L ${cx} ${cy} L ${cx - k} ${cy - s / 2} Z`, class: 'cube-top', filter: 'url(#shadow)' }, g);
-        el('path', { d: `M ${cx - k} ${cy - s / 2} L ${cx} ${cy} V ${cy + s} L ${cx - k} ${cy + s / 2} Z`, class: 'cube-left' }, g);
-        el('path', { d: `M ${cx + k} ${cy - s / 2} L ${cx} ${cy} V ${cy + s} L ${cx + k} ${cy + s / 2} Z`, class: 'cube-right' }, g);
-        el('path', { d: ICONS.lock, class: 'cube-icon', transform: `translate(${cx + k / 2 - 8} ${cy + s / 4 - 8}) scale(.7)` }, g);
-        textBlock(n, g, cx, n.y + n.h + 32, 'middle', false);
+      // Job tray with queued jobs fading out, plus a clock badge for the scheduler; label sits underneath.
+      queue(n, g) {
+        const pad = 12, gap = 6, slot = (n.w - 2 * pad - 3 * gap) / 4;
+        el('rect', { x: n.x, y: n.y, width: n.w, height: n.h, rx: 14, class: 'figure' }, g);
+        [1, .65, .4, .18].forEach((opacity, k) =>
+          el('rect', { x: n.x + pad + k * (slot + gap), y: n.y + 14, width: slot, height: n.h - 28, rx: 5, class: 'job', opacity }, g));
+        badge(g, n.x + 4, n.y - 4, 'clock');
+        textBlock(n, g, n.x + n.w / 2, n.y + n.h / 2 + 42, 'middle', false);
+      },
+      // Pool of shared worker processes inside a dashed pool outline; label sits underneath.
+      workers(n, g) {
+        const cx = n.x + n.w / 2, cy = n.y + n.h / 2;
+        el('rect', { x: n.x, y: n.y, width: n.w, height: n.h, rx: n.h / 2, class: 'ring' }, g);
+        for (const dx of [-31, 31, 0]) {
+          el('circle', { cx: cx + dx, cy, r: 22, class: 'worker' }, g);
+          // CPU chip: outlined package with pins on each side and a solid die in the middle.
+          const chip = el('g', { transform: `translate(${cx + dx - 10.8} ${cy - 10.8}) scale(.9)` }, g);
+          el('path', { d: ICONS.cpu, class: 'badge-icon' }, chip);
+          el('rect', { x: 9.5, y: 9.5, width: 5, height: 5, rx: 1, class: 'cpu-die' }, chip);
+        }
+        textBlock(n, g, cx, cy + 42, 'middle', false);
       },
     };
 
     const nodes = document.getElementById('nodes');
-    for (const n of Object.values(NODES)) {
-      SHAPES[n.shape](n, el('g', { class: n.hero ? 'hero' : '' }, nodes));
+    for (const [id, n] of Object.entries(NODES)) {
+      SHAPES[n.shape](n, el('g', { class: n.hero ? 'hero' : n.small ? 'small' : '', 'data-node': id }, nodes));
     }
+
+    // Account chips stacked to the right of the providers figure, joined to it by one fanned trunk.
+    {
+      const p = NODES.P, py = p.y + p.h / 2, chipX = 1572, chipW = 182, chipH = 38, step = 50, mx = chipX - 32, k = 12;
+      ACCOUNTS.forEach((a, i) => {
+        const cy = py + (i - (ACCOUNTS.length - 1) / 2) * step, dir = Math.sign(cy - py), sx = p.x + p.w + 5;
+        const d = dir
+          ? `M ${sx} ${py} H ${mx - k} Q ${mx} ${py} ${mx} ${py + dir * k} V ${cy - dir * k} Q ${mx} ${cy} ${mx + k} ${cy} H ${chipX - 4}`
+          : `M ${sx} ${py} H ${chipX - 4}`;
+        el('path', { d, class: 'edge link', 'data-node': 'P' }, edges);
+        const g = el('g', { 'data-node': 'P' }, nodes);
+        el('rect', { x: chipX, y: cy - chipH / 2, width: chipW, height: chipH, rx: chipH / 2, class: 'chip' }, g);
+        el('svg', { x: chipX + 8, y: cy - 12, width: 24, height: 24, viewBox: '0 0 32 32' }, g).innerHTML = MARKS[a.mark];
+        el('text', { x: chipX + 42, y: cy + 5.5, class: 'chip-label' }, g).textContent = a.name;
+      });
+    }
+
+    // Presentation sections: each highlights its components, and the runtime anchors every section.
+    const SECTIONS = [
+      { key: 'channels',   label: 'Channels',        nodes: ['C1', 'C2', 'C3', 'O', 'R'] },
+      { key: 'memory',     label: 'Memory',          nodes: ['R', 'D'] },
+      { key: 'financial',  label: 'Financial data',  nodes: ['R', 'F', 'P', 'K'] },
+      { key: 'sandbox',    label: 'Code sandbox',    nodes: ['R', 'E', 'S'] },
+      { key: 'background', label: 'Background work', nodes: ['R', 'Q', 'W'] },
+    ];
+    // Keys of the selected sections; an empty set shows everything.
+    const selected = new Set();
+
+    // One pill per section after "All"; its number is the keyboard shortcut.
+    const nav = document.querySelector('.sections');
+    const buttons = [{ key: 'all', label: 'All' }, ...SECTIONS].map((section, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      const key = document.createElement('kbd');
+      key.textContent = index;
+      button.append(key, section.label);
+      button.addEventListener('click', () => section.key === 'all' ? show([]) : toggle(section.key));
+      nav.appendChild(button);
+      return [section.key, button];
+    });
+
+    function show(keys) {
+      selected.clear();
+      keys.forEach(key => selected.add(key));
+      render();
+    }
+    // Selecting every section is the same view as All, so it collapses back to All.
+    function toggle(key) {
+      if (selected.has(key)) selected.delete(key); else selected.add(key);
+      if (selected.size === SECTIONS.length) selected.clear();
+      render();
+    }
+
+    // Fade every component, connection, and boundary outside the chosen sections.
+    function render() {
+      const chosen = selected.size ? SECTIONS.filter(section => selected.has(section.key)) : SECTIONS;
+      const active = new Set(chosen.flatMap(section => section.nodes));
+      const dim = (node, isDim) => node.classList.toggle('is-dim', isDim);
+      document.querySelectorAll('[data-node]').forEach(node => dim(node, !active.has(node.dataset.node)));
+      document.querySelectorAll('[data-edge]').forEach(node => {
+        const [from, to] = node.dataset.edge.split(' ');
+        dim(node, !chosen.some(section => section.nodes.includes(from) && section.nodes.includes(to)));
+      });
+      document.querySelectorAll('[data-members]').forEach(node => dim(node, !node.dataset.members.split(' ').some(id => active.has(id))));
+      for (const [key, button] of buttons) button.setAttribute('aria-pressed', key === 'all' ? !selected.size : selected.has(key));
+    }
+
+    // Demo keys: 0 shows all, 1-5 toggle a section, arrows step through All and each section in turn.
+    document.addEventListener('keydown', event => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const order = ['all', ...SECTIONS.map(section => section.key)];
+      if (event.key === '0') show([]);
+      else if (SECTIONS[event.key - 1]) toggle(SECTIONS[event.key - 1].key);
+      else if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+        const current = selected.size === 1 ? order.indexOf([...selected][0]) : 0;
+        const next = (current + (event.key === 'ArrowRight' ? 1 : order.length - 1)) % order.length;
+        show(next ? [order[next]] : []);
+      } else return;
+      event.preventDefault();
+    });
+
+    render();
   </script>
 </body>
 </html>
