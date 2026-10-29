@@ -2,9 +2,9 @@
 
 ## 1. Status, scope, and ownership
 
-**Status: TENTATIVE — architecture discussion draft.** The portfolio product direction is agreed; the technical mappings below remain tentative pending the overall architecture round. Exact interfaces, schemas, storage choices, and financial methods remain open.
+**Status: TENTATIVE — architecture discussion draft.** The portfolio product direction is agreed; the technical mappings below remain tentative pending the overall architecture round. Durable application records use the shared [PostgreSQL database](../ADRS/0013-shared-postgresql-storage.md). Exact interfaces, schemas, retention, and financial methods remain open.
 
-The [product requirements](../requirements.md) govern behavior, and the [portfolio user stories](../user-stories/portfolio.md) describe observable outcomes. The [architecture](../architecture.md) is authoritative for the Mastra runtime, shared workers, durable state, and trusted financial tools API.
+The [product requirements](../requirements.md) govern behavior, and the [portfolio user stories](../user-stories/portfolio.md) describe observable outcomes. The [architecture](../architecture.md) is authoritative for the Mastra runtime, shared workers, durable state, and trusted financial tools API. The [provider-backed calculation decision](../ADRS/0015-provider-backed-portfolio-calculations.md) owns the trade-off between initial provider coverage and dedicated indexing or history infrastructure.
 
 The **financial tools API** owns authorized provider reads and the evidence used by the persistent website dashboard's portfolio preview, chat, reports, and background work. The portfolio boundary normalizes that evidence and performs supported calculations. Personalization memory cannot supply current holdings, prices, positions, or permissions. Portfolio answers and reports use concise, precise text in chat, with deeper detail through follow-ups. Image replies are low priority; extensive deep-research reports and polished website report artifacts are deferred.
 

@@ -12,7 +12,7 @@ All answers and reports are concise, precise text suited to chat. Available-sour
 
 Human support is available within working hours and replies in the originating channel. [US-CHAT-07](../user-stories/assistant.md) owns that experience; [TODO](../TODO.md) owns the unresolved operating details and proposed internal Slack tool.
 
-Logical components may share a deployment. This set does not select an implementation schedule, deployment topology, storage engine, model provider, or authentication vendor. Implementation and milestone planning follow agreement on the relevant product behavior and technical contracts.
+Logical components may share a deployment. One [PostgreSQL database](../ADRS/0013-shared-postgresql-storage.md) holds application and Mastra records in separately owned tables. Implementation schedule, deployment topology, database hosting, model provider, and authentication vendor remain open. Implementation and milestone planning follow agreement on the relevant product behavior and technical contracts.
 
 ## 2. Design ownership
 
@@ -20,7 +20,7 @@ Logical components may share a deployment. This set does not select an implement
 | --- | --- | --- |
 | [Onboarding and account connections](onboarding.md) | Stable account and primary phone binding, signup, separate verified channel links through buttons or QR codes, EVM and Solana off-chain wallet-control proof, provider-led Binance authorization, financial connection setup, recovery, and data controls. | `US-ONB` |
 | [Portfolio evidence](portfolio.md) | Current portfolio aggregated from provider data, provider-supplied history, and code-based calculations; shared financial observations, USD display, valuation and comparison semantics, freshness, and partial results. A MyStacks indexer and historical P&L or reconstruction requiring MyStacks infrastructure are deferred at low priority. | `US-PORT`, financial evidence used by every other area. |
-| [Runtime and memory](runtime.md) | Direct chat, ordered turns and model/tool rounds, main-agent delegation and completion events, continuation examples, protected tools, E2B, native structured personal memory with flexible text, and channel histories. | `US-CHAT`, `US-MEM` |
+| [Runtime and memory](runtime.md) | Direct chat, ordered turns and model/tool rounds, main-agent delegation and completion events, continuation examples, protected tools, E2B, native structured personal memory with partial updates and profile-only forgetting, and token-based channel compaction. | `US-CHAT`, `US-MEM` |
 | [Tasks and notifications](tasks.md) | Saved-schedule quotas and minimum cadence, independent occurrence admission, scheduled-execution retries, scheduler ownership, fixed-channel work, lifecycle controls, randomized proactive investigations, notification history, and examples. | `US-TASK`, delivery for continued conversational work. |
 
 Setup and data retrieval have distinct owners: onboarding establishes a connection and its allowed access; portfolio adapters retrieve and normalize evidence under that binding. The runtime and scheduled work consume the same financial operations. Adding providers should reuse identity, evidence, task, memory, and delivery contracts.
@@ -33,7 +33,7 @@ The backend establishes account and channel identity and authorizes each protect
 
 ### 3.2 Financial evidence and memory
 
-Current holdings, prices, and permissions come from authorized backend evidence. Personal memory is shared across channels and can guide explanations, but cannot override those facts or act as a copy of channel transcripts and task logs. Common calculation definitions keep website, chat, and scheduled work consistent. Evidence retains missing coverage; conversational answers describe their actual scope without routine missing-data warnings. An unknown value is not zero.
+Current holdings, prices, and permissions come from authorized backend evidence. Personal memory is shared across channels and can guide explanations, but cannot override those facts or act as a copy of channel transcripts and task logs. Native partial profile updates preserve different fields; the last successful save wins for the same field. Mastra's native Observational Memory manages channel context through token-based compaction, with exact budgets still open. Common calculation definitions keep website, chat, and scheduled work consistent. Evidence retains missing coverage; conversational answers describe their actual scope without routine missing-data warnings. An unknown value is not zero.
 
 ### 3.3 Work and delivery
 
@@ -43,7 +43,7 @@ User-requested jobs, tasks, histories, and results stay in their originating cha
 
 ### 3.4 Changes to access and retained data
 
-Website source disconnection stops future reads and changes portfolio coverage. Tasks continue only if remaining authorized data fulfills their request; otherwise pause and explain why once. Channel disconnection pauses that channel's tasks. Restoring a source or channel leaves affected tasks paused until explicit resume from their originating channel. Edits apply to future runs, while current permissions and pause/cancel state still constrain active work. Forgetting memory requires coordination across enabled stores and an accurate completion claim. Account deletion is deferred; its future scope and retention policy remain separate from accepted memory controls.
+Website source disconnection stops future reads and changes portfolio coverage. Tasks continue only if remaining authorized data fulfills their request; otherwise pause and explain why once. Channel disconnection pauses that channel's tasks. Restoring a source or channel leaves affected tasks paused until explicit resume from their originating channel. Edits apply to future runs, while current permissions and pause/cancel state still constrain active work. Forgetting updates only the saved personal profile and leaves histories and compact summaries intact; retained context may still influence replies or be relearned. Account deletion is deferred; its future scope and retention policy remain separate from accepted memory controls.
 
 ## 4. Design completion criteria
 

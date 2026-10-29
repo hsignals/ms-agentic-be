@@ -20,6 +20,8 @@ Each linked channel has one logical event stream or inbox and one active foregro
 
 Quick work runs inline. For substantial work, the main agent starts background subagents, receives accepted job IDs, acknowledges as appropriate, and ends the turn. The main agent must not occupy the foreground waiting for background results. Messages and completion events arriving during an active turn remain pending for a later turn; Phase 1 does not require mid-turn injection or steering.
 
+Steering an active background run is deferred. A new chat message does not automatically redirect or cancel it; supported status and cancellation tools remain available.
+
 This is logical ordering, not a separate physical queue, process, or VM for each channel. Other channels retain their separate context and work under the account/channel boundary.
 
 ### 2.3 Internal child results and main-owned replies
@@ -42,7 +44,7 @@ Background research, subagent, and proactive runs receive useful authorized read
 
 ### 2.5 Job records without a parent-request lifecycle
 
-The backend database records real job states, results, and stable original-request correlation needed for routing, status, cancellation, and admission. BullMQ provisionally owns timing, dispatch, claims, and configured job retries; Mastra executes the claimed run. Saved recurring tasks retain their own lifecycle, distinct from execution runs.
+Application-owned tables in the [shared PostgreSQL database](0013-shared-postgresql-storage.md) record real job states, results, and stable original-request correlation needed for routing, status, cancellation, and admission. Mastra owns separate tables for its messages and memory; backend authorization governs both. BullMQ with Redis provisionally owns timing, dispatch, claims, and configured job retries; Mastra executes the claimed run. Saved recurring tasks retain their own lifecycle, distinct from execution runs.
 
 The main agent reasons from context and actual child statuses to decide whether the user's request is answered. Phase 1 defines no overall-request finished flag, mandatory dependency graph, workflow checkpoint, or parent cancellation hierarchy. A status claim must use actual job-status tools. Cancellation requested does not mean execution has stopped; current permission, channel, cancellation, and delivery checks still apply.
 
@@ -60,7 +62,7 @@ The main agent reasons from context and actual child statuses to decide whether 
 
 - **Shared infrastructure:** retain the shared Mastra regular `Agent` direction, fresh trusted per-run context, E2B isolation, and backend-held credentials. Logical channel ordering does not select a deployment topology.
 - **Continuation:** completion must reach the channel handler using trusted stored bindings. Pending-event representation, replica coordination, listener integration, and interruption handling remain open; this record does not promise durable chat replay or exactly-once external delivery.
-- **Durability:** background results and required files persist outside disposable workers and sandboxes. Detailed records, storage engines, and unresolved recovery mechanics remain open. The task design owns accepted scheduled retry and proactive failure policies; unscheduled one-off retry details remain open.
+- **Durability:** background results and required files persist outside disposable workers and sandboxes. PostgreSQL hosting, detailed table schemas, file storage, retention, and unresolved recovery mechanics remain open. The task design owns accepted scheduled retry and proactive failure policies; unscheduled one-off retry details remain open.
 - **Authority:** subagent output is untrusted evidence within its assigned purpose. Backend capability checks, current permissions, channel validity, cancellation checks, and existing delivery controls remain required.
 - **Capacity:** five outstanding main-agent-spawned queued or running subagents is the initial configurable per-chat limit. Scheduler-started runs are excluded. Global capacity and cancellation mechanics remain open.
 - **Hosting:** direct execution after transport receipt needs suitable CPU and service lifetime. [Cloud Run's background-activity guidance](https://docs.cloud.google.com/run/docs/tips/general#background_activity) illustrates this constraint; no hosting choice is selected.

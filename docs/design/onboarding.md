@@ -46,6 +46,8 @@ The website detects and saves the device timezone once during onboarding. Users 
 
 ## 3. Identity, messaging, and financial authority
 
+The [account identity decision](../ADRS/0014-stable-account-and-independent-channel-links.md) owns the rationale for a stable MyStacks account with separately verified login and channel bindings.
+
 ### 3.1 Separate bindings
 
 **TENTATIVE architecture mapping:** these bindings express the agreed identity boundaries; their records and provider mappings remain for joint architecture finalization.
@@ -166,7 +168,7 @@ Only website settings add or disconnect messaging channels. The website and chat
 
 ### 6.3 Export and deletion proposals
 
-User-facing data review and export remain proposed capabilities whose exact scope and retention policy need agreement. Account deletion is deferred. Any offered data control must distinguish stopping source access, deleting stored evidence, forgetting derived memory, removing reports, and closing the account. The runtime design owns cleanup of enabled memory layers; the task design owns suppression of future work and notifications.
+User-facing data review and export remain proposed capabilities whose exact scope and retention policy need agreement. Account deletion is deferred. Any offered data control must distinguish stopping source access, deleting stored evidence, removing saved personal profile entries, removing reports, and closing the account. The runtime design owns [profile-only forgetting](../ADRS/0011-profile-only-forgetting.md), which leaves conversation histories and compact summaries unchanged; the task design owns suppression of future work and notifications.
 
 The product must state what an operation covers and report its outcome accurately. It must not claim deletion from a financial provider, messaging history, backups, or legally retained records unless the applicable contract supports that claim. Exact retained records, recovery windows, and deletion timing remain open.
 
