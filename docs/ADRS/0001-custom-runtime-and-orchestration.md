@@ -2,7 +2,7 @@
 
 ## 1. Status and scope
 
-**Status: ACCEPTED architecture decision.** MyStacks uses a common Mastra-based custom runtime and curated tools in shared warm workers, with durable user-scoped state outside those workers. This records the design, not an implemented service or a selected worker-hosting provider.
+**Status: ACCEPTED architecture decision.** MyStacks uses a common Mastra-based custom runtime and curated tools in shared application workers, with direct normal-chat execution, queued background work, and durable user-scoped state outside those workers. This records the design, not an implemented service or a selected worker-hosting provider.
 
 The [requirements](../requirements.md) own product behavior, and the [architecture](../architecture.md) owns responsibilities and flows. This decision preserves Phase 1 informational work, read-only financial access, and the exclusion of specific investment recommendations.
 
@@ -12,7 +12,11 @@ The **orchestration layer** binds incoming work to an authenticated user, routes
 
 Shared workers run MyStacks application code and can serve different users across separate runs. The pool may span multiple hosts. A run does not require a permanent machine for its user or a new infrastructure job for every task.
 
-Conversation history, context, memory, task definitions, progress, and required files must remain user-scoped in durable storage outside worker processes. Workers bind Mastra resource and thread identifiers from trusted backend context, load authorized state, and save required outcomes. Mastra memory and durable storage adapters supply reusable facilities; MyStacks still owns memory policy, task persistence, and recovery behavior.
+Normal chat initially runs directly in the backend after inbound verification, storage, and transport acknowledgement. Each linked channel has one logical ordered event stream and one foreground main-agent turn at a time. A turn can contain several model/tool rounds. Substantial work uses explicitly delegated background subagents so the foreground can finish and handle new questions.
+
+Background completion returns internal findings to a **new main-agent turn** through the same channel handler. The main agent can investigate further, combine results, or delegate more top-level work and owns every agent-authored user reply. Actual background jobs have durable status and result records; the main agent judges the overall answer from channel context and those records. The [channel-turn decision](0009-channel-turns-and-background-subagents.md) owns these boundaries and the five-outstanding limit for main-agent delegation. Scheduler-started runs are outside that quota; the [scheduling decision](0004-durable-scheduling-and-queued-execution.md) owns saved-schedule limits, independent occurrences, and scheduled-execution retry policy.
+
+Conversation history, context, memory, task definitions, progress, and required files must remain user-scoped in durable storage outside worker processes. Workers bind Mastra resource and thread identifiers from trusted backend context, load authorized state, and save required outcomes. Account-shared personal memory uses native Mastra structured working memory with a few stable categories and flexible free text, under the [shared-memory decision](0008-channel-scoped-work-and-shared-memory.md). Mastra memory and durable storage adapters supply reusable facilities; MyStacks still owns the exact schema, memory policy, task persistence, and recovery behavior.
 
 The initial runtime and deployed capabilities are common across users; preferences and remembered context can vary by user. A **skill** supplies instructions, while a **tool** supplies executable capability. Relevant capabilities should compose through the common loop without a separate hard-coded intent for every workflow.
 
@@ -24,7 +28,7 @@ Trusted, predefined tools may execute in the shared backend. Generated code uses
 
 The product needs continuity and user-specific work, rather than one always-running process per user. Shared capacity lets idle users retain their work without retaining an idle runtime. External state also lets another worker continue a later run, while MyStacks remains responsible for storage, authorization, and recovery behavior.
 
-The **existing agentic runtime** approach represented by `mystacks-be` and `hs-llm-service` can support the product requirements. Their existence does not establish that the required memory, tasks, monitoring, or recovery are implemented.
+The **existing agentic runtime** approach represented by `mystacks-be` and `hs-llm-service` is the simplicity reference for direct backend chat. MyStacks remains responsible for the required memory, tasks, monitoring, and recovery behavior.
 
 ### 3.2 A persistent runtime for every user
 
@@ -42,7 +46,8 @@ For example, OpenClaw's [security trust model](https://docs.openclaw.ai/gateway/
 
 - **Application ownership:** MyStacks integrates Mastra's context, memory, skills, and tool facilities while retaining responsibility for task records, recovery policy, financial behavior, and delivery.
 - **User isolation:** every protected state or account operation must use authenticated server context and enforce user/object permissions. Shared execution requires that application boundary even when generated code runs elsewhere.
-- **State consistency:** concurrent chat and background work must preserve consistent user state; ordering and update policies remain open.
+- **State consistency:** each channel serializes foreground turns; shared account-memory writes from linked channels still need an ordering policy. Background subagents read memory without changing it.
+- **Direct-chat limit:** process or deployment interruption may leave an acknowledged chat turn without a reply. Saved messages do not resume inference; hosting must support execution after transport acknowledgement.
 - **Capacity:** warm capacity serves ready work without provisioning a worker per run. Queue backlog, worker replacement, and tool or model latency still affect response time.
-- **Open details:** pinned Mastra packages and adapter APIs, reuse of existing code, worker hosting, storage schemas, state restoration, memory policy, and per-user concurrency remain undecided.
+- **Open details:** pinned Mastra packages and adapter APIs, reuse of existing code, worker hosting, cross-replica channel coordination, storage schemas, background recovery, memory selection and write ordering, and fleet capacity remain undecided.
 - **Product limits:** shared execution does not strengthen monitoring guarantees or expand financial authority.

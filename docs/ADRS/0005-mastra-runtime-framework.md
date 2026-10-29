@@ -16,17 +16,19 @@ Reuse Mastra's skill folders, loading, and discovery. Register executable tool m
 
 ### 2.2 Context, memory, and execution
 
-Reuse Mastra memory facilities and durable storage adapters for conversation continuity and user-specific context. MyStacks defines what is remembered, how it is updated, who can access it, and how it is retained or deleted. Backend code must bind the resource and thread for each run rather than accepting model-selected memory ownership. Mastra documents its [memory facilities and storage configuration](https://mastra.ai/docs/memory/overview).
+Reuse Mastra native structured working memory for an account-shared personal profile with a few stable categories and flexible free text. Channel history and compaction remain separately scoped through native memory facilities and durable storage adapters. MyStacks defines the exact schema, what is remembered, how it is updated, who can access it, and how it is retained or deleted. Structured representation alone does not settle correction, forgetting, or concurrent writes. Backend code must bind the resource and thread for each run rather than accepting model-selected memory ownership. Mastra documents its [memory facilities and storage configuration](https://mastra.ai/docs/memory/overview).
 
 The [E2B decision](0003-sandboxed-code-execution.md) owns generated-code isolation and adapter reuse. The shared Mastra loop remains outside the sandbox. The [credential decision](0002-backend-owned-financial-credentials.md) owns authorization and secret handling; framework schemas, skill instructions, and Agent hooks cannot replace the protected operation's permission checks.
 
-Adopting AgentController, beta durable-agent features, or workflow checkpointing requires a concrete requirement and a design for persistence, replay, and execution ownership. The initial adoption uses regular `Agent` execution with the [queued-work boundary](0004-durable-scheduling-and-queued-execution.md).
+The initial adoption uses regular `Agent` execution for direct foreground chat and the [queued-work boundary](0004-durable-scheduling-and-queued-execution.md) for background runs. A background completion supplies fresh input to a new main-agent turn, which can continue tool/model rounds and owns the user reply. The [channel-turn decision](0009-channel-turns-and-background-subagents.md) defines this application contract and the accepted interrupted-chat limit; it does not select an exact Mastra dispatcher or require workflow checkpoints. Advanced execution facilities need a concrete requirement and a separate persistence and execution-ownership decision.
+
+Only main-agent turns may delegate background subagents, with an initial five-outstanding limit per chat. Backend scheduling starts user-requested and proactive runs independently of that quota under the [scheduling decision](0004-durable-scheduling-and-queued-execution.md). Restricted tool capabilities and backend authorization preserve useful financial read, research, E2B, and shared personal-memory read access while preventing background agents from spawning children, changing settings, connections, memory, or saved user tasks, or sending user messages. Exact native configuration remains open.
 
 ## 3. Rationale and alternatives
 
 ### 3.1 Reuse the components around the loop
 
-The existing `mystacks-be` and `hs-llm-service` implementations already use AI SDK automatic tool loops. Choosing Mastra does not create agent reasoning or tool use that AI SDK lacks. It reduces MyStacks' assembly work for skill loading, context, memory, tool dispatch, and related runtime facilities.
+The `mystacks-be` and `hs-llm-service` implementations use AI SDK automatic tool loops and provide a simplicity reference for direct backend chat. Choosing Mastra does not create agent reasoning or tool use that AI SDK lacks. It reduces MyStacks' assembly work for skill loading, context, memory, tool dispatch, and related runtime facilities.
 
 Mastra uses AI SDK provider interfaces alongside its own Agent, memory, and runtime abstractions. Its [model integration](https://mastra.ai/models) supports AI SDK provider modules. MyStacks still owns financial tools, authorization, task behavior, storage policy, and delivery.
 
@@ -43,8 +45,8 @@ LangGraph is a strong alternative when explicit graph checkpoints and interrupti
 ## 4. Consequences and open decisions
 
 - **Hosting and license:** Mastra's open-source core can run on MyStacks-managed GCP compute. Its [license](https://github.com/mastra-ai/mastra/blob/main/LICENSE.md) places core code outside `ee/` under Apache-2.0, with separate terms for enterprise and third-party components. Enterprise features and hosted cloud services remain optional commercial choices.
-- **Implementation validation:** pin and validate package versions, storage adapters, E2B integration, and deployment compatibility during implementation. Framework selection does not establish that every feature has the same stability or operating guarantees.
+- **Implementation validation:** pin and validate package versions, storage adapters, E2B integration, main/subagent tool configuration, fresh-turn completion input, and deployment compatibility during implementation. Framework selection does not establish that every feature has the same stability or operating guarantees.
 - **Runtime and model:** Bun remains a runtime candidate requiring compatibility checks. DeepSeek is a supported model-integration candidate; no production runtime, model, provider, or gateway is selected by this decision.
-- **Memory policy:** automatic retention, personal-fact updates, and chat controls to inspect, correct, and forget are accepted under the [shared-memory decision](0008-channel-scoped-work-and-shared-memory.md). Schema, storage engine, retrieval configuration, selection and write mechanisms, retention, deletion completion, and concurrent-write ordering remain open.
+- **Memory policy:** native structured working memory, automatic personal-fact updates, and chat controls to inspect, correct, and forget are accepted under the [shared-memory decision](0008-channel-scoped-work-and-shared-memory.md). Exact schema, storage engine, retrieval configuration, selection and write mechanisms, retention, deletion completion, and concurrent-write ordering remain open.
 - **Security and correctness:** trusted identity binding, account/object authorization, secret exclusion, financial scope, and analysis validation remain MyStacks responsibilities.
 - **Capacity:** selecting Mastra and E2B does not validate the 1,000-user launch or 100,000-user growth targets. Frequency, run duration, bursts, quotas, and operational evidence must determine capacity.

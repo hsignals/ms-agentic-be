@@ -30,7 +30,8 @@ As a user, I want to ask financial questions in ordinary language so that I can 
 - When the user explicitly asks for unavailable information, the assistant explains what is unavailable and offers the closest useful answer it can support.
 - Answers describe their actual scope naturally, such as “Across your connected accounts,” without inventing figures, treating unavailable data as zero or no risk, or implying unsupported completeness.
 - Follow-up questions can refer to the prior answer; if the reference is unclear, the assistant resolves it before drawing a materially different conclusion.
-- For longer analysis, the assistant briefly acknowledges the request, explains the intended work, provides useful initial information when available, and returns the result when ready. `US-CHAT-05` describes the accepted longer-work experience.
+- Quick work completes in the conversation. For longer analysis, the assistant starts background work, briefly acknowledges the intended work, provides useful initial information when available, and frees the conversation for new questions. `US-CHAT-05` describes the accepted longer-work experience.
+- If a new message arrives while the assistant is still handling a foreground turn, it remains pending for a later turn; several pending messages may be handled together. The message does not silently steer the active turn.
 
 ### 2.2 US-CHAT-02 — Combine research with portfolio context
 
@@ -64,14 +65,18 @@ As a user, I want to supply a financial document, spreadsheet, or screenshot so 
 
 ### 2.5 US-CHAT-05 — Receive longer work in chat
 
-**Status: accepted experience with results in the originating channel; detailed limits and in-flight cancellation behavior remain open. In-flight steering is low priority.**
+**Status: accepted experience with results in the originating channel and an initial five-run main-agent delegation limit; global capacity and in-flight cancellation behavior remain open. In-flight steering is low priority.**
 
 As a user, I want the assistant to continue longer work and return the result in chat so that I can leave the conversation and come back later.
 
-- For a request needing longer work, the assistant briefly acknowledges the request and explains the intended work. It can include useful initial information when available.
+- For a request needing longer work, the assistant starts background work and acknowledges accepted work as appropriate. It explains the intended work and can include useful initial information when available.
 - The user can leave chat while the work continues and receive the result later in the same channel.
 - Longer work can include research and substantial calculations; its result still leads with the answer or main finding in a concise chat reply, with deeper detail available through follow-ups.
-- The main chat remains usable while background work runs. Multiple independent background runs can exist at once, subject to limits still to be agreed.
+- The main chat remains usable while background work runs, including for new questions and job-status requests. The assistant does not hold the conversation open while waiting for a background result.
+- The configurable initial limit is five outstanding main-agent-spawned background runs per chat, counting queued and running work. Completed, failed, or cancelled runs do not count. If five such runs are outstanding, the assistant reports capacity instead of accepting another delegation, whether the user requested it or the assistant chose it. A new delegation after handling a result uses the same quota.
+- Scheduler-started recurring and proactive runs are excluded from that delegation quota. User-created scheduled occurrences are independent and can run in parallel even when an earlier occurrence of the same task is still queued or running. The [task stories](tasks.md) own saved-schedule limits and scheduled failure behavior.
+- A background result returns to the main assistant for a fresh turn in the same channel. The assistant can check more data, run calculations, combine results from several runs, or end the turn quietly while another run continues; it does not forward every background output as a separate report. Its reply remains available in normal channel history for follow-ups.
+- If a result arrives while the assistant is handling another turn, it stays pending for a later turn without changing the current response.
 - The assistant gives progress updates when they add meaningful information, without routine chatter. From the originating channel, the user can list background work, ask for status, inspect results, and request cancellation. Another linked channel cannot access or control that work.
 - The assistant acknowledges a stop request honestly and does not claim that work has stopped until that outcome is known. Completion, failure, and cancellation are terminal outcomes; exact handling of work and delivery already underway remains open.
 - If work fails or reaches a limit, the user sees that outcome, any useful completed findings, and whether further action is needed; a failed attempt is not shown as complete.
@@ -107,6 +112,12 @@ These examples exercise the stories without limiting the assistant to a fixed re
 | The user uploads a spreadsheet with a clear analysis request. | The assistant follows the request and identifies any inputs it could not interpret. |
 | Longer analysis continues after the user leaves chat. | The result arrives later in the originating channel, with completion, failure, or cancellation made clear and useful completed findings included when available. |
 | The user sends another independent request while longer work is running. | The main chat remains usable; independent background work can run subject to the agreed limits, without silently redirecting the earlier job. |
+| The user asks for ETH's price and the status of a background analysis. | The assistant answers the price question and checks the analysis's actual job status while the analysis continues. |
+| One of two background runs completes, but the other is still needed. | The assistant can end the result-handling turn quietly, then combine both results and any needed calculations when the other run completes. |
+| A background result needs another financial check or calculation before it answers the request. | The assistant performs that work in a fresh turn and sends the supported answer rather than forwarding the internal output. |
+| A new message or background result arrives during an active foreground turn. | It remains pending for a later turn; the channel has only one active foreground turn. |
+| Five main-agent-spawned background runs are queued or running and another delegation is needed. | The assistant explains the current capacity instead of accepting a sixth delegation; terminal runs and scheduler-started work do not occupy a slot. |
+| Five main-agent-spawned runs are outstanding when a saved task becomes due. | The due occurrence is admitted independently of that quota, subject to the task's normal eligibility and authority checks; worker start depends on available capacity. |
 | The user asks chat to list longer work or report its status. | The assistant lists only that channel's background work or explains a run from that channel. |
 | The user asks to stop longer work. | The assistant acknowledges the request, reports the actual outcome, and does not describe work as stopped before that outcome is known. |
 | A user requests a specific trade or an unrelated sports report. | The assistant states the applicable boundary and makes no claim of execution. |
@@ -116,6 +127,6 @@ These examples exercise the stories without limiting the assistant to a fixed re
 - **Interaction:** follow-up context limits within each channel, progress presentation, and response-time targets.
 - **Research:** supported sources, access methods, source attribution format, and claim-specific freshness requirements.
 - **Low-priority uploads and artifacts:** supported formats, file and analysis limits, artifact formats when enabled, access duration, and retention.
-- **Continued work:** concurrent-run limits, exact cancellation and in-flight behavior, retry and replay behavior, interrupted-work recovery, and resource budgets. In-flight steering remains low priority.
+- **Continued work:** global capacity, exact cancellation and in-flight behavior, unscheduled one-off retry and replay behavior, interrupted-work recovery, and resource budgets. Scheduled failure behavior follows the task stories. In-flight steering remains low priority.
 
 The [portfolio stories](portfolio.md), [task stories](tasks.md), and [memory stories](memory.md) cover the connected experience, ongoing requests, and personalization alongside these conversations.

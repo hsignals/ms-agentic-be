@@ -134,11 +134,11 @@
       <div>
         <p class="eyebrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4z"/></svg>MyStacks · Agentic runtime · Phase 1</p>
         <h1>Custom runtime architecture</h1>
-        <p class="lede">One shared runtime serves every user, live and on schedule. Credentials stay in the backend; generated code runs in an isolated sandbox.</p>
+        <p class="lede">Shared Mastra runtime; direct chat, one main-agent turn per channel. Background results start a new main-agent turn, which owns the reply. Credentials stay in the backend; generated code runs in E2B. <a href="ADRS/0009-channel-turns-and-background-subagents.md">Turn and delegation decisions</a>.</p>
       </div>
       <div class="legend" aria-hidden="true">
         <span><i class="swatch-edge"></i>Request and response</span>
-        <span><i class="swatch-trigger"></i>Scheduled work</span>
+        <span><i class="swatch-trigger"></i>Background work</span>
         <span><i class="swatch-boundary"></i>Boundary</span>
       </div>
     </header>
@@ -146,7 +146,7 @@
     <nav class="sections" aria-label="Diagram sections"></nav>
     <svg id="diagram" viewBox="0 0 1800 900" role="img" aria-labelledby="diagram-title diagram-desc">
       <title id="diagram-title">MyStacks custom runtime architecture</title>
-      <desc id="diagram-desc">User messages arrive from WhatsApp, iMessage, and other channels such as Telegram, Discord, and the app, and go to the orchestration layer, which talks to the MyStacks Agentic Runtime. The runtime talks to durable user-scoped state, the financial tools API, and the code execution tool. The financial tools API talks to financial providers, which connect to Binance, Robinhood, Coinbase, and IBKR accounts, EVM and Solana addresses, and other accounts. The code execution tool talks to a task-scoped E2B sandbox. These connections are two-way. A keys and credentials store inside the backend feeds only the financial tools API; the agent never sees the keys and reaches financial data only through those tools. For background work, the runtime schedules tasks into a scheduler and job queue (BullMQ with Redis), which hands jobs to a shared worker pool that runs the runtime; the queue and workers sit in a background-work group. The orchestration layer, runtime, state, financial tools API, code execution tool, and background work sit inside the trusted MyStacks backend; financial providers and the sandbox sit outside it.</desc>
+      <desc id="diagram-desc">WhatsApp and iMessage are the launch channels; other channels are future scope. The orchestration layer verifies and stores inbound messages and executes chat directly, with one ordered event stream and one foreground main-agent turn per channel. A turn can contain several model and tool rounds. Process interruption can leave an acknowledged turn without a reply. The runtime uses durable user-scoped state, the financial tools API, and the E2B execution tool. Backend-held financial credentials reach only the financial tools API. The provisional BullMQ and Redis background queue dispatches work to shared warm workers; the backend database owns task definitions and job statuses and results. Main-agent turns may delegate up to five outstanding queued or running subagents per chat; terminal jobs and scheduler-started runs are excluded. Background agents cannot spawn children or send messages. User-created recurring schedules allow five enabled tasks per chat, excluding paused tasks, and a minimum one-hour interval. Each eligible occurrence admits one independent background agent run even while an earlier occurrence remains queued or running; actual start depends on worker capacity. Known temporary scheduled-execution failure gets one automatic retry, at most two execution attempts. Delivery failure must not rerun successful analysis. Completion persists internal findings and triggers a new main-agent turn through the channel handler, waiting if the channel is busy. The main agent can continue tools or code execution and owns the reply. Eligible proactive checks each run a bounded agent investigation, targeting approximately five randomized starts per account each day within 09:00–21:00 in its saved timezone. This window limits starts, not delivery. Only one proactive investigation runs per account; overlap and missed checks are skipped. Investigation failure is recorded internally for the next scheduled check without a routine message or whole-investigation retry. Proactive finding and notification history stays separate from shared personal memory. Account-shared personal memory uses native Mastra structured working memory with a few stable categories and flexible free text; channel history and compaction remain separate. Exact memory schema, storage, concurrent-write handling, hosting, and framework integration remain open.</desc>
       <defs>
         <linearGradient id="solana" x1="0" y1="1" x2="1" y2="0">
           <stop offset="0" stop-color="#9945ff"/>
@@ -183,16 +183,16 @@
       // shape picks the drawing function in SHAPES; x, y, w, h is the box edges attach to.
       C1: { shape: 'medallion', x: 93, y: 258, w: 84,  h: 84,  title: ['WhatsApp'],       icon: 'whatsapp', tone: 'whatsapp', small: true, fan: true },
       C2: { shape: 'medallion', x: 93, y: 408, w: 84,  h: 84,  title: ['iMessage'],       icon: 'imessage', tone: 'imessage', small: true, fan: true },
-      C3: { shape: 'medallion', x: 93, y: 558, w: 84,  h: 84,  title: ['Other channels'], sub: 'Telegram, Discord, app', icon: 'apps', tone: 'other', small: true, fan: true },
-      O: { shape: 'hex',      x: 310,  y: 380, w: 240, h: 140, kicker: 'Backend',       title: ['Orchestration', 'layer'],       sub: 'Auth, routing, delivery' },
-      R: { shape: 'card',     x: 610,  y: 355, w: 290, h: 190, kicker: 'Core · Mastra', title: ['MyStacks Agentic', 'Runtime'], sub: 'Agent loop, skills, tools', hero: true },
-      D: { shape: 'folder',   x: 960,  y: 115, w: 270, h: 140, kicker: 'State',         title: ['Durable', 'user-scoped state'], sub: 'Memory, tasks, and files', icon: 'db' },
+      C3: { shape: 'medallion', x: 93, y: 558, w: 84,  h: 84,  title: ['Other channels'], sub: 'Future scope', icon: 'apps', tone: 'other', small: true, fan: true },
+      O: { shape: 'hex',      x: 310,  y: 380, w: 240, h: 140, kicker: 'Backend',       title: ['Orchestration', 'layer'],       sub: 'Auth, turns, delivery' },
+      R: { shape: 'card',     x: 610,  y: 355, w: 290, h: 190, kicker: 'Core · Mastra', title: ['MyStacks Agentic', 'Runtime'], sub: 'Main agent owns replies', hero: true },
+      D: { shape: 'folder',   x: 960,  y: 115, w: 270, h: 140, kicker: 'State',         title: ['Durable', 'user-scoped state'], sub: 'Profile, tasks, jobs, files', icon: 'db' },
       F: { shape: 'card',     x: 960,  y: 380, w: 270, h: 140, kicker: 'Tool',          title: ['Financial tools API'],          sub: 'Authorized read-only access', icon: 'chart' },
       P: { shape: 'medallion', x: 1382, y: 402, w: 96, h: 96, glyph: 'bank', kicker: 'Provider',      title: ['Financial providers'],          sub: 'Connected accounts' },
       E: { shape: 'terminal', x: 960,  y: 645, w: 270, h: 150, kicker: 'Tool',          title: ['Code execution tool'],          sub: 'Runs generated code' },
       K: { shape: 'keys',     x: 970,  y: 553, w: 250, h: 58,  title: ['Keys & credentials'], sub: 'Hidden from the agent', small: true },
       S: { shape: 'medallion', x: 1382, y: 672, w: 96, h: 96, glyph: 'sandbox', badge: 'lock', kicker: 'Sandbox',       title: ['Task-scoped sandbox'],      sub: 'E2B · isolated, internet off' },
-      Q: { shape: 'queue',    x: 360,  y: 690, w: 120, h: 56,  title: ['Scheduler & job queue'], sub: 'BullMQ · Redis', small: true },
+      Q: { shape: 'queue',    x: 360,  y: 690, w: 120, h: 56,  title: ['Scheduler & job queue'], sub: 'BullMQ · Redis · provisional', small: true },
       W: { shape: 'workers',  x: 579,  y: 688, w: 122, h: 60,  title: ['Shared worker pool'],    sub: 'Claim and run jobs', small: true },
     };
     // 24x24 line icons for badges and figures.
@@ -210,7 +210,7 @@
     };
     // MyStacks brand mark, copied from the favicon at docs.mystacks.ai; it spans 14.15 to 49.85 in a 64-unit box.
     const MYSTACKS_MARK = 'M21.5 14.15L42.5 14.15C46.56 14.15 49.85 17.44 49.85 21.5L49.85 42.5C49.85 46.56 46.56 49.85 42.5 49.85L21.5 49.85C17.44 49.85 14.15 46.56 14.15 42.5L14.15 21.5C14.15 17.44 17.44 14.15 21.5 14.15ZM21.5 40.4L32 33.05L42.5 40.4L42.5 33.05L32 25.7L21.5 33.05Z';
-    const EDGES = [['C1', 'O'], ['C2', 'O'], ['C3', 'O'], ['O', 'R'], ['R', 'D'], ['R', 'F'], ['F', 'P'], ['R', 'E'], ['E', 'S'], ['R', 'Q', 'trigger', { label: 'Schedules tasks', at: [497, 662] }], ['Q', 'W', 'trigger'], ['W', 'R', 'trigger'], ['K', 'F', 'key']];
+    const EDGES = [['C1', 'O'], ['C2', 'O'], ['C3', 'O'], ['O', 'R'], ['R', 'D'], ['R', 'F'], ['F', 'P'], ['R', 'E'], ['E', 'S'], ['R', 'Q', 'trigger', { label: 'Delegates / schedules', at: [497, 662] }], ['Q', 'W', 'trigger'], ['W', 'R', 'trigger', { label: 'Runs subagents', at: [700, 616] }], ['K', 'F', 'key']];
     // Account chips fan out from the providers figure. Each mark is the brand's own logo in a 32-unit circle:
     // Binance, Robinhood, and Solana glyphs from Simple Icons 16.36.0 (CC0); Ethereum from cryptocurrency-icons 0.18.1 (CC0);
     // the Coinbase C from Coinbase's static assets; IBKR from the interactivebrokers.com home-screen icon.
