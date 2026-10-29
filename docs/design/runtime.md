@@ -4,7 +4,7 @@
 
 **Status: tentative Phase 1 technical design, pending the overall design round.** The [requirements](../requirements.md) own product outcomes; the [architecture](../architecture.md) owns shared execution boundaries. The recorded framework direction uses Mastra's regular `Agent`, fresh trusted `RequestContext` for each run, durable account-scoped state, and E2B for generated code. **BullMQ with Redis remains provisional.** Accepted product behavior constrains these notes; the technical mappings below do not select hosting, models, storage engines, schemas, or exact policies.
 
-The design supports [assistant stories US-CHAT-01–06](../user-stories/assistant.md) and [memory stories US-MEM-01–04](../user-stories/memory.md). Phase 1 permits financial information, analysis, concise reports in chat, memory, and informational tasks; it excludes specific buy, sell, or rebalance recommendations and financial execution.
+The design supports [assistant stories US-CHAT-01–07](../user-stories/assistant.md) and [memory stories US-MEM-01–04](../user-stories/memory.md). Phase 1 permits financial information, analysis, concise reports in chat, memory, informational tasks, and staffed human support; it excludes specific buy, sell, or rebalance recommendations and financial execution.
 
 **Phase 1 is text-first in iMessage and WhatsApp.** Available-source research, significant calculations, E2B execution, and background jobs support concise results in chat. Image replies are optional later work at low priority. Extensive deep-research reports, polished webpage artifacts, full report pages, and long-form report exports are deferred; Phase 1 has no separate web chat or report experience. File analysis remains low priority.
 
@@ -21,7 +21,7 @@ The [channel turns and background subagents ADR](../ADRS/0009-channel-turns-and-
 - Model arguments, uploaded content, message text, and queued identifiers cannot establish or replace the account or channel binding. Resource and thread IDs identify state; they do not authorize access. Server-owned context keys are populated only after the binding is authorized.
 - Shared agent definitions contain common instructions and capability registration. Private run data must not live in shared mutable agent fields or a shared private-file workspace.
 
-The orchestrator authorizes delivery separately from the runtime's memory binding. Jobs and scheduled tasks keep their originating channel as their fixed destination in Phase 1; proactive insights use the account's preferred linked channel under the [task design](tasks.md). A login phone number does not implicitly select a thread or destination. The same shared runtime serves linked channels without a separate VM, queue, or runtime deployment per channel, and without requiring Mastra to interpret provider sender identities. Exact verification adapters, runtime interfaces, and concrete context fields remain open.
+The orchestrator authorizes delivery separately from the runtime's memory binding. Jobs and scheduled tasks keep their originating channel as their fixed destination in Phase 1; proactive insights use the account's selected proactive insight delivery channels under the [task design](tasks.md). The setting permits iMessage, WhatsApp, both, or neither, with each newly linked channel selected by default. Insights go only to selected channels without automatic fallback. With neither selected, proactive investigation and delivery are disabled, including unsent insights. That setting routes only proactive insights; chat replies retain their current channel. A login phone number does not implicitly select a thread or destination. The same shared runtime serves linked channels without a separate VM, queue, or runtime deployment per channel, and without requiring Mastra to interpret provider sender identities. Exact verification adapters, runtime interfaces, and concrete context fields remain open.
 
 ### 2.2 Native history and context
 
@@ -35,7 +35,7 @@ The runtime uses Mastra's native agent, skill, tool, and context facilities. Cur
 
 Protected tool handlers or the financial tools API authorize the current user, account, and object on every protected path. Job and task tools expose only current-channel work, and backend handlers enforce both account and current channel for reads, writes, and result access. Channel ownership is server-bound rather than a model argument; prompts and capability registration do not replace these checks. Shared personal memory uses validated account-scoped backend operations.
 
-Chat controls cover current-channel jobs and tasks, shared personal memory and preferences, and the account-wide proactive on/off setting. The website owns financial connections, channel links and disconnection, and preferred-channel routing settings. Chat can explain those controls and link to the website; it cannot select another channel, transfer work, or change channel configuration.
+Chat controls cover current-channel jobs and tasks, shared personal memory and preferences, and the proactive insight delivery channels setting. Chat and the website update the same account setting. The website owns financial connections and channel linking and disconnection. Chat can explain those website controls and link to them; it cannot transfer work or change channel links. Selecting proactive insight delivery channels does not select a destination for chat replies or user-requested work.
 
 The tool surface provides read-only financial access. Output policy also applies to explanations, research, reports, artifacts, and messages, so a read-only tool cannot justify a specific investment recommendation. The exact enforcement mechanism remains open; its observable behavior must meet US-CHAT-06.
 
@@ -52,6 +52,14 @@ A foreground turn is one main-agent processing cycle. It can consume pending use
 Quick work runs inline. For substantial work, the main agent starts background subagents, receives accepted job IDs, acknowledges as appropriate, and ends the foreground turn. It must not occupy the foreground while waiting for background completion. User messages arriving during an active foreground turn are stored as pending for a later turn and may be handled together. Phase 1 does not require mid-turn steering.
 
 **Accepted interruption limit:** process or deployment interruption can leave an acknowledged chat message without a reply. Persisting a message alone does not resume inference. Phase 1 does not add durable chat workflows, checkpoints, an outbox, or a replay engine. Hosting must support execution after the transport response; its CPU allocation and lifetime remain open. [Cloud Run's background-activity guidance](https://docs.cloud.google.com/run/docs/tips/general#background_activity) makes CPU availability after a response a deployment requirement rather than a property of storing messages.
+
+### 2.5 Human support and reply ownership
+
+The runtime must support the accepted [human support story](../user-stories/assistant.md#27-us-chat-07--reach-human-support-during-support-hours): a user can request a real person in chat and reach staffed support during published hours, with human replies delivered to the originating channel. Support hours and their time zone must be visible. Acknowledging or forwarding the request means the handoff is pending until a human joins. Outside those hours, the reply gives the next opening and how the request or contact will be handled without inventing a response-time promise.
+
+Staff receive only the issue and authorized account and originating-channel context needed to help; the handoff cannot expose another channel's history, tasks, or results. The user must be able to distinguish human and AI replies. While a human owns the support conversation, reply coordination must prevent conflicting human and AI replies. The handoff grants no financial execution authority.
+
+Support hours, staffing, response expectations, staff tooling including proposed Slack use, context access, and the handoff and return-to-assistant mechanism remain open in the [open decisions](../TODO.md). Apple-specific controls must meet applicable requirements with the minimum necessary controls; exact controls and their effect on the chat experience remain open.
 
 ## 3. Evidence and conversational answers
 
@@ -80,6 +88,8 @@ For longer work, the assistant briefly acknowledges the request and describes th
 Longer work runs as an explicitly delegated background subagent job while the main chat remains usable. Each job has task-scoped instructions and context under its account and originating channel. Ordinary new chat does not silently become input to that job.
 
 The backend database owns saved task definitions, background run records, statuses, and results. A background run retains its original request correlation, authorized input references, task context, progress, and outcome outside the serving worker. Required outputs also persist outside the worker and disposable sandbox. Results are inspectable only within their originating channel. Exact records, schemas, and storage engines remain open.
+
+Scheduled work uses only its originating channel's conversation, tasks, and results alongside authorized shared personal memory and financial evidence. It cannot retrieve another channel's history or work.
 
 Under the **provisional BullMQ and Redis choice**, BullMQ owns timing, queue dispatch and claims, and configured job retries; Mastra executes the claimed run. Backend registration creates recurring schedules, and running worker processes execute due work. Redis holds queue and schedule data; it does not start a stopped service. A second independent scheduler or retry owner must not manage the same work. The [task design](tasks.md) owns saved user tasks, their distinct execution runs, and proactive scheduling and failure policies.
 
@@ -239,12 +249,15 @@ Logs and traces must follow the credential boundary and selected handling policy
 
 Verification must demonstrate account isolation across chat and background entry paths, current-channel history and task/result access, concise text-first results that preserve relevant reasoning and evidence, checked calculation outputs and any enabled artifacts, shared personal memory learned across channels, preserved concurrent updates and corrections, and truthful job outcomes while chat remains usable. Memory checks must cover clear new personal statements automatically updating older facts across channels, clarification only for ambiguity that materially affects the answer, and a visible distinction between user facts and assistant interpretations. A newer user financial statement must not replace provider financial evidence. Channel relinking must not silently resume paused scheduled tasks. Forgetting verification must cover every enabled derived memory layer and prevent old channel summaries from restoring removed facts.
 
+Human support verification must demonstrate a staffed same-channel handoff during published hours, truthful pending status, visible hours and time zone, clear out-of-hours handling, limited staff context, identifiable human and AI replies, and coordination that prevents conflicting replies while a human owns support.
+
 ## 8. Open implementation decisions
 
 | Area | Decision still needed |
 | --- | --- |
 | Interfaces | Sender verification and account linking, channel conversation binding, model/provider configuration, Mastra package versions, and context fields. |
 | Channel turns | Replica coordination, concrete pending-event representation and ordering, completion-listener integration, and hosting CPU/lifetime support after transport receipt. Direct execution and one foreground turn per channel are accepted. |
+| Human support | Published hours and time zone, staffing, response expectations, out-of-hours handling, staff tooling and access, handoff and reply ownership, and any Apple-specific controls. The [open decisions](../TODO.md) track these choices. |
 | Continued work | Record schemas, task-context configuration, global capacity, restart/resume/failure policy, progress presentation, exact cancellation and in-flight behavior, and unscheduled one-off retry and replay behavior. Scheduled retry and proactive failure policies follow the task design. Running-job steering remains deferred. |
 | Execution and optional files | Quotas, E2B configuration, checked-result methods, low-priority upload formats and parsers, and artifact access and retention when enabled. |
 | Memory | Exact structured-profile schema and storage adapter, source distinctions, selection and size budgets, compaction and context budgets, simultaneous-write ordering and same-field merging, implementation of accepted updates and chat controls, retained histories and enabled derived layers, retention, and deletion completion. |

@@ -2,9 +2,9 @@
 
 ## 1. Status and scope
 
-**Status: accepted text-first replies, natural financial questions in `US-CHAT-01`, low-priority supplied-file analysis in `US-CHAT-04`, and longer work in `US-CHAT-05`; other detailed stories remain proposed.** The [requirements](../requirements.md) define accepted product outcomes. These stories separate agreed conversational behavior from detailed proposals still to discuss.
+**Status: accepted text-first replies, natural financial questions in `US-CHAT-01`, low-priority supplied-file analysis in `US-CHAT-04`, longer work in `US-CHAT-05`, and staffed human support in `US-CHAT-07`; other detailed stories remain proposed.** The [requirements](../requirements.md) define accepted product outcomes. These stories separate agreed conversational behavior from detailed proposals still to discuss.
 
-The assistant handles broad requests within **wealth and assets**, combining available information and capabilities without requiring users to choose a fixed intent. Website signup with a phone number and an SMS code, followed by channel linking, is required before assistant access; financial connections remain optional. A message before signup receives an onboarding link to that same website flow. iMessage and WhatsApp are the launch messaging channels, each separately verified and linked to the user's MyStacks account. Response-time targets remain open.
+The assistant handles broad requests within **wealth and assets**, combining available information and capabilities without requiring users to choose a fixed intent. Website signup with a phone number and an SMS code opens the dashboard, where financial connections and channel linking can be completed in either order; financial connections remain optional. Assistant access requires a verified linked channel. A message before signup receives an onboarding link to that same website flow. iMessage and WhatsApp are the launch messaging channels, each separately verified and linked to the user's MyStacks account. Response-time targets remain open.
 
 Phase 1 provides **read-only financial information and analysis**. It excludes specific buy, sell, or rebalance recommendations and financial execution. The [runtime design](../design/runtime.md) and [architecture](../architecture.md) remain **tentative pending the overall architecture design round**; the product agreements in these stories remain accepted.
 
@@ -18,11 +18,12 @@ Phase 1 provides **read-only financial information and analysis**. It excludes s
 
 As a user, I want to ask financial questions in ordinary language so that I can understand my portfolio and relevant financial information without learning a command list.
 
-- After signup, users can ask general financial questions in a linked channel before connecting any financial account. A financial connection is needed only for answers that require its account information.
+- After signup, users can ask general financial questions in a verified linked channel before connecting any financial account. A financial connection is needed only for answers that require its account information.
 - Each linked channel has its own conversation, history, current context, and compaction. Background jobs, scheduled tasks, and results stay within their originating channel; switching channels does not carry over that work or conversation.
 - Useful personal facts, goals, preferences, and financial connections are shared across the account. A useful fact learned in either channel can inform relevant answers in another channel without making its transcript or task records available there.
-- Chat can inspect and control only its own channel's jobs and scheduled tasks. Phase 1 offers no cross-channel history lookup, destination selector, or work transfer, including on request.
-- Users can control shared personal memory and preferences and the account-wide proactive on/off setting in chat. To add or remove financial connections, link or disconnect a channel, or change preferred-channel routing, the assistant links to the website dashboard.
+- Chat can inspect and control only its own channel's jobs and scheduled tasks. Phase 1 offers no cross-channel history lookup, destination selector for requested work, or work transfer, including on request.
+- Users can control shared personal memory and preferences and select proactive insight delivery channels in chat. Chat and the website dashboard update the same account setting: iMessage, WhatsApp, both, or neither. Each newly linked channel is selected by default. Insights go only to selected channels, without automatic fallback; with neither selected, proactive investigation and delivery are disabled, including unsent insights.
+- To add or remove financial connections or link or disconnect a channel, the assistant links to the website dashboard. The proactive insight delivery channels setting routes only proactive insights; chat replies, requested work, and scheduled work retain their originating channel. Scheduled work does not retrieve another channel's history, tasks, or results.
 - The assistant uses connected or supplied portfolio information when relevant, including for questions about holdings, composition, changes, and supported position risks.
 - The assistant leads with the answer or main finding, followed by key numbers and only the reasoning and evidence needed to understand it. Short paragraphs or bullets keep the result readable in the channel.
 - Follow-up questions provide deeper detail. Concision preserves important reasoning and evidence rather than imposing a rigid word count.
@@ -91,17 +92,37 @@ As a user, I want clear boundaries so that I can tell which financial help the a
 - If asked to place an order, transfer assets, or perform another financial action, the assistant explains that Phase 1 cannot carry out the action and never claims it did.
 - If asked for unrelated work, the assistant briefly explains the domain boundary; adding a new capability does not change these limits.
 
+### 2.7 US-CHAT-07 — Reach human support during support hours
+
+**Status: accepted capability; support hours, staffing, response expectations, and handoff details remain open in the [open decisions](../TODO.md).**
+
+As a user, I want to reach a real support person in chat during support hours so that someone can help when I need human assistance.
+
+- The user can ask for a human in either linked channel and reach staffed human support during published support hours. Forwarding a request to a staff tool alone does not satisfy the handoff.
+- Support hours and their time zone are visible to the user, including when asking chat about availability.
+- The assistant acknowledges the request and describes it as pending until a human joins; it does not claim that a person is present merely because the request was forwarded.
+- Human support replies reach the user in the originating iMessage or WhatsApp conversation. The user can tell whether a reply comes from the AI assistant or a human; using support does not require the user to join a staff tool.
+- Support staff receive the issue and the authorized account and originating-channel context needed to help. The handoff does not expose another channel's history, tasks, or results.
+- While a human owns the support conversation, human and AI replies must not conflict. The ownership and return-to-assistant mechanism remain open.
+- Outside support hours, the user sees the next opening and how their request or contact will be handled. The experience does not promise 24-hour staffing or an unagreed response time.
+- Human support does not grant permission to place trades, transfer assets, or perform other financial execution.
+
+Support tooling, including proposed staff use of Slack, remains open. Apple-specific support controls must meet applicable requirements with the minimum necessary controls; the exact controls and their effect on the chat experience remain open in the [open decisions](../TODO.md).
+
 ## 3. Observable acceptance examples
 
 These examples exercise the stories without limiting the assistant to a fixed request catalog.
 
 | Situation | Observable result |
 | --- | --- |
-| The user messages before signup. | The onboarding reply links to website signup/sign-in; assistant access follows signup and channel linking. |
+| The user messages before signup. | The onboarding reply links to website signup/sign-in; assistant access follows signup and verified channel linking. |
 | A signed-up user asks a general financial question before connecting a financial account. | The assistant answers from available information without requiring a financial connection. |
 | The user switches between linked iMessage and WhatsApp channels. | Each channel keeps its own conversation, history, current context, jobs, tasks, and results while useful personal memory and financial connections remain shared. |
 | The user asks WhatsApp to retrieve an iMessage task result or send a task result to iMessage. | WhatsApp cannot retrieve, control, or route work from another channel; the user manages the work from its originating channel. |
-| The user asks chat to disconnect a financial source or change the preferred channel. | The assistant links to the website dashboard, where the user manages those settings. |
+| The user asks chat to disconnect a financial source. | The assistant links to the website dashboard, where the user manages that setting. |
+| The user selects iMessage, WhatsApp, both, or neither for proactive insights in chat or on the website. | Both interfaces show the same proactive insight delivery channels setting; sends use only the selected channels without automatic fallback. |
+| The user links a new channel. | The newly linked channel is selected for proactive insights by default; existing channel choices remain intact. |
+| The user leaves no proactive insight delivery channels selected. | Proactive investigations are disabled, and unsent proactive insights are not sent. |
 | The user asks about total exposure, then asks which source contributes most. | The follow-up uses the same understood scope and explains each source's contribution. |
 | A request needs research, significant calculations, or background execution. | The assistant completes the needed work and returns a concise text reply with the main finding, key numbers, and relevant reasoning and evidence; follow-ups can explore the detail. |
 | A scheduled result or proactive insight arrives in chat. | The message follows the same text-first briefing format as a direct answer. |
@@ -121,6 +142,11 @@ These examples exercise the stories without limiting the assistant to a fixed re
 | The user asks chat to list longer work or report its status. | The assistant lists only that channel's background work or explains a run from that channel. |
 | The user asks to stop longer work. | The assistant acknowledges the request, reports the actual outcome, and does not describe work as stopped before that outcome is known. |
 | A user requests a specific trade or an unrelated sports report. | The assistant states the applicable boundary and makes no claim of execution. |
+| The user asks for a human during published support hours. | The assistant acknowledges the pending request; staffed human support joins and replies in the same channel with a clear human identity. Forwarding alone is not reported as a completed handoff. |
+| The user asks for support outside published hours. | The reply gives the next opening, the time zone, and how the request or contact will be handled without inventing a response-time promise. |
+| Support staff receive a handoff from WhatsApp. | They receive the issue and necessary authorized account and WhatsApp context without iMessage history, tasks, or results. |
+| A human owns the support conversation while an AI reply becomes ready. | Reply coordination prevents conflicting human and AI replies; the user can identify who is responding. |
+| The user asks human support to execute a trade. | The support handoff does not expand Phase 1 financial authority or result in a claim of execution. |
 
 ## 4. Open decisions
 
@@ -128,5 +154,6 @@ These examples exercise the stories without limiting the assistant to a fixed re
 - **Research:** supported sources, access methods, source attribution format, and claim-specific freshness requirements.
 - **Low-priority uploads and artifacts:** supported formats, file and analysis limits, artifact formats when enabled, access duration, and retention.
 - **Continued work:** global capacity, exact cancellation and in-flight behavior, unscheduled one-off retry and replay behavior, interrupted-work recovery, and resource budgets. Scheduled failure behavior follows the task stories. In-flight steering remains low priority.
+- **Human support:** support hours and time zone, staffing, response expectations, out-of-hours handling, staff tooling and access, handoff and reply ownership, and any Apple-specific controls follow the [open decisions](../TODO.md).
 
 The [portfolio stories](portfolio.md), [task stories](tasks.md), and [memory stories](memory.md) cover the connected experience, ongoing requests, and personalization alongside these conversations.

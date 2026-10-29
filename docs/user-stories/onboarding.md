@@ -2,24 +2,24 @@
 
 ## 1. Status and scope
 
-**Status: the signup order, button-based channel linking, persistent website dashboard, connection experiences, website portfolio preview, and account/channel continuity below are accepted.** Access to general financial questions without connected financial accounts and the controls identified in `US-ONB-07` are also accepted. Choices explicitly marked open remain proposed; phone changes and recovery are low priority, and account deletion is deferred.
+**Status: phone signup followed by the persistent website dashboard, channel linking through QR codes or direct buttons, connection experiences, website portfolio preview, and account/channel continuity below are accepted.** Access to general financial questions without connected financial accounts and the controls identified in `US-ONB-07` are also accepted. Choices explicitly marked open remain proposed; phone changes and recovery are low priority, and account deletion is deferred.
 
 The governing [product requirements](../requirements.md) define Phase 1 as read-only financial information, analysis, and monitoring. Onboarding must not grant trading authority or promise specific buy, sell, or rebalance recommendations.
 
-**Website signup and channel linking are required before assistant chat; financial connections are optional.** The user signs up and logs in with a phone number and an SMS code, then links iMessage or WhatsApp before optionally connecting financial sources. Only phone verification is required for MyStacks signup. Name, goals, and preferences are optional and can be learned through chat; financial providers may require their own setup. A stable MyStacks account ID owns the user's saved state, and each messaging channel is separately verified and linked to that account.
+**Website signup and channel linking are required before assistant chat; financial connections are optional.** The user signs up and logs in with a phone number and an SMS code, then lands on the persistent dashboard. They can connect financial sources or link iMessage or WhatsApp in either order; a verified channel link is required only before assistant chat. Only phone verification is required for MyStacks signup. Name, goals, and preferences are optional and can be learned through chat; financial providers may require their own setup. A stable MyStacks account ID owns the user's saved state, and each messaging channel is separately verified and linked to that account.
 
-Chat is the default interaction surface for questions and ongoing work. The persistent website dashboard manages financial connections, messaging channels, and delivery-routing settings and shows an immediate portfolio preview after connection. Required connection categories remain wallet addresses, Binance, and Hyperliquid, with Hyperliquid at **low priority**. The source chooser lists supported providers, including exchanges or brokerages where available. Supported account types, assets, balances, and positions depend on the provider or connector, and the user sees the available coverage before confirming a connection. An EVM wallet becomes a connected source only after successful wallet-control verification.
+Chat is the default interaction surface for questions and ongoing work. The persistent website dashboard manages financial connections, messaging channels, and proactive insight delivery channels and shows an immediate portfolio preview after connection. Chat can also change the same proactive insight delivery channels setting. Required connection categories remain wallet addresses, Binance, and Hyperliquid, with Hyperliquid at **low priority**. The source chooser lists supported providers, including exchanges or brokerages where available. Supported account types, assets, balances, and positions depend on the provider or connector, and the user sees the available coverage before confirming a connection. EVM and Solana wallets are supported source categories; a wallet becomes a connected source only after successful wallet-control verification. Exact supported networks, wallet types, and provider coverage remain open.
 
-The [technical design](../design/onboarding.md) owns implementation proposals and remains **tentative pending the overall architecture design round**. The authentication provider, detailed verification mechanisms, and recovery policy remain open. Phone-number changes, lost-number recovery, and email recovery are **low priority**. QR linking and WhatsApp login are deferred.
+The [technical design](../design/onboarding.md) owns implementation proposals and remains **tentative pending the overall architecture design round**. The authentication provider, detailed verification mechanisms, and recovery policy remain open. Phone-number changes, lost-number recovery, and email recovery are **low priority**. WhatsApp login is deferred; signup uses the website phone-verification flow.
 
 ## 2. Experience outline
 
-1. Sign up on the phone-friendly website using a phone number and an SMS code before starting assistant chat.
-2. Use **Open iMessage** or **Open WhatsApp** on phone or desktop, then send the prepared linking message and wait for **Connected**.
-3. In the dashboard's **Add account** flow, search supported sources, choose **Connect a wallet**, or **Skip for now**.
-4. After each connection, see its result and available portfolio preview, then choose **Add more** or **Continue to chat**.
-5. Ask portfolio questions or general financial questions in the linked channel, and optionally share preferences or create an ongoing task.
-6. Return to the same website dashboard to add or remove financial connections, link or disconnect messaging channels, or change the preferred proactive channel. Chat controls personal preferences, the account-wide proactive on/off setting, and that channel's own tasks.
+1. Sign up on the phone-friendly website using a phone number and an SMS code, then land on the persistent dashboard.
+2. Choose whether to connect financial sources or link messaging channels first. In **Add account**, search supported sources, choose **Connect a wallet**, or **Skip for now**.
+3. To link a channel, scan its iMessage or WhatsApp QR code or use **Open iMessage** or **Open WhatsApp**, then send the prepared linking message and wait for **Connected**.
+4. After each financial connection, see its result and available portfolio preview, then choose **Add more** or **Continue to chat**. If no channel is linked, **Continue to chat** prompts channel linking first.
+5. Ask portfolio questions or general financial questions in a verified linked channel, and optionally share preferences or create an ongoing task. Financial connections remain optional.
+6. Return to the same website dashboard to add or remove financial connections, link or disconnect messaging channels, or select proactive insight delivery channels. The website and chat control the same selection of one, both, or none of the linked channels. Chat also controls personal preferences and that channel's own tasks.
 
 Connecting every account is not a prerequisite for value. A skipped or failed connection does not imply a zero balance.
 
@@ -31,10 +31,10 @@ Connecting every account is not a prerequisite for value. A skipped or failed co
 
 **As a new user, I want to sign up on my phone and link my messaging channels so that web setup and chat use one MyStacks account.**
 
-- The user must complete website signup with a phone number and an SMS code, then link a messaging channel before using assistant chat. Connecting a financial source remains optional, and name, goals, and preferences do not block signup.
+- After website signup with a phone number and an SMS code, the user lands on the persistent dashboard and can connect financial sources or link messaging channels in either order. A verified messaging-channel link is required before assistant chat. Connecting a financial source remains optional, and name, goals, and preferences do not block signup.
 - Each MyStacks account has one primary verified phone number, and a phone number can belong to only one account at a time. The account persists when its primary number changes.
 - The user can link iMessage, WhatsApp, or both to the same account; each chosen channel requires separate verification. A matching phone number or email address does not implicitly link or merge accounts or channels.
-- On phone and desktop, **Open iMessage** and **Open WhatsApp** open a prepared linking message that the user sends. The website offers the recipient and message for copying if the button cannot open the app, and shows **Connected** only after verification succeeds.
+- On phone and desktop, the dashboard shows a QR code for each of iMessage and WhatsApp alongside **Open iMessage** and **Open WhatsApp**. Scanning a QR code or using a button opens a prepared linking message that the user sends. The website offers the recipient and message for copying if the handoff cannot open the app, and shows **Connected** only after separate channel verification succeeds. Displaying or scanning a QR code alone does not verify or link a channel.
 - If the user messages before signup, the onboarding reply provides a signup/sign-in link to the same website flow. Assistant access starts after signup and channel linking.
 - Future messaging channels, including SMS, also require their own verified link to the account; the signup phone number alone does not establish a messaging-channel link.
 - The persistent website dashboard supports signup, financial connections, messaging-channel settings, and the immediate portfolio preview. New and returning users use the same **Add account** flow; chat requests to add or manage connections link there.
@@ -52,25 +52,25 @@ Connecting every account is not a prerequisite for value. A skipped or failed co
 - The dashboard's **Add account** flow lets new and returning users search supported providers, choose **Connect a wallet**, or **Skip for now**. It presents wallet addresses, Binance, and Hyperliquid with their supported coverage and required access; Hyperliquid remains low priority.
 - Provider search offers exchanges or brokerages only where supported; the chooser does not promise coverage for an unsupported provider or account type.
 - The user can choose the supported accounts or addresses they want to include and leave others for later.
-- After each connection, the result and available portfolio preview offer **Add more** and **Continue to chat**, so the user can keep adding accounts.
+- After each connection, the result and available portfolio preview offer **Add more** and **Continue to chat**, so the user can keep adding accounts. If no messaging channel is linked, **Continue to chat** prompts channel linking before assistant access.
 - If a provider is unavailable, the user can retry, choose another source, or continue and add it later.
 - If the signed-up user skips, they can ask general financial questions in a linked channel and return to connections later.
 
-### 3.3 US-ONB-03 — Verify and connect an EVM wallet
+### 3.3 US-ONB-03 — Verify and connect an EVM or Solana wallet
 
-**Status: accepted flow; supported wallet types and networks remain open.**
+**Status: EVM and Solana wallet support and the verification flow are accepted; exact wallet types, networks, and provider coverage remain open. The Solana verification mechanism remains open.**
 
-**As a user, I want to connect my EVM wallet and sign a readable message so that MyStacks can verify my control before saving and tracking the wallet.**
+**As a user, I want to connect my EVM or Solana wallet and sign a readable off-chain message so that MyStacks can verify my control before saving and tracking the wallet.**
 
 - On the companion website, the user connects a supported wallet, confirms the selected address and network, and signs a readable message for wallet-control verification. Connecting the wallet alone does not complete verification.
 - The product explains that this off-chain signature establishes a read-only connection and grants no transaction or token-approval authority. MyStacks identity and attached-wallet control are separate bindings.
-- Only successful wallet-control verification creates a verified EVM connection and starts portfolio reads or monitoring. Typing an arbitrary address does not create a tracked connection.
-- A cancelled, expired, invalid, or unsupported pending connection attempt creates no verified EVM connection and starts no portfolio reads or monitoring for that attempt. Existing verified EVM connections remain active, and the user sees a clear correction or retry path.
-- The same verification rule applies when setup starts through web, chat, a tool, a task, or an import. Uploaded evidence alone does not create a verified EVM connection or start tracking.
+- Only successful wallet-control verification creates a verified wallet connection and starts portfolio reads or monitoring. Typing an arbitrary address does not create a tracked connection.
+- A cancelled, expired, invalid, or unsupported pending connection attempt creates no verified wallet connection and starts no portfolio reads or monitoring for that attempt. Existing verified wallet connections remain active, and the user sees a clear correction or retry path.
+- The same verification rule applies when setup starts through web, chat, a tool, a task, or an import. Uploaded evidence alone does not create a verified wallet connection or start tracking.
 - After verification, routine reads and monitoring can continue without daily signatures or an open wallet. Expiry of the verification attempt does not expire the completed connection.
 - Disconnecting on the website stops new reads and excludes that source from the current portfolio. Connecting a new address or reconnecting a disconnected wallet requires fresh wallet-control verification. Completed EVM tracking has no periodic expiry.
 
-The [wallet connection decision](../ADRS/0007-verified-evm-wallet-connections.md) owns the accepted rationale. The [technical design](../design/onboarding.md#42-evm-wallet-control-verification) owns the verification mechanism.
+The [wallet connection decision](../ADRS/0007-verified-evm-wallet-connections.md) owns the accepted rationale. The technical design owns [EVM verification](../design/onboarding.md#42-evm-wallet-control-verification) and the [open Solana mechanism](../design/onboarding.md#43-solana-wallet-control-verification). EVM-specific signing standards do not define the Solana flow.
 
 ### 3.4 US-ONB-04 — Connect Binance with read-only access
 
@@ -78,10 +78,10 @@ The [wallet connection decision](../ADRS/0007-verified-evm-wallet-connections.md
 
 **As a Binance user, I want clear connection instructions and visible permissions so that I can share supported account information without granting financial action authority.**
 
-- The user chooses **Connect Binance** and follows a guided secure connection on the companion website.
+- The user chooses **Connect Binance** on the dashboard. The user completes the supported provider’s secure authorization flow and returns to the dashboard with connection status and coverage.
 - Before confirmation, the user reviews the available account coverage and required read-only access. The connection grants no trading or withdrawal authority.
 - Chat does not ask the user to share API secrets or other connection secrets.
-- After confirmation, the user sees import progress and which supported accounts are included.
+- After authorization, the dashboard shows connection and read progress and which supported accounts are included.
 - If setup or import fails, the product explains the problem and offers a clear correction or retry path without claiming that assets were loaded.
 
 ### 3.5 US-ONB-05 — Understand the first read
@@ -102,7 +102,7 @@ The [wallet connection decision](../ADRS/0007-verified-evm-wallet-connections.md
 
 - After each connection, the website shows its result and a preview of available portfolio value, holdings, positions, and included accounts, with **Add more** and **Continue to chat**.
 - Useful results remain available while other sources load or need attention. The website shows source availability, and unavailable data is never presented as a zero balance.
-- Values use USD by default while preserving native asset quantities. Totals and conclusions use the available supported coverage; portfolio-value changes and investment gains or losses are distinct, and deposits are not presented as profit. A change appears only when its required comparison evidence exists.
+- The current portfolio uses supported provider data. Values use USD by default while preserving native asset quantities. Totals and conclusions use the available supported coverage; portfolio-value changes and investment gains or losses are distinct, and deposits are not presented as profit. Provider-supplied history or metrics may appear when supported and backed by the required evidence. A MyStacks indexer and historical reconstruction or P&L requiring MyStacks infrastructure are deferred at low priority.
 - The user can request portfolio answers in chat and follow up on the snapshot within Phase 1 informational scope. Answers highlight available results without routine missing-data warnings or unsupported claims of completeness.
 
 ### 3.7 US-ONB-07 — Choose what happens after first value
@@ -111,8 +111,10 @@ The [wallet connection decision](../ADRS/0007-verified-evm-wallet-connections.md
 
 - The user can choose **Add more** on the website, share a useful preference in chat, or continue without either step.
 - The morning digest offer explains its informational purpose, delivery destination, and best-effort timing before the user chooses an available option.
-- **Proactive controls:** proactive insights are on by default and have one account-wide on/off control in chat. The first linked channel becomes preferred, and linking another does not switch it. The user changes the preferred channel on the website. If it disconnects, proactive delivery switches to another remaining linked channel and the website shows the change; with no linked channel, delivery pauses while the on/off preference is retained.
-- **Task controls:** explicitly requested summaries and other scheduled tasks belong to the channel that creates them. Chat can inspect, change, pause, resume, or cancel only that channel's jobs and tasks, with no alternative destination in Phase 1. Proactive fallback does not reroute scheduled tasks; the [task stories](tasks.md) own their lifecycle.
+- **Proactive insight delivery channels:** the dashboard lets the user select one, both, or none of their linked messaging channels. The website and chat change the same account-wide selection. Every newly linked channel is selected by default, including when the previous selection was empty.
+- With no proactive insight delivery channels selected, proactive investigations and unsent proactive delivery stop. Disconnecting a channel removes that destination from the selection and never selects another unselected channel.
+- Each proactive investigation runs once account-wide. Each qualifying insight goes to all selected, verified, currently eligible channels while preserving separate channel histories.
+- **Task controls:** explicitly requested summaries and other scheduled tasks belong to the channel that creates them. Chat can inspect, change, pause, resume, or cancel only that channel's jobs and tasks, with no alternative destination in Phase 1. Changes to proactive insight delivery channels do not reroute scheduled tasks; the [task stories](tasks.md) own their lifecycle.
 - The website detects and saves the device timezone once during onboarding. Users explicitly change their default in the web app or chat; automatic re-detection on later visits is deferred. A timezone specified for a task affects only that task, and existing tasks keep their assigned zone unless edited. Scheduling asks for a timezone only if unknown and a morning time if none is known. Confirmations show the selected time and timezone.
 
 ### 3.8 US-ONB-08 — Manage connected sources
@@ -136,9 +138,9 @@ The [wallet connection decision](../ADRS/0007-verified-evm-wallet-connections.md
 - If sign-in expires, the user sees how to authenticate again and retains completed setup.
 - The ordinary phone-number change flow verifies the current and new numbers. Changing the primary phone number preserves the same account ID, conversation histories, shared personal memory, preferences, financial connections, tasks, results, and separately linked messaging channels. The new number cannot remain linked to another account.
 - A changed phone number or messaging identity requires the appropriate verified change or recovery flow before existing financial information becomes accessible; the detailed experience remains open.
-- Only the website can add or disconnect messaging channels and change delivery-routing settings. Chat can explain the controls and link to settings. A channel link does not replace the account's primary login number.
+- Only the website can add or disconnect messaging channels. The website and chat can change the same proactive insight delivery channels setting. A channel link does not replace the account's primary login number.
 - Disconnecting a channel pauses its scheduled tasks, including future runs and pending deliveries, while retaining their history and results. Relinking the original channel does not resume them automatically; the user resumes from that channel. Already-started sends cannot be recalled. One-off jobs and active attempts retain the cancellation and outcome rules in the [task stories](tasks.md).
-- Proactive insights follow their separate fallback rule in `US-ONB-07`; scheduled tasks remain with their originating channel.
+- Proactive insights follow the selected proactive insight delivery channels in `US-ONB-07`; scheduled tasks remain with their originating channel.
 
 ### 3.10 US-ONB-10 — Understand and control account data
 
@@ -171,11 +173,12 @@ The [wallet connection decision](../ADRS/0007-verified-evm-wallet-connections.md
 | Decision | What needs agreement |
 | --- | --- |
 | Account entry and continuity | Authentication provider, supported channel sender types, and exact recovery evidence and policy. Phone-number changes, lost-number recovery, and email recovery are low priority. |
-| Launch coverage | Supported wallet networks and types, EVM cross-chain proof policy, and how provider-dependent coverage limits are shown to users. |
+| Launch coverage | Supported EVM and Solana wallet networks and types, Solana provider coverage, EVM cross-chain proof policy, and how provider-dependent coverage limits are shown to users. |
 | Hyperliquid account connection | Which verified wallets qualify and how supported coverage and connection limits are explained. |
-| First portfolio snapshot | The useful minimum for each source, valuation sources, formulas, and supported metrics for portfolio-value changes and investment gains or losses. USD is the default display currency; alternate currencies are low priority. |
+| First portfolio snapshot | The useful minimum for each source, valuation sources, formulas, and supported provider-supplied history and metrics for portfolio-value changes and investment gains or losses. A MyStacks indexer and historical reconstruction or P&L requiring MyStacks infrastructure are deferred at low priority. USD is the default display currency; alternate currencies are low priority. |
 | Personalization | Which optional preferences to ask for after first value and how the automatic-memory experience is introduced. |
-| Notifications | How to explain best-effort monitoring limits, pending proactive delivery after routing changes, and exact daylight-saving mechanics within the accepted timezone rules. |
+| Notifications | How to explain best-effort monitoring limits, pending proactive delivery after changes to proactive insight delivery channels, and exact daylight-saving mechanics within the accepted timezone rules. |
+| Apple messaging controls | The [Apple messaging TODO](../TODO.md) owns unresolved service-specific controls; only the minimum controls required by the selected service should shape its delivery experience. |
 | Data policy | Retention after disconnect, review and export scope, and how previously read information is presented. Account deletion is deferred. |
 
 These decisions need agreement before the affected stories become implementation acceptance criteria.

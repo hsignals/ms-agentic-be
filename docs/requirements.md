@@ -47,13 +47,13 @@ Specific investment recommendations remain deferred pending the business's **lic
 
 ### 3.1 Coverage
 
-**Phase 1 coverage** must include on-chain wallet addresses, Binance accounts, and Hyperliquid positions. Connections must support the informational experience without requiring financial execution authority.
+**Phase 1 coverage** must include EVM and Solana wallets, Binance accounts, and Hyperliquid positions. Connections must support the informational experience without requiring financial execution authority.
 
 **Hyperliquid support is low priority.** It remains in product scope; delivery sequencing is not selected.
 
 The available accounts, assets, balances, and positions depend on the selected connector and provider. The connection experience must show supported coverage and unavailable or unsupported information clearly; detailed coverage belongs to provider selection.
 
-**EVM wallet connections require wallet-control verification.** The user must connect a supported wallet on the companion website and sign a readable off-chain message. Only after the backend verifies control may MyStacks save the wallet as a tracked connection and start importing its portfolio data. Entering an address, connecting a wallet without signing, or supplying a file must not establish a verified connection; chat and scheduled tracking must enforce the same boundary.
+**EVM and Solana wallet connections require wallet-control verification.** The user must connect a supported wallet on the companion website and sign a readable off-chain message. Only after the backend verifies control may MyStacks save the wallet as a tracked connection and start importing its portfolio data. Entering an address, connecting a wallet without signing, or supplying a file must not establish a verified connection; chat and scheduled tracking must enforce the same boundary.
 
 Verification enables read-only portfolio tracking without granting transaction or token-approval authority. Once connected, routine reads and monitoring must not require daily signatures or an open wallet app. A short-lived verification attempt does not determine the lifetime of the established connection; disconnecting stops future reads through that connection.
 
@@ -63,7 +63,7 @@ Hyperliquid setup must offer eligible wallets the user has already verified, wit
 
 ### 3.2 Portfolio understanding
 
-The assistant must combine available holdings and positions across supported connections into a coherent portfolio view. Users must be able to ask about the combined portfolio and understand the contribution of individual sources.
+The assistant must combine current provider-supplied holdings and positions across supported connections into a coherent portfolio view. Users must be able to ask about the combined portfolio and understand the contribution of individual sources.
 
 “Full portfolio” means the **supported, connected or user-supplied portion** of the user's assets. It must not imply knowledge of accounts or assets the user has not connected or supplied.
 
@@ -71,12 +71,12 @@ The experience must support questions about:
 
 - Total holdings and positions across connections.
 - Portfolio composition and concentration.
-- Portfolio changes, including changes over 24 hours.
+- Portfolio changes, including changes over 24 hours when provider history and inputs support the comparison.
 - Position risks, including proximity to liquidation where supported data is available.
 
 These are examples of required outcomes, not a complete intent catalog. **Portfolio values default to USD**, with native asset quantities preserved. Choosing another display currency is low priority. Value changes must be distinguished from investment gains and losses: separate deposits and withdrawals when the available evidence supports it, and describe a balance change as a balance change when investment performance cannot be established. Exact valuation and performance formulas remain provider-dependent design decisions.
 
-Phase 1 uses available provider data and code-based calculations on a best-effort basis, without operating a MyStacks indexer. Reuse suitable provider-calculated values and fetch the evidence needed for the requested calculation. Common definitions and reusable calculation code must keep website, chat, and scheduled results consistent. Historical storage, an indexer, or other data infrastructure may be added for concrete capability needs; selecting this approach does not imply that unsupported historical data exists.
+Phase 1 uses available provider data and code-based calculations on a best-effort basis, without operating a MyStacks indexer. Reuse suitable provider-calculated values and fetch the evidence needed for the requested calculation. Common definitions and reusable calculation code must keep website, chat, and scheduled results consistent. Historical P&L and reconstruction that require MyStacks to collect its own history or operate an indexer are deferred at low priority. Provider-supplied historical data and metrics remain usable when their coverage and inputs support the requested answer; unavailable history must not be reconstructed through new indexing infrastructure in Phase 1.
 
 ## 4. Conversational experience and personalization
 
@@ -94,11 +94,11 @@ Adding a relevant skill or tool should let the assistant handle new requests **w
 
 ### 4.2 Interaction surfaces and responsiveness
 
-**Chat is the default assistant surface after required signup.** The website provides signup and a persistent dashboard for financial connections, messaging channels, and portfolio previews. New and returning users use the same **Add account** flow. The launch chat channels are **iMessage and WhatsApp**. Task management remains in the originating chat; the website manages channel links and preferred proactive-message routing.
+**Chat is the default assistant surface after required signup.** The website provides signup and a persistent dashboard for financial connections, messaging channels, and portfolio previews. New and returning users use the same **Add account** flow. The launch chat channels are **iMessage and WhatsApp**. Task management remains in the originating chat; the website manages channel links, and both web and chat manage proactive insight delivery channels.
 
 **Phase 1 replies and reports are text-first, concise, precise, and readable in chat.** Answers, research summaries, scheduled updates, and proactive messages lead with the main finding and include key numbers, relevant evidence, and only the explanation needed to understand them. Short paragraphs and bullets support reading; follow-up questions provide deeper detail. Concision must preserve information needed to answer correctly rather than impose an arbitrary word limit. Image replies are low priority. Extensive deep-research reports and polished website report artifacts are deferred; available-source research, substantial calculations, and background work remain in scope.
 
-Onboarding follows **phone/SMS signup → channel linking → optional financial connections**. The searchable chooser presents supported sources, with a **Connect a wallet** option and **Skip for now**. Financial authorization may use mobile web or provider apps. After a connection, users can choose **Add more** or **Continue to chat**; adding one account does not end setup automatically. The same dashboard remains available for later additions.
+Onboarding follows **phone/SMS signup → dashboard**. From the dashboard, users may connect financial sources and link messaging channels in either order. A verified channel link is required before assistant chat; financial connections remain optional. The searchable chooser presents supported sources, with a **Connect a wallet** option and **Skip for now**. For Binance, the user completes the supported provider’s secure authorization flow and returns to the dashboard with connection status and coverage. Financial authorization may use mobile web or provider apps; OAuth availability and exact setup steps depend on the supported provider. After a connection, users can choose **Add more** or **Continue to chat**; adding one account does not end setup automatically. The same dashboard remains available for later additions.
 
 Once useful portfolio data is available after connection, the website must show a preview of available value, holdings, and positions with their included accounts, without waiting for every connected source. Users request portfolio answers in chat. Failed or cancelled setup preserves completed connections and offers an explanation, retry, another source, or continuation in chat from the same dashboard.
 
@@ -126,13 +126,19 @@ In chat, users must be able to inspect remembered personal context, correct it, 
 
 Users must sign up before any assistant chat. The primary signup and login method is a **phone number verified by an SMS code**, linked to a stable MyStacks account. Only phone verification is required for MyStacks signup; name, goals, and preferences are optional and may be learned through chat. Financial providers may request their own setup information. Each account has one primary verified phone number, and a phone number belongs to one account at a time. Phone-number changes, lost-number recovery, and email recovery are low priority. An authorized number change must preserve the account and its state; recovery evidence and safe number-reassignment handling remain open.
 
-Messaging channels are separately verified links to that account. On phone or desktop, an **Open iMessage** or **Open WhatsApp** button prepares a linking message that the user sends; copying the recipient and message provides a fallback. Successful verification changes the website status to **Connected**. QR linking and WhatsApp-based login are deferred. Matching phone numbers or email addresses must not implicitly link or merge accounts or channels. Signup identity, channel access, and financial connection authority remain distinct.
+Messaging channels are separately verified links to that account. The dashboard offers QR codes and **Open iMessage** or **Open WhatsApp** buttons to open the linking flow on the chosen device. The user sends the prepared linking message; copying the recipient and message provides a fallback. Successful verification changes the website status to **Connected**. Opening a link or scanning a QR code alone does not verify a channel. WhatsApp-based login is deferred. Matching phone numbers or email addresses must not implicitly link or merge accounts or channels. Signup identity, channel access, and financial connection authority remain distinct.
 
 Each linked channel has its own conversation history, current context, background jobs, scheduled tasks, and results. Chat can inspect or manage work only from that channel and cannot select another delivery channel. Useful personal memory and financial connections are shared across the account; facts learned in one channel may help another. Memory corrections and forgetting apply account-wide. Shared memory must not act as a copy of channel transcripts, task logs, or results. Cross-channel work and conversation handoff are deferred.
 
 Messaging channels are added and disconnected on the website; chat may explain these settings and link to them. Disconnecting a channel preserves the account and shared data but pauses its scheduled tasks and pending deliveries. Relinking does not resume those tasks automatically; users resume them from that channel. A message from an unlinked sender receives a signup or sign-in link into the same onboarding flow before assistant conversation begins.
 
 Financial connections remain optional, so a signed-up user with a linked channel can ask general financial questions without connecting an account. Supported sender identities and verification mechanisms remain architectural choices. Account deletion is deferred; export and broader retained-data controls remain proposed capabilities.
+
+### 4.5 Human support
+
+Users must be able to request a real person in chat during published support hours and receive the human reply in the originating channel. The product must show support hours and timezone, distinguish a waiting request from a human taking over, and provide a clear out-of-hours response. Staff receive only the context needed for the issue within the account and channel boundaries. Human support must preserve Phase 1 financial authority and avoid conflicting assistant replies during the handoff.
+
+The accepted [human-support story](user-stories/assistant.md#27-us-chat-07--reach-human-support-during-support-hours) owns the experience. Staffing, hours, response expectations, and the staff-side tool remain open in [the TODO list](TODO.md#2-human-support); Slack is a proposed option.
 
 ## 5. Proactive information and ongoing tasks
 
@@ -176,11 +182,11 @@ Proactive investigations begin within **defined financial scopes**. The assistan
 
 **High precision takes priority, accepting lower recall to avoid spam.** Suppress uncertain, minor, repetitive, and low-value findings; stay quiet when nothing qualifies. Resurface a finding only when an important change or new useful evidence warrants it. Exact criteria and thresholds depend on provider evidence and later design, without a numeric precision guarantee. This attention filter governs unsolicited initiative; explicitly scheduled updates follow the user's request, including quiet-day summaries.
 
-**Proactive messages are on by default.** Users control them with one account-level binary on/off setting in chat, such as “no proactive messages” or “turn on proactive messages,” and receive a brief confirmation. A proactive investigation may start only while this setting is on and a verified linked destination exists. Turning it off prevents future investigations and suppresses unsent proactive messages, including findings from work already running. Explicitly scheduled tasks continue under their own controls. There is no user-facing fewer/more setting for proactive messages.
+**Every newly linked messaging channel is selected for proactive insights by default**, including when no channel was previously selected. Users choose one, both, or none of their linked channels through the dashboard or chat; both surfaces update the same **proactive insight delivery channels** setting and confirm changes. A clear request such as “No proactive messages” clears the selection. A request to enable insights in the current channel selects that channel; material ambiguity about destinations requires clarification. With no channels selected, future proactive investigations stop and unsent proactive messages are suppressed, including findings from work already running. Explicitly scheduled tasks retain their own controls. There is no user-facing fewer/more setting for proactive messages.
 
-Proactive messages must go to **one preferred verified channel**, without duplicating each message across channels. The first linked channel becomes preferred; linking another preserves that preference. Users change preferred-channel routing on the website. If it disconnects and another channel remains, switch the proactive preference to the remaining channel and show the change. If none remain, pause proactive delivery until a channel is linked, preserving the on/off preference. This fallback applies to proactive insights; scheduled tasks retain their fixed channel and pause when it disconnects.
+A proactive investigation requires at least one selected, verified, currently eligible destination. Investigate once per account and deliver each qualifying insight to all selected eligible channels, checking each destination again before sending. Removing or disconnecting a selected channel suppresses unsent delivery there without selecting another channel. Delivery continues to other selected eligible channels. Intentional delivery to multiple selected channels does not combine their conversations or reroute their scheduled tasks; relinking a channel does not resume its paused tasks.
 
-Proactive findings already sent, their timing, and their supporting evidence must inform later investigations so the assistant can judge meaningful change and avoid repetition, including after a preferred-channel change. This account-level notification history is separate from personal memory and channel transcripts.
+Proactive findings already sent, their timing, and their supporting evidence must inform later investigations so the assistant can judge meaningful change and avoid repetition, including after proactive insight delivery channels change. This account-level notification history is separate from personal memory and channel transcripts. Record delivery outcomes per channel so a successful send to one destination does not suppress intended delivery to another or hide a failed send.
 
 Before delivering task results, the product must respect **current permissions, task status, and channel binding** rather than rely only on the state captured when work was queued. Future-only edits preserve the active run's original instructions, while current pause, cancellation, and access controls still govern its actions and delivery. Already-started sends cannot be recalled. Retry and repeated-delivery mechanisms remain architectural decisions.
 
@@ -228,8 +234,8 @@ Useful partial information is preferable to withholding an answer until every co
 | Responsiveness | A useful initial response, followed by deeper work when needed. |
 | Continuity | User-specific knowledge that improves assistance over time. |
 | Available information | Best-effort useful answers with accurate scope and no routine missing-data warnings. |
-| Lower-priority capabilities | Hyperliquid support, financial file analysis, image replies, phone-number changes, lost-number and email recovery, and alternate display currencies are low priority; steering running background work is deferred at low priority. |
-| Deferred capabilities | Extensive deep-research reports, polished website report artifacts, automatic timezone re-detection on later website visits, account deletion, QR channel linking, WhatsApp-based login, and cross-channel work or routing from chat. |
+| Lower-priority capabilities | Hyperliquid support, financial file analysis, image replies, phone-number changes, lost-number and email recovery, and alternate display currencies are low priority; steering running background work and historical P&L or reconstruction requiring MyStacks-owned history infrastructure are deferred at low priority. |
+| Deferred capabilities | Extensive deep-research reports, polished website report artifacts, automatic timezone re-detection on later website visits, account deletion, WhatsApp-based login, and cross-channel requested work or task routing from chat. |
 
 ### 7.2 Scale and unresolved business constraints
 
@@ -244,6 +250,9 @@ These examples define product behavior without prescribing an implementation or 
 | Situation | Expected behavior |
 | --- | --- |
 | A user asks a general financial question before connecting an account. | The assistant answers from available information without requiring a financial connection. |
+| A user completes phone OTP verification. | The dashboard opens with financial connections and QR/button channel linking available in either order; chat starts only after channel verification. |
+| A user connects a supported EVM or Solana wallet. | A verified readable off-chain proof of wallet control is required before saving the connection or tracking its portfolio. |
+| A user requests historical P&L unavailable from provider data. | The assistant explains the unavailable evidence; MyStacks-owned history reconstruction and indexing are deferred at low priority. |
 | A person starts assistant chat without a MyStacks account. | The product directs them to signup before the assistant conversation begins. |
 | A user chats through linked iMessage and WhatsApp conversations. | Each keeps its own conversation, jobs, tasks, and results while sharing personal memory and authorized financial connections. |
 | Useful portfolio data becomes ready after connection. | The website shows a preview with Add more and Continue to chat; users request portfolio answers in chat. |
@@ -262,12 +271,14 @@ These examples define product behavior without prescribing an implementation or 
 | The user turns proactive messages off. | Future proactive investigations and unsent proactive insights stop; explicitly scheduled tasks continue unless separately paused or cancelled. |
 | A proactive investigation starts at 8:58 PM and finishes at 9:03 PM. | It may produce a message after 9 PM if the finding qualifies and current delivery eligibility remains valid. |
 | A proactive investigation fails. | The failure is recorded internally; the next normal check can proceed without a routine failure notification or catch-up investigation. |
-| Several channels are linked and proactive messages are enabled. | Each proactive message is delivered to one preferred verified channel, without broadcast duplicates. |
+| The user selects one, both, or no proactive insight delivery channels in web or chat. | Both surfaces show the same selection. Each qualifying insight reaches every selected eligible channel from one investigation; selecting none stops investigations and suppresses unsent delivery. |
+| A user links another messaging channel after clearing the proactive selection. | The newly linked channel is selected by default; the other channel selections remain unchanged. |
 | The user asks what is scheduled or requests a clear task change. | Chat lists or manages only the current channel's tasks and confirms the result; edits affect future runs. |
 | A scheduled task's channel is disconnected and later relinked. | The task pauses without rerouting and stays paused until the user resumes it from that channel. |
 | A financial source required by a scheduled task is disconnected and later restored. | The task pauses if remaining data cannot fulfill its request, explains why once, and stays paused after restoration until explicitly resumed from its channel. |
 | The user changes their default timezone or names a timezone for one new task. | The new default applies to new tasks; a task-specific timezone affects only that task. Existing tasks keep their assigned timezone unless explicitly edited. |
-| The preferred proactive channel is disconnected while another remains linked. | Proactive delivery switches to the remaining channel with a visible website update; scheduled tasks do not follow that switch. |
+| A selected proactive insight delivery channel is disconnected while an unselected one remains linked. | The disconnected destination is removed; the unselected channel remains unselected, and proactive investigation stops if no selected eligible destination remains. |
+| A user requests a human during or outside support hours. | During support hours, the request reaches staffed support and the human replies in the originating channel. Outside support hours, the user sees availability and how the request will be handled. |
 | A user adds money to a connected account. | Supported calculations distinguish the deposit from investment profit; insufficient evidence supports only a balance-change claim. |
 | The user asks the assistant to forget all remembered personal context. | The assistant reports the outcome for personalization memory without claiming all other records were deleted. |
 | One connected source is unavailable. | The assistant gives a useful answer from available information with accurate scope, without a routine missing-source warning. |
@@ -283,7 +294,8 @@ These examples define product behavior without prescribing an implementation or 
 | Data coverage | Connector and provider selection, wallet eligibility, supported networks, and the coverage and limits exposed by each integration. |
 | Portfolio measures | Provider-supported metrics, valuation sources, performance formulas, and calculation of external cash flows within the accepted USD and evidence rules. |
 | Alert evaluation | Provider-supported risk definitions, evidence and attention thresholds, freshness requirements by claim, repeat-suppression mechanisms, and any numeric precision targets within the accepted precision-first policy. |
-| Interaction details | Supported channel identities, linking verification mechanics, device handoff compatibility, and response-time targets. |
+| Interaction details | Supported channel identities, linking verification mechanics, device handoff compatibility, and response-time targets. Apple-specific controls remain TBD: meet the minimum applicable requirements without letting them guide general product UX. [TODO](TODO.md#1-apple-messaging) owns service/provider and permitted proactive-scope confirmation. |
+| Human support | Staffing, published hours/timezone, response expectations, out-of-hours handling, staff tooling, and handoff integration; see [TODO](TODO.md#2-human-support). |
 | Account recovery | Low-priority phone changes, lost-number and email recovery, and safe reassigned-number handling. Account deletion is deferred. |
 | Task behavior | Recurrence and daylight-saving mechanics, in-flight interruption, transient-error classification and delay for the single scheduled-execution retry, one-off job and delivery retry policies, repeated delivery, and resource budgets. Scheduled admission, parallel occurrences, and quotas are defined in Section 5.2; proactive behavior is defined in Section 5.4. |
 | Memory | Selection and retrieval of useful context, concurrent-write ordering, retention, and correction/forgetting completion mechanisms within the accepted automatic-update and material-clarification rules. |

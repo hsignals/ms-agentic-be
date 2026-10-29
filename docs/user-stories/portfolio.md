@@ -2,11 +2,11 @@
 
 ## 1. Status and scope
 
-**Status: Phase 1 discussion draft.** The dashboard flow, shared account evidence, USD display default, and provider-based calculation direction are agreed. Exact coverage and financial methods remain open.
+**Status: Phase 1 discussion draft.** The combined view of current provider data, dashboard flow, shared account evidence, USD display default, and provider-based calculation direction are agreed. Exact coverage, supported metrics, and financial methods remain open.
 
 The governing [product requirements](../requirements.md) define read-only financial information, analysis, and monitoring. Portfolio answers must exclude specific buy, sell, or rebalance recommendations and financial actions.
 
-The portfolio combines the **supported, connected portion** of on-chain wallets, Binance accounts, and Hyperliquid positions. It must not imply coverage of accounts, networks, instruments, or assets the user has not connected or the product does not support.
+The portfolio combines the **supported, connected portion** of EVM and Solana wallets, Binance accounts, and Hyperliquid positions, using current data and metrics supplied by the supported providers. It must not imply coverage of accounts, networks, instruments, or assets the user has not connected or the product does not support. Wallet tracking requires proof of wallet control through the connection flow.
 
 Chat is the default for portfolio questions and updates, and portfolio answers in chat follow user requests. The persistent website dashboard manages financial connections and shows the available portfolio preview after each connection. Chat and that preview must explain the same financial facts, with scope and freshness represented accurately.
 
@@ -33,13 +33,13 @@ Portfolio answers and reports must be concise, precise, and readable directly in
 - If holdings or positions cannot be compared under the supported measure, the answer explains the limit instead of combining unlike values.
 - Explanations describe exposure and uncertainty without directing the user to buy, sell, or rebalance particular assets.
 
-### 2.3 US-PORT-03 — Understand changes over 24 hours
+### 2.3 US-PORT-03 — Understand provider-supported changes
 
-**As a user, I want to see supported portfolio changes over 24 hours so that I can understand what changed and what remains unexplained.**
+**As a user, I want to see supported change and performance measures so that I can understand what the available provider evidence says about my portfolio.**
 
-- A reported 24-hour change identifies the comparison period and the sources, holdings, or positions included in both observations.
-- Available provider history and inputs determine which comparisons are supported; connecting a source does not guarantee an earlier observation.
-- If the required earlier observation, prices, or comparable coverage is missing, the product marks the affected change as unavailable or partial and explains why.
+- A provider-supplied change or performance measure identifies its source, meaning, period, and included coverage. A reported 24-hour change must have evidence supporting that period.
+- Suitable provider-calculated values may be reused, and available provider inputs may support additional calculations. Connecting a source does not guarantee earlier observations or every historical measure.
+- If inputs needed for a calculation are missing, the product marks the affected measure as unavailable or partial and explains why; current holdings and supported metrics remain usable.
 - When a connection or its supported coverage changes, the explanation distinguishes that change from a supported change in the assets being observed.
 - When the available data supports it, the answer separates deposits and withdrawals from investment gains or losses. A portfolio-value change is not labeled investment return or profit unless an agreed method supports that claim; if only balance change is supported, the answer labels it as balance change.
 
@@ -71,7 +71,7 @@ Portfolio answers and reports must be concise, precise, and readable directly in
 - A portfolio explanation or digest identifies the underlying sources and distinguishes reported facts, calculations, assumptions, and uncertain conclusions.
 - A remembered preference may change presentation, but it cannot replace current financial evidence or expand account access.
 
-Phase 1 uses provider data and best-effort calculations in code, without a MyStacks indexer. Suitable provider-calculated values may be reused; additional supported calculations use common definitions across the preview, chat, and tasks. Available inputs limit the answers the product can support.
+Phase 1 aggregates current supported provider data and metrics with best-effort calculations in code, without a MyStacks indexer. Correct aggregation requires compatible identities, units, valuation, and treatment of overlapping provider views. Suitable provider-calculated values, including historical metrics, may be reused; additional supported calculations use common definitions across the preview, chat, and tasks. Available inputs limit the answers the product can support. Historical P&L or reconstruction requiring MyStacks to build its own indexer or dedicated history infrastructure is **deferred and low priority**.
 
 ## 3. Open product decisions
 
@@ -79,18 +79,18 @@ Phase 1 uses provider data and best-effort calculations in code, without a MySta
 
 | Decision | What needs agreement |
 | --- | --- |
-| Supported coverage | Exact networks, protocols, Binance account types, Hyperliquid position types, instruments, and exclusions. |
+| Supported coverage | Exact wallet networks and protocol coverage for EVM and Solana, Binance account types, Hyperliquid position types, instruments, and exclusions. |
 | Valuation | Price sources, valuation basis, treatment of unpriced assets, liabilities, and positions, and conversion rules. USD is the default display currency; alternate display currencies are low priority. |
 | Composition and concentration | Which measures to offer, what constitutes exposure, and which holdings or positions may share a comparison total. |
 | Position risk | Supported position details, risk measures, evidence requirements, and language for incomplete risk information. |
 
-### 3.2 Changes and historical evidence
+### 3.2 Provider metrics and supported comparisons
 
 | Decision | What needs agreement |
 | --- | --- |
-| Comparison periods | Meaning of a 24-hour comparison, acceptable earlier observations, and how changed connection coverage is explained. |
-| Historical baseline | Which provider history is available, whether a comparison can be supported, and what users see before a baseline exists. Additional history collection or infrastructure needs a concrete capability requirement. |
-| Cash flows and performance | Treatment of deposits, withdrawals, transfers, fees, and other external flows; definitions of return, profit, and performance. |
+| Provider metrics | Which supplied change and performance measures are supported, with their meaning, period, coverage, and evidence requirements. |
+| Supported comparisons | Which provider history and inputs support additional calculations, acceptable comparison times, and how missing inputs or changed connection coverage are explained. |
+| Cash flows and performance | Treatment of deposits, withdrawals, transfers, fees, and other external flows where provider evidence supports it; definitions of return, profit, and performance for the supported measures. |
 | Freshness | When each claim may use an earlier observation and how stale or unknown freshness is shown. |
 
 These decisions must be settled before the affected measures become implementation acceptance criteria. The stories do not select financial calculation methods or a delivery schedule.

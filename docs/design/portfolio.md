@@ -16,9 +16,9 @@ Financial connections and portfolio evidence belong to the account and are avail
 
 ### 2.1 Supported capabilities and provider adapters
 
-Phase 1 includes supported on-chain wallet reads, Binance account reads, and Hyperliquid position reads. **Hyperliquid remains low priority and in scope.** Exact networks, protocols, account types, instruments, endpoints, and SDKs require confirmation before implementation.
+Phase 1 includes supported EVM and Solana wallet reads, Binance account reads, and Hyperliquid position reads. **Hyperliquid remains low priority and in scope.** Exact networks, protocols, account types, instruments, endpoints, and SDKs require confirmation before implementation.
 
-Phase 1 uses provider data and best-effort calculations in code, without a MyStacks indexer. A read requests the supported data needed for the question, preview, or task rather than collecting every available account or historical record.
+Phase 1 aggregates current supported provider data and metrics with best-effort calculations in code, without a MyStacks indexer. Suitable provider-supplied historical metrics and calculations supported by available provider inputs remain eligible. Historical P&L or reconstruction requiring MyStacks to build its own indexer or dedicated history infrastructure is **deferred and low priority**. A read requests the supported data needed for the question, preview, or task rather than collecting every available account or historical record.
 
 Provider adapters must:
 
@@ -31,7 +31,7 @@ Capability coverage must accompany adapter results so consumers can explain whic
 
 ### 2.2 Public reads and private accounts
 
-Public blockchain data may be available without private financial credentials, but MyStacks portfolio tracking requires a connection established through the source's setup flow. For EVM wallets, the backend must resolve an active **verified EVM connection** belonging to the current user before importing holdings or starting tracking. A raw address, wallet-connect event, uploaded file, model argument, or queued input cannot substitute for wallet-control verification. The [onboarding design](onboarding.md) owns that verification, accepted reuse of eligible verified wallets for Hyperliquid setup, and remaining source-connection mechanics.
+Public blockchain data may be available without private financial credentials, but MyStacks portfolio tracking requires a connection established through the source's setup flow. For EVM and Solana wallets, the backend must resolve an active **verified wallet connection** belonging to the current user before importing holdings or starting tracking. A raw address, wallet-connect event, uploaded file, model argument, or queued input cannot substitute for wallet-control verification. The [onboarding design](onboarding.md) owns verification for each wallet family, accepted reuse of eligible verified wallets for Hyperliquid setup, and remaining source-connection mechanics.
 
 Before a connection-scoped read, the backend must authorize the current user, connected account or wallet, requested object, and read operation. Private account reads use backend-held credentials after those checks. Chat, website, jobs, and predefined monitoring use the same authorization boundary. A public address cannot authorize access to another user's saved connection or private data.
 
@@ -72,7 +72,7 @@ Asset and position identity mappings must prevent unsupported merging across net
 
 Totals and concentration calculations may combine only values compatible with the approved measure and valuation basis. Derived values must retain the contributing evidence and identify excluded or unpriced portions. Native amounts remain available even when a conversion or aggregate cannot be produced.
 
-Display values default to USD while native asset quantities and units remain available. Alternate display currencies are low priority. Price sources, cost basis, position valuation, liability treatment, conversion rules, supported exposure measures, and rounding policy require explicit decisions.
+Display values default to USD while native asset quantities and units remain available. Alternate display currencies are low priority. Price sources, position valuation, liability treatment, conversion rules, supported exposure measures, and rounding policy require explicit decisions. Supported provider metrics, including supplied cost basis or performance values, must retain their meaning and evidence limits.
 
 ### 3.3 Partial information and freshness
 
@@ -82,17 +82,17 @@ Earlier observations may support a useful partial answer only when their age and
 
 Consumers must describe the scope actually covered. A partial holdings total cannot establish total wealth; missing position risk inputs cannot establish that no risk exists. Conversational answers use available information without routine missing-data warnings and explain unavailable information when the user explicitly asks for it. Useful supported information remains available without waiting for every source to become current.
 
-## 4. Snapshots, comparison, and consumer flow
+## 4. Provider metrics, comparisons, and consumer flow
 
-### 4.1 Comparable observations
+### 4.1 Current views and supported comparisons
 
 A portfolio snapshot is a view assembled from identified observations; it must not imply that all providers were observed at the same instant. Its included source coverage, observation times, and calculation basis must remain inspectable.
 
-A comparison must retain both observations, their periods, coverage, units, and method. It must identify changes in connection scope or supported coverage instead of treating newly observed assets as investment gains or disappeared coverage as losses.
+A comparison calculated by MyStacks must retain the contributing observations, their periods, coverage, units, and method. A provider-calculated comparison must retain the provider's stated meaning, period, coverage, units, and observation time; using it does not require MyStacks to reconstruct its underlying history. Consumers must identify changes in connection scope or supported coverage instead of treating newly observed assets as investment gains or disappeared coverage as losses.
 
-Provider history and available inputs determine which comparisons are possible. The historical baseline, definition of a 24-hour interval, acceptable comparison times, and handling of missing baseline evidence remain open. Until the required comparison exists, the affected measure is unavailable or explicitly partial; a connection does not itself guarantee historical analytics.
+Provider metrics, history, and available inputs determine which comparisons are possible. The meaning of supported metrics, definition of a 24-hour interval, acceptable comparison times, and handling of missing inputs remain open. Until the required evidence exists, the affected measure is unavailable or explicitly partial; a connection does not itself guarantee historical analytics. Missing comparison evidence does not prevent a current portfolio view from using supported holdings, positions, or other metrics.
 
-Changes in value, cash flows, investment return, and profit must remain distinct claims. When provider data supports the distinction, calculations separate deposits and withdrawals from investment gains or losses. If the available inputs support only balance change, consumers label it as balance change. Exact treatment of internal transfers, fees, cash flows, and position accounting, along with return formulas and historical reconstruction, remains open.
+Changes in value, cash flows, investment return, and profit must remain distinct claims. When provider data supports the distinction, calculations separate deposits and withdrawals from investment gains or losses. If the available inputs support only balance change, consumers label it as balance change. Exact treatment of internal transfers, fees, cash flows, position accounting, and return formulas remains open for supported measures; reconstruction requiring MyStacks history infrastructure remains deferred.
 
 ### 4.2 Shared use across product surfaces
 
@@ -104,23 +104,24 @@ The preview, chat, reports, digests, and monitoring must reuse this boundary, co
 
 Backend access to a job, scheduled task, or result must bind both the account and its originating channel. Shared portfolio evidence can support a new request in either linked channel without loading another channel's conversation, task records, or results.
 
-Evidence needed to explain a retained result must remain associated with that result under the agreed data policy. The provider-based calculation approach preserves the architecture's required durable data, results, and generated artifacts. Additional historical storage, an indexer, or other infrastructure requires a concrete data or capability need. Exact persistence mappings, refresh ownership, reusable public data, private-data reuse, and retention remain open.
+Evidence needed to explain a retained result must remain associated with that result under the agreed data policy. The provider-based calculation approach preserves the architecture's required durable data, results, and generated artifacts. Retaining that evidence does not require a dedicated history collection or reconstruction service. Exact persistence mappings, refresh ownership, reusable public data, private-data reuse, and retention remain open.
 
 ## 5. Acceptance evidence and open decisions
 
 ### 5.1 Required design checks
 
-- With supported wallet, Binance, and Hyperliquid evidence, a combined view preserves source contributions and does not merge incompatible holdings or positions.
+- With supported EVM wallet, Solana wallet, Binance, and Hyperliquid evidence, a combined view preserves source contributions and does not merge incompatible holdings or positions.
 - After a new or returning user adds a source, the dashboard shows the result and available preview and allows another source through the same flow or continuation to chat.
 - With supported valuation data, USD display values preserve the native quantities and units used to explain holdings and positions.
 - With a successful empty read, a failed read, and an unknown as-of time, consumers distinguish zero, unavailable coverage, and unknown freshness.
 - With matching observations and methods, calculations in the preview, chat, scheduled tasks, and digests agree; changed times or coverage remain visible.
-- With missing historical evidence or changed connection coverage, a 24-hour explanation does not invent investment performance.
+- With a supported provider-calculated metric, consumers preserve its meaning, period, coverage, freshness, and source without requiring MyStacks to reconstruct history.
+- With missing inputs for a calculated comparison or changed connection coverage, an explanation does not invent investment performance; current supported information remains usable.
 - With provider-supported cash-flow data, an explanation separates deposits and withdrawals from investment gains or losses; balance-only inputs produce a balance-change claim.
 - With the same linked account in two channels, each can use shared financial evidence, while job, scheduled-task, and result access remains restricted to its originating channel.
-- With unverified EVM input, every entry path refuses wallet import or tracking until wallet-control verification succeeds. Supplying an address through chat, a file, or a scheduled task cannot bypass the connection flow.
+- With unverified EVM or Solana input, every entry path refuses wallet import or tracking until wallet-control verification succeeds. Supplying an address through chat, a file, or a scheduled task cannot bypass the connection flow.
 - With unauthorized account input or disconnected access, every entry path denies new reads through that connection without exposing another user's evidence or credentials.
 
 ### 5.2 Decisions required before implementation
 
-Coverage, provider APIs and SDKs, evidence schemas, identity mappings, supported metrics and formulas, cost basis, valuation and risk methods, freshness policies, comparison and cash-flow semantics, persistence mappings, data reuse, retention, and operational metrics remain open. These decisions must preserve the requirements' read-only authority, useful partial answers, and accepted best-effort monitoring limits.
+Decisions for current provider aggregation include exact coverage, provider APIs and SDKs, evidence schemas, identity mappings, supported provider metrics and calculation formulas, valuation and risk methods, freshness policies, supported comparison and cash-flow semantics, persistence mappings, data reuse, retention, and operational metrics. These decisions must preserve the requirements' read-only authority, useful partial answers, and accepted best-effort monitoring limits. Historical P&L or reconstruction requiring MyStacks to build its own indexer or dedicated history infrastructure remains deferred and low priority.
