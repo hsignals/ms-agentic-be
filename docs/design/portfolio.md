@@ -2,9 +2,9 @@
 
 ## 1. Status, scope, and ownership
 
-**Status: TENTATIVE — architecture discussion draft.** The portfolio product direction is agreed; the technical mappings below remain tentative pending the overall architecture round. Durable application records use the shared [PostgreSQL database](../ADRS/0013-shared-postgresql-storage.md). Exact interfaces, schemas, retention, and financial methods remain open.
+**Status: TENTATIVE — architecture discussion draft.** The portfolio product direction, initial provider direction, and requirement for current account evidence are accepted; technical mappings remain tentative pending the overall architecture round. Durable application records use the shared [PostgreSQL database](../ADRS/0013-shared-postgresql-storage.md). Exact interfaces, schemas, retention, and financial methods remain open.
 
-The [product requirements](../requirements.md) govern behavior, and the [portfolio user stories](../user-stories/portfolio.md) describe observable outcomes. The [architecture](../architecture.md) is authoritative for the Mastra runtime, shared workers, durable state, and trusted financial tools API. The [provider-backed calculation decision](../ADRS/0015-provider-backed-portfolio-calculations.md) owns the trade-off between initial provider coverage and dedicated indexing or history infrastructure.
+The [product requirements](../requirements.md) govern behavior, and the [portfolio user stories](../user-stories/portfolio.md) describe observable outcomes. The [architecture](../architecture.md) is authoritative for the Mastra runtime, shared workers, durable state, and trusted financial tools API. The [provider-backed calculation decision](../ADRS/0015-provider-backed-portfolio-calculations.md) owns the trade-off against dedicated indexing or history infrastructure. The [provider decision](../ADRS/0018-managed-financial-data-providers.md) owns provider selection and vendor constraints; the [current-evidence decision](../ADRS/0019-current-portfolio-evidence.md) owns freshness and the limits of delayed observations.
 
 The **financial tools API** owns authorized provider reads and the evidence used by the persistent website dashboard's portfolio preview, chat, reports, and background work. The portfolio boundary normalizes that evidence and performs supported calculations. Personalization memory cannot supply current holdings, prices, positions, or permissions. Portfolio answers and reports use concise, precise text in chat, with deeper detail through follow-ups. Image replies are low priority; extensive deep-research reports and polished website report artifacts are deferred.
 
@@ -16,7 +16,9 @@ Financial connections and portfolio evidence belong to the account and are avail
 
 ### 2.1 Supported capabilities and provider adapters
 
-Phase 1 includes supported EVM and Solana wallet reads, Binance account reads, and Hyperliquid position reads. **Hyperliquid remains low priority and in scope.** Exact networks, protocols, account types, instruments, endpoints, and SDKs require confirmation before implementation.
+The initial direction is **SnapTrade** for Binance, Coinbase, Interactive Brokers (IBKR), moomoo, and Robinhood, and **Zerion** for supported EVM and Solana wallet data. These targets serve a mixed, global audience; they do not establish worldwide availability or complete coverage of a named institution. **Direct Hyperliquid remains low priority and in scope.** DeBank is an optional future complement for demonstrated EVM coverage gaps. Bybit, Upbit, and prediction-market connectors are deferred.
+
+Coverage follows each provider's supported regions, accounts, networks, instruments, fields, and freshness. The product must not promise a fixed asset or position taxonomy beyond validated provider capabilities. The provider decision records material gaps, including delayed IBKR account state and incomplete Solana DeFi coverage; exact endpoints, SDKs, and the capabilities offered for each target require validation before implementation.
 
 Phase 1 aggregates current supported provider data and metrics with best-effort calculations in code, without a MyStacks indexer. Suitable provider-supplied historical metrics and calculations supported by available provider inputs remain eligible. Historical P&L or reconstruction requiring MyStacks to build its own indexer or dedicated history infrastructure is **deferred and low priority**. A read requests the supported data needed for the question, preview, or task rather than collecting every available account or historical record.
 
@@ -31,7 +33,7 @@ Capability coverage must accompany adapter results so consumers can explain whic
 
 ### 2.2 Public reads and private accounts
 
-Public blockchain data may be available without private financial credentials, but MyStacks portfolio tracking requires a connection established through the source's setup flow. For EVM and Solana wallets, the backend must resolve an active **verified wallet connection** belonging to the current user before importing holdings or starting tracking. A raw address, wallet-connect event, uploaded file, model argument, or queued input cannot substitute for wallet-control verification. The [onboarding design](onboarding.md) owns verification for each wallet family, accepted reuse of eligible verified wallets for Hyperliquid setup, and remaining source-connection mechanics.
+Public blockchain data may be available without private financial credentials, but MyStacks portfolio tracking requires a connection established through the source's website setup flow. For EVM and Solana wallets, the backend must resolve an active **verified wallet connection** belonging to the current user before importing holdings or starting tracking. A raw address, wallet-connect event, uploaded file, model argument, or queued input cannot substitute for wallet-control verification. Hyperliquid setup reuses an eligible verified EVM wallet without another wallet-control signature, or verifies another supported wallet through a readable website challenge, then confirms the supported account scope. The [onboarding design](onboarding.md) owns verification and source-connection mechanics.
 
 Before a connection-scoped read, the backend must authorize the current user, connected account or wallet, requested object, and read operation. Private account reads use backend-held credentials after those checks. Chat, website, jobs, and predefined monitoring use the same authorization boundary. A public address cannot authorize access to another user's saved connection or private data.
 
@@ -45,6 +47,12 @@ Provider responses, asset labels, user text, and supplied documents are untruste
 
 Financial adapters expose read operations only. Their credentials remain in trusted backend code and must not enter model context, results, job inputs, traces, or generated-code execution. Evidence supports information and analysis; it does not authorize financial actions or specific buy, sell, or rebalance recommendations.
 
+### 2.4 Direct Hyperliquid reads and transport
+
+The low-priority Hyperliquid connector uses documented public REST information reads on demand. It queries the actual account address, rather than an agent-wallet address, after the backend resolves the authorized verified connection and supported account scope. These reads require no private key, OAuth token, or trading key. Public availability does not grant authority to attach an address to a user or bypass connection checks.
+
+**Webshare is the selected backend outbound proxy vendor** for these reads. It is transport for the trusted connector, rather than a financial evidence provider or an agent-accessible proxy. Hyperliquid's limits still apply to each exit IP; worker instances using the same exit share its budget. Proxy type, count, region, rotation, routing, and rate-limit implementation remain open. This choice establishes no capacity or freshness guarantee. WebSockets require a concrete need beyond the on-demand REST flow before adoption.
+
 ## 3. Shared financial evidence contract
 
 ### 3.1 Evidence needed by every consumer
@@ -56,19 +64,19 @@ Each financial observation or derived result must carry enough context to establ
 | Source and scope | Provider, connection-bound account or wallet address, network where relevant, and supported coverage included in the read. |
 | Financial identity | Asset, holding, or position identity, with provider distinctions retained until an approved mapping establishes equivalence. |
 | Native values and units | Original financial quantities, currencies, price units, position direction, and other semantics needed to interpret the value. |
-| Time | Provider as-of time when available, collection time, and explicit unknown freshness when an as-of time cannot be established. |
+| Time | Source as-of time when available and backend retrieval time, with account-state and price freshness represented separately; unknown source freshness remains explicit. |
 | Availability and gaps | Successful empty coverage, unavailable or unsupported portions, partial reads, and any limits affecting the claim. |
 | Derivation | Contributing observations, conversion or calculation basis, assumptions, and the method used for a derived result. |
 
 These are semantic requirements, not a selected record schema. Financial values must retain required precision in their native domain representation; transport and storage encodings belong at those boundaries.
 
-Collection time cannot substitute for a missing provider as-of time. A successfully retrieved response may still contain earlier observations. Consumers must retain that distinction when describing freshness.
+Retrieval time cannot substitute for a missing source as-of time. A successfully retrieved response may still contain earlier account state or prices. Provider refresh or update fields establish freshness only when their meaning is validated for the relevant evidence.
 
 ### 3.2 Normalization and valuation
 
 Normalization must preserve source-level detail while giving consumers one meaning for each shared concept. Account balances, collateral, position size, liabilities, and valuation are different concepts; equal numeric values do not make them interchangeable.
 
-Asset and position identity mappings must prevent unsupported merging across networks, instruments, or representations. The aggregation must avoid counting the same represented value twice when the provider exposes overlapping views. Exact mappings and accounting treatment remain open.
+Asset and position identity mappings must prevent unsupported merging across networks, instruments, or representations. Aggregation must avoid counting the same represented value twice across provider views or connectors. Hyperliquid account modes, shared collateral, and any overlapping Zerion evidence require explicit accounting before a combined total or exposure measure is supported. Exact mappings and accounting treatment remain open.
 
 Totals and concentration calculations may combine only values compatible with the approved measure and valuation basis. Derived values must retain the contributing evidence and identify excluded or unpriced portions. Native amounts remain available even when a conversion or aggregate cannot be produced.
 
@@ -78,9 +86,11 @@ Display values default to USD while native asset quantities and units remain ava
 
 Every portfolio result must state the coverage actually included. A connected source that was not successfully read remains a gap, even when other sources have valid evidence. A known zero requires evidence of a successful read for the relevant scope.
 
-Earlier observations may support a useful partial answer only when their age and coverage are visible and the selected claim permits their use. Unknown freshness must remain unknown. Claim-specific freshness policies and refresh behavior remain open.
+**Current portfolio analysis and account-specific proactive conclusions require fresh or near-fresh relevant account state.** At analysis time, the trusted connector obtains the latest available evidence needed for the claim, allowing brief reuse only while that evidence remains suitable. A recent retrieval alone does not establish current holdings, positions, balances, or collateral. Fresh prices applied to old holdings do not establish current exposure.
 
-Consumers must describe the scope actually covered. A partial holdings total cannot establish total wealth; missing position risk inputs cannot establish that no risk exists. Conversational answers use available information without routine missing-data warnings and explain unavailable information when the user explicitly asks for it. Useful supported information remains available without waiting for every source to become current.
+Earlier or delayed observations may support bounded historical or reporting claims when their age, coverage, and limits are clear. They must not silently stand in for current account state. When a proactive investigation lacks fresh evidence for a current-exposure claim, it must omit that claim; other supported findings remain eligible. For user-requested answers, provide useful available information and concise material limitations that affect the answer. One delayed or failed source does not block all analysis.
+
+Consumers must describe the scope actually covered. A partial holdings total cannot establish total wealth; missing position risk inputs cannot establish that no risk exists. Exact maximum ages, service-level targets, refresh mechanisms, and cache durations remain open by provider, evidence type, and claim. The accepted approximately five daily periodic proactive investigations remain best effort; this design does not add continuous monitoring or a MyStacks indexer.
 
 ## 4. Provider metrics, comparisons, and consumer flow
 
@@ -96,7 +106,7 @@ Changes in value, cash flows, investment return, and profit must remain distinct
 
 ### 4.2 Shared use across product surfaces
 
-The authorized consumer requests the required supported scope, the financial boundary obtains or selects permitted evidence, and the portfolio boundary produces the requested view or calculation. The response carries its sources, times, coverage, and derivation through to presentation.
+The authorized consumer requests the required supported scope, the financial boundary obtains the latest relevant evidence or briefly reuses suitable recent evidence, and the portfolio boundary produces the supported view or calculation. A refresh request can still return delayed source data; the response carries actual sources, account-state and price times, coverage, and derivation through to presentation.
 
 After each connection, the website dashboard shows the connection result and available portfolio preview, with **Add more** and **Continue to chat**. New and returning users use the same **Add account** flow. Chat requests to add or manage financial connections link to this dashboard.
 
@@ -104,24 +114,27 @@ The preview, chat, reports, digests, and monitoring must reuse this boundary, co
 
 Backend access to a job, scheduled task, or result must bind both the account and its originating channel. Shared portfolio evidence can support a new request in either linked channel without loading another channel's conversation, task records, or results.
 
-Evidence needed to explain a retained result must remain associated with that result under the agreed data policy. The provider-based calculation approach preserves the architecture's required durable data, results, and generated artifacts. Retaining that evidence does not require a dedicated history collection or reconstruction service. Exact persistence mappings, refresh ownership, reusable public data, private-data reuse, and retention remain open.
+Evidence needed to explain a retained result must remain associated with that result under the agreed data policy and permitted provider terms. The provider-based calculation approach preserves the architecture's required durable data, results, and generated artifacts without requiring a dedicated history collection or reconstruction service. The provider decision identifies unresolved licensing constraints on retained evidence, market data, chat, and reports. Exact permitted persistence mappings, refresh ownership, public-data reuse, private-data reuse, and retention remain open.
 
 ## 5. Acceptance evidence and open decisions
 
 ### 5.1 Required design checks
 
-- With supported EVM wallet, Solana wallet, Binance, and Hyperliquid evidence, a combined view preserves source contributions and does not merge incompatible holdings or positions.
+- With supported SnapTrade, Zerion, and low-priority direct Hyperliquid evidence, a combined view preserves source contributions and does not merge incompatible holdings or positions, shared collateral, or overlapping connector views.
 - After a new or returning user adds a source, the dashboard shows the result and available preview and allows another source through the same flow or continuation to chat.
 - With supported valuation data, USD display values preserve the native quantities and units used to explain holdings and positions.
 - With a successful empty read, a failed read, and an unknown as-of time, consumers distinguish zero, unavailable coverage, and unknown freshness.
+- With an old account observation and a fresh price, consumers preserve both times and do not claim current exposure. A new retrieval of delayed source data has the same limit.
+- With fresh evidence for only part of a portfolio, supported current findings remain usable; proactive conclusions omit unsupported current exposure, while requested answers explain material limitations concisely.
 - With matching observations and methods, calculations in the preview, chat, scheduled tasks, and digests agree; changed times or coverage remain visible.
 - With a supported provider-calculated metric, consumers preserve its meaning, period, coverage, freshness, and source without requiring MyStacks to reconstruct history.
 - With missing inputs for a calculated comparison or changed connection coverage, an explanation does not invent investment performance; current supported information remains usable.
 - With provider-supported cash-flow data, an explanation separates deposits and withdrawals from investment gains or losses; balance-only inputs produce a balance-change claim.
 - With the same linked account in two channels, each can use shared financial evidence, while job, scheduled-task, and result access remains restricted to its originating channel.
 - With unverified EVM or Solana input, every entry path refuses wallet import or tracking until wallet-control verification succeeds. Supplying an address through chat, a file, or a scheduled task cannot bypass the connection flow.
+- With an eligible verified EVM wallet or a newly verified controlling wallet, Hyperliquid uses the confirmed actual account address through the backend public-read connector, without financial execution credentials.
 - With unauthorized account input or disconnected access, every entry path denies new reads through that connection without exposing another user's evidence or credentials.
 
 ### 5.2 Decisions required before implementation
 
-Decisions for current provider aggregation include exact coverage, provider APIs and SDKs, evidence schemas, identity mappings, supported provider metrics and calculation formulas, valuation and risk methods, freshness policies, supported comparison and cash-flow semantics, persistence mappings, data reuse, retention, and operational metrics. These decisions must preserve the requirements' read-only authority, useful partial answers, and accepted best-effort monitoring limits. Historical P&L or reconstruction requiring MyStacks to build its own indexer or dedicated history infrastructure remains deferred and low priority.
+Decisions for the selected provider direction include validated regional and account coverage, provider APIs and SDKs, evidence schemas, identity mappings, supported metrics and formulas, valuation and risk methods, maximum evidence ages, supported comparison and cash-flow semantics, permitted persistence and reuse, retention, and operational metrics. The [provider decision's vendor validation](../ADRS/0018-managed-financial-data-providers.md#4-required-vendor-validation) must establish compatibility with chat, hourly scheduled tasks, and approximately five daily proactive investigations without treating delayed state as current. Hyperliquid proxy configuration and shared exit-IP budget handling remain open. These choices must preserve read-only authority, useful partial answers, and accepted best-effort monitoring limits. Historical P&L or reconstruction requiring a MyStacks indexer or dedicated history infrastructure remains deferred and low priority.

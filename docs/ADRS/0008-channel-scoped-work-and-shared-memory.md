@@ -28,7 +28,7 @@ Chat retains controls for shared personal memory and preferences. The website ow
 
 One proactive investigation per account may run at a time. Each qualifying finding is delivered to all selected, currently eligible verified destinations, with a separate delivery outcome for each channel. The setting routes only proactive insights under the task design. Background results return internally to a new main-agent turn, which owns the reply in the originating channel; chat replies and requested work retain that channel.
 
-Each linked channel orders user messages and internal completion events through one logical event stream, with one foreground main-agent turn at a time. Background runs do not occupy that turn while waiting for completion. The [channel-turn decision](0009-channel-turns-and-background-subagents.md) owns continuation and delegation behavior; the exact cross-replica coordination and Mastra mapping remain open.
+Each linked channel orders user messages and internal completion events through one logical event stream, with one foreground main-agent turn at a time. One active ordinary backend coordinator serves different channels concurrently; background runs do not occupy a foreground turn while waiting for completion. The [channel-turn decision](0009-channel-turns-and-background-subagents.md) owns coordinator scope, continuation, and delegation behavior. Exact Mastra integration remains open; distributed coordinator ownership waits for observed need.
 
 ### 2.3 Fixed task channel and disconnect behavior
 

@@ -2,7 +2,7 @@
 
 ## 1. Status and scope
 
-**Status: ACCEPTED framework selection.** MyStacks builds its shared custom runtime with Mastra's regular `Agent` and core facilities, and uses E2B for isolated generated-code execution. BullMQ and Redis remain the provisional scheduling and queue choice.
+**Status: ACCEPTED framework selection and low-priority additive LangSmith tracing.** MyStacks builds its shared custom runtime with Mastra's regular `Agent` and core facilities, and uses E2B for isolated generated-code execution. BullMQ is the initial scheduling and queue baseline; its Redis-backed integration remains provisional.
 
 This decision selects reusable runtime components, not a completed service or implementation plan. It preserves Phase 1 informational work, read-only financial access, the exclusion of specific investment recommendations, and the accepted best-effort monitoring limits. The [requirements](../requirements.md) own those product boundaries, and the [architecture](../architecture.md) owns component responsibilities and flows.
 
@@ -10,7 +10,7 @@ This decision selects reusable runtime components, not a completed service or im
 
 ### 2.1 Shared Agent and explicit capabilities
 
-Use a common Mastra `Agent` with curated tools and skills in shared warm workers. Each run receives backend-established user, resource, and thread bindings in private run context, without mutating shared Agent fields. No permanent runtime or VM is assigned to every user. Mastra's [Agent facilities](https://mastra.ai/docs/agents/overview) supply the loop and tool dispatch, while MyStacks supplies domain instructions and business behavior.
+Use a common Mastra `Agent` with curated tools and skills for direct API/chat execution and shared warm background workers. Background workers use a separate [Cloud Run worker pool](0017-cloud-run-worker-pool.md), with the same backend codebase and distinct entrypoints. Each run receives backend-established user, resource, and thread bindings in private run context, without mutating shared Agent fields. No permanent runtime or VM is assigned to every user. Mastra's [Agent facilities](https://mastra.ai/docs/agents/overview) supply the loop and tool dispatch, while MyStacks supplies domain instructions and business behavior.
 
 Reuse Mastra's skill folders, loading, and discovery. Register executable tool modules explicitly, then let the runtime select applicable tools dynamically. A `SKILL.md` file provides instructions; it cannot install a tool or grant permissions. Mastra documents [filesystem skills and dynamic skill resolution](https://mastra.ai/docs/skills).
 
@@ -25,6 +25,12 @@ The [E2B decision](0003-sandboxed-code-execution.md) owns generated-code isolati
 The initial adoption uses regular `Agent` execution for direct foreground chat and the [queued-work boundary](0004-durable-scheduling-and-queued-execution.md) for background runs. A background completion supplies fresh input to a new main-agent turn, which can continue tool/model rounds and owns the user reply. The [channel-turn decision](0009-channel-turns-and-background-subagents.md) defines this application contract and the accepted interrupted-chat limit; it does not select an exact Mastra dispatcher or require workflow checkpoints. Advanced execution facilities need a concrete requirement and a separate persistence and execution-ownership decision.
 
 Only main-agent turns may delegate background subagents, with an initial five-outstanding limit per chat. Backend scheduling starts user-requested and proactive runs independently of that quota under the [scheduling decision](0004-durable-scheduling-and-queued-execution.md). Restricted tool capabilities and backend authorization preserve useful financial read, research, E2B, and shared personal-memory read access while preventing background agents from spawning children, changing settings, connections, memory, or saved user tasks, or sending user messages. Exact native configuration remains open.
+
+### 2.3 Low-priority additive tracing
+
+LangSmith tracing is a **low-priority observability integration** for diagnosing agent and tool execution. It adds diagnostics to the selected runtime rather than owning agent execution, scheduling, durable task state, authentication, or authorization. LangSmith Deployment is a separate product and is not selected.
+
+Exact integration packages and versions, trace payloads, configuration, sampling, access, and retention remain open. The credential boundary applies to every trace: financial credentials, refresh tokens, database credentials, and E2B management keys must stay out of trace payloads. Private financial data requires the selected provider-handling policy before export.
 
 ## 3. Rationale and alternatives
 
@@ -44,9 +50,13 @@ Eve is a viable file-based framework using AI SDK. Its [self-hosting contract](h
 
 LangGraph is a strong alternative when explicit graph checkpoints and interruption/resumption govern the workflow. Its [persistence](https://docs.langchain.com/oss/javascript/langgraph/persistence) and [interrupt](https://docs.langchain.com/oss/javascript/langgraph/interrupts) facilities support those requirements. Phase 1 has not established a need for that execution model.
 
+### 3.4 Add diagnostics without changing execution ownership
+
+Optional tracing can improve diagnosis while retaining the selected Mastra and shared-worker responsibilities. Its integration and data-handling work remain low priority; the trade-off is less detailed diagnostics until that work is justified. Adopting a separate deployment runtime for tracing would add execution ownership and operating changes beyond this decision.
+
 ## 4. Consequences and open decisions
 
-- **Hosting and license:** Mastra's open-source core can run on MyStacks-managed GCP compute. Its [license](https://github.com/mastra-ai/mastra/blob/main/LICENSE.md) places core code outside `ee/` under Apache-2.0, with separate terms for enterprise and third-party components. Enterprise features and hosted cloud services remain optional commercial choices.
+- **Hosting and license:** background consumers use the selected Cloud Run worker pool, initially with one or two running instances and manual instance scaling. API/chat hosting and configuration remain open. Mastra's [license](https://github.com/mastra-ai/mastra/blob/main/LICENSE.md) places core code outside `ee/` under Apache-2.0, with separate terms for enterprise and third-party components. Enterprise features and hosted cloud services remain optional commercial choices.
 - **Implementation validation:** pin and validate package versions, storage adapters, E2B integration, main/subagent tool configuration, fresh-turn completion input, and deployment compatibility during implementation. Framework selection does not establish that every feature has the same stability or operating guarantees.
 - **Runtime and model:** Bun remains a runtime candidate requiring compatibility checks. DeepSeek is a supported model-integration candidate; no production runtime, model, provider, or gateway is selected by this decision.
 - **Memory policy:** the [shared-memory decision](0008-channel-scoped-work-and-shared-memory.md) defines account-wide personal context and main-agent-controlled updates. Native per-channel compaction, profile-only forgetting, last-successful-save updates, and PostgreSQL storage have separate decision records above. Exact profile schema and budgets, compaction thresholds and models, retention, adapter/package versions, and framework integration remain open.

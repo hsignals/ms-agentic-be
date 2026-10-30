@@ -8,7 +8,7 @@ The governing [product requirements](../requirements.md) define Phase 1 as read-
 
 **Website signup and channel linking are required before assistant chat; financial connections are optional.** The user signs up and logs in with a phone number and an SMS code, then lands on the persistent dashboard. They can connect financial sources or link iMessage or WhatsApp in either order; a verified channel link is required only before assistant chat. Only phone verification is required for MyStacks signup. Name, goals, and preferences are optional and can be learned through chat; financial providers may require their own setup. A stable MyStacks account ID owns the user's saved state, and each messaging channel is separately verified and linked to that account.
 
-Chat is the default interaction surface for questions and ongoing work. The persistent website dashboard manages financial connections, messaging channels, and proactive insight delivery channels and shows an immediate portfolio preview after connection. Chat can also change the same proactive insight delivery channels setting. Required connection categories remain wallet addresses, Binance, and Hyperliquid, with Hyperliquid at **low priority**. The source chooser lists supported providers, including exchanges or brokerages where available. Supported account types, assets, balances, and positions depend on the provider or connector, and the user sees the available coverage before confirming a connection. EVM and Solana wallets are supported source categories; a wallet becomes a connected source only after successful wallet-control verification. Exact supported networks, wallet types, and provider coverage remain open.
+Chat is the default interaction surface for questions and ongoing work. The persistent website dashboard manages financial connections, messaging channels, and proactive insight delivery channels and shows an immediate portfolio preview after connection. Chat can also change the same proactive insight delivery channels setting. Target sources are EVM and Solana wallets and accounts at Binance, Coinbase, Interactive Brokers (IBKR), moomoo, and Robinhood for a mixed/global audience. Hyperliquid remains **low priority**. Actual regional, account, asset, balance, position, and update availability depends on the supported provider; the user sees coverage and limits before confirming a connection. A wallet becomes a connected source only after successful wallet-control verification. Exact supported networks and wallet types remain open. Interactive Brokers update timing and moomoo availability outside the US and Canada remain unresolved target gaps. Bybit, Upbit, and prediction-market connectors are deferred; general financial questions and research about them remain allowed.
 
 The [technical design](../design/onboarding.md) owns implementation proposals and remains **tentative pending the overall architecture design round**. The authentication provider, detailed verification mechanisms, and recovery policy remain open. Phone-number changes, lost-number recovery, and email recovery are **low priority**. WhatsApp login is deferred; signup uses the website phone-verification flow.
 
@@ -49,8 +49,8 @@ Connecting every account is not a prerequisite for value. A skipped or failed co
 
 **As a new user, I want to choose one supported source or skip connections so that I can begin without collecting every account first.**
 
-- The dashboard's **Add account** flow lets new and returning users search supported providers, choose **Connect a wallet**, or **Skip for now**. It presents wallet addresses, Binance, and Hyperliquid with their supported coverage and required access; Hyperliquid remains low priority.
-- Provider search offers exchanges or brokerages only where supported; the chooser does not promise coverage for an unsupported provider or account type.
+- The dashboard's **Add account** flow lets new and returning users search target sources, choose **Connect a wallet**, or **Skip for now**. Targets include EVM and Solana wallets, Binance, Coinbase, Interactive Brokers (IBKR), moomoo, and Robinhood; Hyperliquid remains low priority.
+- The chooser shows actual provider-supported availability by region, account, and capability, including material update delays. A target listing does not promise unsupported access or live account data.
 - The user can choose the supported accounts or addresses they want to include and leave others for later.
 - After each connection, the result and available portfolio preview offer **Add more** and **Continue to chat**, so the user can keep adding accounts. If no messaging channel is linked, **Continue to chat** prompts channel linking before assistant access.
 - If a provider is unavailable, the user can retry, choose another source, or continue and add it later.
@@ -72,14 +72,14 @@ Connecting every account is not a prerequisite for value. A skipped or failed co
 
 The [wallet connection decision](../ADRS/0007-verified-evm-wallet-connections.md) owns the accepted rationale. The technical design owns [EVM verification](../design/onboarding.md#42-evm-wallet-control-verification) and the [open Solana mechanism](../design/onboarding.md#43-solana-wallet-control-verification). EVM-specific signing standards do not define the Solana flow.
 
-### 3.4 US-ONB-04 — Connect Binance with read-only access
+### 3.4 US-ONB-04 — Connect an exchange or brokerage with read-only access
 
 **Status: accepted experience; the connection mechanism belongs to technical design.**
 
-**As a Binance user, I want clear connection instructions and visible permissions so that I can share supported account information without granting financial action authority.**
+**As an exchange or brokerage user, I want clear connection instructions and visible permissions so that I can share supported account information without granting financial action authority.**
 
-- The user chooses **Connect Binance** on the dashboard. The user completes the supported provider’s secure authorization flow and returns to the dashboard with connection status and coverage.
-- Before confirmation, the user reviews the available account coverage and required read-only access. The connection grants no trading or withdrawal authority.
+- The user selects a supported exchange or brokerage through **Add account** on the dashboard, completes the provider’s secure authorization flow, and returns to the dashboard with connection status and coverage.
+- Before confirmation, the user reviews regional availability, included accounts, supported capabilities, material update delays, and required read-only access. The connection grants no trading or withdrawal authority.
 - Chat does not ask the user to share API secrets or other connection secrets.
 - After authorization, the dashboard shows connection and read progress and which supported accounts are included.
 - If setup or import fails, the product explains the problem and offers a clear correction or retry path without claiming that assets were loaded.
@@ -89,7 +89,7 @@ The [wallet connection decision](../ADRS/0007-verified-evm-wallet-connections.md
 **As a user, I want progress and results for each source so that I know what is ready and what still needs attention.**
 
 - Each source shows whether it is waiting, reading, ready, or needs attention, with a useful next action when one is available.
-- Ready information identifies its source, coverage, and as-of time or unknown freshness.
+- Ready information identifies its source, coverage, source as-of time or unknown freshness, and retrieval time. A recently retrieved delayed observation is not described as current account state.
 - If one source is slow or fails, available information from other sources remains usable and the missing coverage is visible.
 - An unread or failed source is never shown as a zero balance or evidence that no risk exists.
 - Interrupted or failed setup preserves completed connections and returns the user to the dashboard with an explanation and options to retry, choose another source, or continue to chat.
@@ -103,7 +103,8 @@ The [wallet connection decision](../ADRS/0007-verified-evm-wallet-connections.md
 - After each connection, the website shows its result and a preview of available portfolio value, holdings, positions, and included accounts, with **Add more** and **Continue to chat**.
 - Useful results remain available while other sources load or need attention. The website shows source availability, and unavailable data is never presented as a zero balance.
 - The current portfolio uses supported provider data. Values use USD by default while preserving native asset quantities. Totals and conclusions use the available supported coverage; portfolio-value changes and investment gains or losses are distinct, and deposits are not presented as profit. Provider-supplied history or metrics may appear when supported and backed by the required evidence. A MyStacks indexer and historical reconstruction or P&L requiring MyStacks infrastructure are deferred at low priority.
-- The user can request portfolio answers in chat and follow up on the snapshot within Phase 1 informational scope. Answers highlight available results without routine missing-data warnings or unsupported claims of completeness.
+- Current portfolio analysis obtains the latest relevant account state at analysis time, with brief reuse only while it remains fresh or near-fresh for the claim. The preview distinguishes delayed observations from current account state. Fresh prices alone do not make earlier holdings current.
+- The user can request portfolio answers in chat and follow up on the snapshot within Phase 1 informational scope. Answers highlight available results and briefly explain material timing or coverage limits without routine missing-data warnings or unsupported claims of completeness.
 
 ### 3.7 US-ONB-07 — Choose what happens after first value
 
@@ -155,14 +156,14 @@ The [wallet connection decision](../ADRS/0007-verified-evm-wallet-connections.md
 
 ### 3.11 US-ONB-11 — Connect a Hyperliquid account
 
-**Status: accepted experience; low priority.** Wallet eligibility remains open, and supported coverage depends on the provider or connector.
+**Status: accepted experience; low priority.** Eligible EVM wallet types and supported account coverage remain provider-dependent.
 
 **As a Hyperliquid user, I want to connect my own account so that its supported balances and positions appear in my portfolio.**
 
-- The user chooses **Connect Hyperliquid** and can select an eligible wallet they have already verified with MyStacks, or connect and verify another supported wallet.
+- On the website, the user chooses **Connect Hyperliquid** and can select an eligible EVM wallet they have already verified with MyStacks, or connect another supported EVM wallet and sign a readable off-chain wallet-control message.
 - When an already verified wallet is eligible, the user can reuse it without signing another wallet-control message.
 - If a wallet cannot be used for the connection, the product explains why and offers another wallet or a supported correction. When no eligible verified wallet is available, the user can connect and verify one.
-- Before confirmation, the product identifies the user's supported accounts and the available asset, balance, and position coverage. The user confirms the connection with its visible coverage limits.
+- Before confirmation, the product identifies the actual Hyperliquid account address being connected and its available asset, balance, and position coverage. The user confirms the authorized account and its visible coverage limits.
 - The connection includes only the user's own supported account information verified through the selected wallet. Supported account types and products depend on the provider or connector.
 - After confirmation, the user sees connection progress and the available portfolio data. A successful connection with no balances or positions shows an empty result; a failed or incomplete read is not shown as zero.
 - A cancelled or failed setup attempt creates no new connection, preserves existing connections, and offers a clear retry or correction path.
@@ -173,8 +174,8 @@ The [wallet connection decision](../ADRS/0007-verified-evm-wallet-connections.md
 | Decision | What needs agreement |
 | --- | --- |
 | Account entry and continuity | Authentication provider, supported channel sender types, and exact recovery evidence and policy. Phone-number changes, lost-number recovery, and email recovery are low priority. |
-| Launch coverage | Supported EVM and Solana wallet networks and types, Solana provider coverage, EVM cross-chain proof policy, and how provider-dependent coverage limits are shown to users. |
-| Hyperliquid account connection | Which verified wallets qualify and how supported coverage and connection limits are explained. |
+| Launch coverage | Supported EVM and Solana wallet networks and types, EVM cross-chain proof policy, and visible regional, account, capability, and update limits for the target sources. Interactive Brokers timing and moomoo coverage outside the US and Canada remain unresolved target gaps. |
+| Hyperliquid account connection | Which supported EVM wallet types qualify and how actual account addresses, supported coverage, and connection limits are explained. |
 | First portfolio snapshot | The useful minimum for each source, valuation sources, formulas, and supported provider-supplied history and metrics for portfolio-value changes and investment gains or losses. A MyStacks indexer and historical reconstruction or P&L requiring MyStacks infrastructure are deferred at low priority. USD is the default display currency; alternate currencies are low priority. |
 | Personalization | Which optional preferences to ask for after first value and how the automatic-memory experience is introduced. |
 | Notifications | How to explain best-effort monitoring limits, pending proactive delivery after changes to proactive insight delivery channels, and exact daylight-saving mechanics within the accepted timezone rules. |

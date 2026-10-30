@@ -24,10 +24,11 @@ As a user, I want to ask financial questions in ordinary language so that I can 
 - Chat can inspect and control only its own channel's jobs and scheduled tasks. Phase 1 offers no cross-channel history lookup, destination selector for requested work, or work transfer, including on request.
 - Users can control shared personal memory and preferences and select proactive insight delivery channels in chat. Chat and the website dashboard update the same account setting: iMessage, WhatsApp, both, or neither. Each newly linked channel is selected by default. Insights go only to selected channels, without automatic fallback; with neither selected, proactive investigation and delivery are disabled, including unsent insights.
 - To add or remove financial connections or link or disconnect a channel, the assistant links to the website dashboard. The proactive insight delivery channels setting routes only proactive insights; chat replies, requested work, and scheduled work retain their originating channel. Scheduled work does not retrieve another channel's history, tasks, or results.
-- The assistant uses connected or supplied portfolio information when relevant, including for questions about holdings, composition, changes, and supported position risks.
+- The assistant uses connected or supplied portfolio information when relevant, including for questions about holdings, composition, changes, and supported position risks. Current portfolio analysis obtains the latest relevant account state at analysis time, allowing brief reuse while it remains fresh or near-fresh for the claim.
+- Source as-of time remains distinct from retrieval time. Fresh prices do not make old holdings current; delayed observations can still support accurately dated historical or reporting answers.
 - The assistant leads with the answer or main finding, followed by key numbers and only the reasoning and evidence needed to understand it. Short paragraphs or bullets keep the result readable in the channel.
 - Follow-up questions provide deeper detail. Concision preserves important reasoning and evidence rather than imposing a rigid word count.
-- The assistant gives its best useful answer from available information without routine warnings about missing data.
+- The assistant gives its best useful answer from available information without routine warnings about missing data. When timely account evidence is unavailable for a requested analysis, it briefly explains material timing or coverage limits and continues with supported findings; unrelated answers remain available.
 - When the user explicitly asks for unavailable information, the assistant explains what is unavailable and offers the closest useful answer it can support.
 - Answers describe their actual scope naturally, such as “Across your connected accounts,” without inventing figures, treating unavailable data as zero or no risk, or implying unsupported completeness.
 - Follow-up questions can refer to the prior answer; if the reference is unclear, the assistant resolves it before drawing a materially different conclusion.
@@ -128,6 +129,7 @@ These examples exercise the stories without limiting the assistant to a fixed re
 | A scheduled result or proactive insight arrives in chat. | The message follows the same text-first briefing format as a direct answer. |
 | One connected source is unavailable but is not needed for the requested research. | The assistant provides supported findings without a routine missing-source warning. |
 | The user explicitly asks for a balance that is unavailable. | The assistant explains that the requested balance is unavailable and offers the closest useful supported information. |
+| Fresh market prices are available, but the latest account observation is delayed. | The assistant does not present old holdings as current. A requested answer uses supported information with concise material timing limits; unrelated research can continue. |
 | “How did I do?” could mean a balance change or investment performance. | The assistant resolves the distinction needed for a meaningful answer. |
 | The user uploads a financial document without instructions. | The assistant asks what the user wants before analyzing it. |
 | The user uploads a spreadsheet with a clear analysis request. | The assistant follows the request and identifies any inputs it could not interpret. |
@@ -151,7 +153,7 @@ These examples exercise the stories without limiting the assistant to a fixed re
 ## 4. Open decisions
 
 - **Interaction:** follow-up context limits within each channel, progress presentation, and response-time targets.
-- **Research:** supported sources, access methods, source attribution format, and claim-specific freshness requirements.
+- **Research:** supported sources, access methods, source attribution format, and exact brief-reuse windows, maximum evidence age, and service-level targets within the fresh or near-fresh account-state requirement for current analysis.
 - **Low-priority uploads and artifacts:** supported formats, file and analysis limits, artifact formats when enabled, access duration, and retention.
 - **Continued work:** global capacity, exact cancellation and in-flight behavior, unscheduled one-off retry and replay behavior, interrupted-work recovery, and resource budgets. Scheduled failure behavior follows the task stories. In-flight steering remains low priority.
 - **Human support:** support hours and time zone, staffing, response expectations, out-of-hours handling, staff tooling and access, handoff and reply ownership, and any Apple-specific controls follow the [open decisions](../TODO.md).

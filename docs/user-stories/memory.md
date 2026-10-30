@@ -55,7 +55,7 @@ As a user, I want remembered context to be distinguishable from current evidence
 
 - If a remembered preference or goal materially shapes an answer, the assistant can explain that context and its source.
 - User-stated or user-confirmed personal facts remain distinguishable from assistant guesses and interpretations; the assistant does not present an interpretation as a confirmed user fact.
-- Current holdings, prices, position risks, and account access rely on available financial evidence rather than being asserted from memory.
+- Current holdings, prices, position risks, and account access rely on financial evidence rather than being asserted from memory. Current portfolio analysis and proactive current-exposure claims require fresh or near-fresh relevant account state; remembered holdings and fresh market prices do not make an older account observation current.
 - When remembered context and current evidence differ, the assistant does not silently treat either as a corrected goal or preference. Current financial evidence remains the basis for financial facts.
 - A newer user statement about holdings, balances, prices, or account access remains user-supplied context; it does not overwrite provider financial evidence or establish current access.
 - Remembering a past balance or connected account does not make it current or accessible. When the user explicitly requests unavailable current information, the assistant explains the gap and offers the closest useful supported answer.

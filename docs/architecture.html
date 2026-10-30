@@ -17,6 +17,14 @@
       --ink: #0b1f1b;
       --mint: #22d3ae;
       --text: #111a24;
+      --user-a: #16a34a;
+      --user-a-tint: #e9f7ee;
+      --user-b: #0a84ff;
+      --user-b-tint: #e8f2ff;
+      --sched: #7c3aed;
+      --sched-tint: #f3edfe;
+      --sweep: #d97706;
+      --sweep-tint: #fdf3e7;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; height: 100%; }
@@ -28,18 +36,22 @@
       color: #111a24;
       font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
-    main { height: 100svh; display: grid; grid-template-rows: auto 1fr; padding: clamp(20px, 3vw, 48px) clamp(20px, 4vw, 64px); gap: 12px; }
+    main, .dispatch { height: 100svh; display: grid; grid-template-rows: auto 1fr; padding: clamp(20px, 3vw, 48px) clamp(20px, 4vw, 64px); gap: 12px; }
     header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px 32px; }
     .eyebrow { margin: 0 0 10px; font-size: 13px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: #0f8a6a; }
-    h1 { margin: 0; font-size: clamp(26px, 2.6vw, 40px); font-weight: 700; letter-spacing: -.02em; }
+    h1, h2 { margin: 0; font-size: clamp(26px, 2.6vw, 40px); font-weight: 700; letter-spacing: -.02em; }
     .lede { margin: 10px 0 0; max-width: 70ch; font-size: clamp(14px, 1.1vw, 17px); line-height: 1.5; color: #55606d; }
     .legend { display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: 13px; color: #55606d; white-space: nowrap; }
     .legend span { display: inline-flex; align-items: center; gap: 8px; }
     .swatch-edge { width: 26px; height: 0; border-top: 1.5px solid #8b96a3; }
     .swatch-trigger { width: 26px; height: 0; border-top: 1.5px dashed #0f8a6a; }
     .swatch-boundary { width: 18px; height: 12px; border: 1.5px dashed #b9c2cc; border-radius: 4px; }
+    .swatch-user { width: 12px; height: 12px; border-radius: 4px; background: var(--user-a); }
+    .swatch-user.b { background: var(--user-b); }
+    .swatch-user.s { background: var(--sched); }
+    .swatch-user.p { background: var(--sweep); }
     .stage { position: relative; min-height: 0; }
-    #diagram { display: block; width: 100%; height: 100%; overflow: visible; }
+    #diagram, #dispatch { display: block; width: 100%; height: 100%; overflow: visible; }
 
     /* Section picker: pill toggles over the empty top-right corner of the diagram. */
     .sections { position: absolute; top: 0; right: 0; z-index: 1; display: flex; gap: 6px; }
@@ -55,7 +67,7 @@
     .sections button[aria-pressed="true"] kbd { color: #ffffff; background: #ffffff2e; }
     @media (max-width: 959px) {
       .sections { position: static; flex-wrap: wrap; margin-bottom: 12px; }
-      #diagram { height: auto; }
+      #diagram, #dispatch { height: auto; }
     }
 
     /* Parts outside the chosen sections fade back; layout never moves. */
@@ -119,12 +131,72 @@
     .spin.reverse { animation-duration: 72s; animation-direction: reverse; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .eyebrow svg { width: 14px; height: 14px; vertical-align: -2px; margin-right: 6px; fill: currentColor; }
-    @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+    @media (prefers-reduced-motion: reduce) { .spin, .run-ring { animation: none; } }
+
+    /* Subagent dispatch: each user's jobs keep that user's channel colour from queue to worker to new turn. */
+    .bubble-tail { fill: var(--surface); }
+    .ask { fill: var(--text); font-size: 15px; }
+    .note { fill: #6b7683; font-size: 13px; }
+    .agent .card { fill: url(#hero-fill); stroke: #0b2a24; }
+    .agent .kicker { fill: var(--mint); }
+    .agent .title { fill: #ffffff; }
+    .agent .sub, .agent-note { fill: #a9c9bf; }
+    .agent-note { font-size: 13px; }
+    .agent-row { fill: #e3f1ec; font-size: 13.5px; }
+    .slot-free { fill: none; stroke: #ffffff4d; stroke-dasharray: 3 3; }
+    .job-tile.a { fill: var(--user-a); }
+    .job-tile.b { fill: var(--user-b); }
+    .job-id { fill: #ffffff; font-size: 12px; font-weight: 700; }
+    .row { fill: var(--surface); stroke: var(--line); stroke-width: 1.2; }
+    .row.waiting { fill: #f7f6f2; stroke: #b9c2cc; stroke-dasharray: 5 4; }
+    .row-label { fill: var(--text); font-size: 14px; font-weight: 500; }
+    .slot { stroke-width: 1.2; }
+    .slot.a { fill: var(--user-a-tint); stroke: #16a34a40; }
+    .slot.b { fill: var(--user-b-tint); stroke: #0a84ff40; }
+    .slot-title { fill: var(--text); font-size: 15px; font-weight: 600; }
+    .slot-sub { fill: #5f6b78; font-size: 12.5px; }
+    .worker-name { fill: var(--text); font-size: 17px; font-weight: 600; }
+    .run-track { fill: var(--surface); stroke-width: 2; }
+    .run-track.a { stroke: #16a34a2e; }
+    .run-track.b { stroke: #0a84ff2e; }
+    .run-ring { fill: none; stroke-width: 2; stroke-linecap: round; stroke-dasharray: 20 68; transform-box: fill-box; transform-origin: center; animation: spin 1.4s linear infinite; }
+    .tool { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .run-ring.a, .tool.a { stroke: var(--user-a); }
+    .run-ring.b, .tool.b { stroke: var(--user-b); }
+    .job-tile.s { fill: var(--sched); }
+    .job-tile.p { fill: var(--sweep); }
+    .slot.s { fill: var(--sched-tint); stroke: #7c3aed40; }
+    .slot.p { fill: var(--sweep-tint); stroke: #d9770640; }
+    .run-track.s { stroke: #7c3aed2e; }
+    .run-track.p { stroke: #d977062e; }
+    .run-ring.s, .tool.s { stroke: var(--sched); }
+    .run-ring.p, .tool.p { stroke: var(--sweep); }
+    .tile-icon { fill: none; stroke: #ffffff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .queue-label { fill: #8a94a0; font-size: 11.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
+    .priority { fill: #8a94a0; font-size: 12.5px; font-weight: 600; }
+    /* Dashed worker: capacity that raising the pool's instance count would add. */
+    .ghost { fill: #ffffff59; stroke: #b9c2cc; stroke-width: 1.4; stroke-dasharray: 6 5; }
+    .ghost-text { fill: #8a94a0; }
+    .add-text { fill: var(--accent); font-size: 13.5px; font-weight: 600; }
+    .edge.ghost-link { stroke: #b9c2cc; stroke-dasharray: 3 5; }
+    .badge-icon.muted { stroke: #8a94a0; }
+    .step-num { fill: var(--mint); font-size: 12.5px; font-weight: 700; }
+    .reply-text { fill: var(--accent); font-size: 14px; font-weight: 600; }
+
+    /* Open questions under the dispatch diagram. */
+    .questions { padding: 8px clamp(20px, 4vw, 64px) clamp(32px, 4vw, 64px); }
+    .questions h2 { font-size: clamp(22px, 2vw, 30px); }
+    .questions ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 20px 0 0; padding: 0; list-style: none; counter-reset: question; }
+    .questions li { counter-increment: question; display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: start; padding: 20px 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; font-size: 16px; line-height: 1.5; color: var(--text); }
+    .questions li::before { content: counter(question); display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; font: 700 13px Inter, sans-serif; color: var(--mint); background: var(--ink); }
+    .questions strong { display: block; margin-bottom: 4px; font-weight: 600; }
+    .questions span { color: #55606d; font-size: 15px; }
 
     @media print {
       @page { size: landscape; margin: 0; }
       body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
       .flow { display: none; }
+      .dispatch, .questions { break-before: page; }
     }
   </style>
 </head>
@@ -134,7 +206,7 @@
       <div>
         <p class="eyebrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4z"/></svg>MyStacks · Agentic runtime · Phase 1</p>
         <h1>Custom runtime architecture</h1>
-        <p class="lede">Shared Mastra runtime; direct chat, one main-agent turn per channel. Native channel compaction and an account-shared profile use PostgreSQL. Background results start a new main-agent turn, which owns the reply. Credentials stay in the backend; generated code runs in E2B. <a href="ADRS/0009-channel-turns-and-background-subagents.md">Turn and delegation decisions</a>.</p>
+        <p class="lede">Shared Mastra runtime; one active backend coordinator serves concurrent channels, with one main-agent turn per channel. Native channel compaction and an account-shared profile use PostgreSQL. Background results start a new main-agent turn, which owns the reply. Credentials stay in the backend; generated code runs in E2B. Financial data uses SnapTrade, Zerion, and low-priority Hyperliquid reads through Webshare, with provider-dependent coverage and fresh account evidence for current analysis. <a href="ADRS/0009-channel-turns-and-background-subagents.md">Turn and delegation decisions</a>.</p>
       </div>
       <div class="legend" aria-hidden="true">
         <span><i class="swatch-edge"></i>Request and response</span>
@@ -146,7 +218,7 @@
     <nav class="sections" aria-label="Diagram sections"></nav>
     <svg id="diagram" viewBox="0 0 1800 900" role="img" aria-labelledby="diagram-title diagram-desc">
       <title id="diagram-title">MyStacks custom runtime architecture</title>
-      <desc id="diagram-desc">WhatsApp and iMessage are the launch channels; other channels are future scope. The orchestration layer verifies and stores inbound messages and executes chat directly, with one ordered event stream and one foreground main-agent turn per channel. A turn can contain several model and tool rounds. Process interruption can leave an acknowledged turn without a reply. The runtime uses durable user-scoped state, the financial tools API, and the E2B execution tool. Backend-held financial credentials reach only the financial tools API. The provisional BullMQ and Redis background queue dispatches work to shared warm workers; the backend database owns task definitions and job statuses and results. Main-agent turns may delegate up to five outstanding queued or running subagents per chat; terminal jobs and scheduler-started runs are excluded. Background agents cannot spawn children or send messages. User-created recurring schedules allow five enabled tasks per chat, excluding paused tasks, and a minimum one-hour interval. Each eligible occurrence admits one independent background agent run even while an earlier occurrence remains queued or running; actual start depends on worker capacity. Known temporary scheduled-execution failure gets one automatic retry, at most two execution attempts. Delivery failure must not rerun successful analysis. Completion persists internal findings and triggers a new main-agent turn through the channel handler, waiting if the channel is busy. The main agent can continue tools or code execution and owns the reply. Eligible proactive checks each run a bounded agent investigation, targeting approximately five randomized starts per account each day within 09:00–21:00 in its saved timezone. This window limits starts, not delivery. Only one proactive investigation runs per account; overlap and missed checks are skipped. Investigation failure is recorded internally for the next scheduled check without a routine message or whole-investigation retry. Proactive finding and notification history stays separate from shared personal memory. Each channel uses native Mastra Observational Memory token-based compaction; model context combines recent raw messages, that channel’s compact notes, and the account-shared structured profile. Compaction does not delete stored raw history or automatically update the shared profile. Only main-agent turns write the profile. Native partial updates preserve distinct fields; for the same field, the last successful save wins, including older turns overwriting corrections or deletions. Forget removes a profile detail and forgetall clears the profile through the same update tool; histories and compact notes remain unchanged and can still influence answers or cause relearning. Phase 1 provides neither vector retrieval nor cross-channel history retrieval. One PostgreSQL database holds separate application-owned and Mastra-owned tables under backend authorization, not a database per user. Exact profile schema and budgets, compaction token thresholds and models, database hosting, retention, package versions, and framework integration remain open.</desc>
+      <desc id="diagram-desc">WhatsApp and iMessage are the launch channels; other channels are future scope. One active ordinary backend coordinator verifies and stores inbound messages and executes chat directly for all users. Different channels run concurrently, while each channel has one ordered event stream and one foreground main-agent turn. User messages and background completions enter the same channel handler. A turn can contain several model and tool rounds. Process interruption can leave an acknowledged turn without a reply. Phase 1 uses stop-and-start coordinator deployments and accepts brief chat or traffic interruption. Distributed coordinator ownership and additional traffic-switching mechanisms wait for observed need. The runtime uses durable user-scoped state, the financial tools API, and the E2B execution tool. Backend-held financial credentials reach only the financial tools API. Application-wide keys use GCP Secret Manager; per-user provider credentials are encrypted in PostgreSQL using GCP KMS. Trusted API and background-worker adapters resolve and decrypt credentials after user and connection authorization; models and E2B receive data only. A compromised backend process can expose credentials within its service permissions. A separate financial service is deferred until a concrete need. Exact provider fields, schema, IAM, key configuration, and encryption mechanism remain open. SnapTrade targets Binance, Coinbase, Interactive Brokers, moomoo, and Robinhood for a mixed, global audience; Zerion supplies supported EVM and Solana wallet data. Direct Hyperliquid stays low priority and uses on-demand REST through Webshare after binding an eligible verified EVM account address. Public read endpoints need no user private, OAuth, or trading key; product authorization still requires the verified connection. Proxy credentials stay in the backend, configuration remains open, and Hyperliquid limits apply per exit IP. Actual coverage, IBKR freshness, moomoo regions, provider polling and permitted use remain validation gaps. DeBank is an optional future EVM complement; Bybit, Upbit, and prediction-market connectors are deferred. Current portfolio analysis requests fresh or near-fresh relevant account evidence with brief appropriate reuse. Source-data time differs from retrieval time, and fresh prices cannot make old holdings current. Proactive work avoids current-exposure conclusions without timely evidence; requested answers remain useful with concise material limits. Exact age limits remain open, and periodic proactive checks do not imply continuous monitoring. One shared background execution queue across accounts uses BullMQ as the baseline with provisional Redis integration, with explicit priorities ordered as main-agent-delegated subagents, user-created scheduled occurrences, then proactive investigations. Priority orders waiting work without interrupting active runs or reserving capacity. The queue dispatches work to a GCP Cloud Run worker pool deployed separately from API/chat, starting with one or two manually scaled instances; the backend database owns task definitions and job statuses and results. Main-agent turns may delegate up to five outstanding queued or running subagents per chat; terminal jobs and scheduler-started runs are excluded. Background agents cannot spawn children or send messages. User-created recurring schedules allow five enabled tasks per chat, excluding paused tasks, and a minimum one-hour interval. Each eligible occurrence admits one independent background agent run even while an earlier occurrence remains queued or running; actual start depends on worker capacity. User-requested background work has at most two whole-job execution attempts per job or scheduled occurrence. Interrupted unfinished work restarts from the beginning only if it remains active and authorized and has an attempt left; this shares the allowance for the existing scheduled temporary-failure retry. Cancelled or no-longer-authorized work does not restart. Completed saved results are reused, without checkpoints inside agent reasoning, model calls, or tool steps. Delivery failure must not rerun successful analysis. Completion persists internal findings and triggers a new main-agent turn through the channel handler, waiting if the channel is busy. The main agent can continue tools or code execution and owns the reply. Eligible proactive checks each run a bounded agent investigation, targeting approximately five randomized starts per account each day within 09:00–21:00 in its saved timezone. This window limits starts, not delivery. Only one proactive investigation runs per account; overlap and missed checks are skipped. Proactive investigation failure or interruption is recorded internally for the next scheduled check without a routine message or whole-investigation retry. Configurable execution limits and recorded run duration, model usage, and outcome guide capacity tuning from queue delay and resource usage. Exact limits await representative runs; per-user spending budgets are deferred. Proactive finding and notification history stays separate from shared personal memory. Each channel uses native Mastra Observational Memory token-based compaction; model context combines recent raw messages, that channel’s compact notes, and the account-shared structured profile. Compaction does not delete stored raw history or automatically update the shared profile. Only main-agent turns write the profile. Native partial updates preserve distinct fields; for the same field, the last successful save wins, including older turns overwriting corrections or deletions. Forget removes a profile detail and forgetall clears the profile through the same update tool; histories and compact notes remain unchanged and can still influence answers or cause relearning. Phase 1 provides neither vector retrieval nor cross-channel history retrieval. One PostgreSQL database holds separate application-owned and Mastra-owned tables under backend authorization, not a database per user. Exact profile schema and budgets, compaction token thresholds and models, database hosting, retention, package versions, and framework integration remain open.</desc>
       <defs>
         <linearGradient id="solana" x1="0" y1="1" x2="1" y2="0">
           <stop offset="0" stop-color="#9945ff"/>
@@ -177,6 +249,38 @@
     </svg>
     </div>
   </main>
+  <section class="dispatch" aria-labelledby="dispatch-heading">
+    <header>
+      <div>
+        <p class="eyebrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4z"/></svg>Background work · Two-user example</p>
+        <h2 id="dispatch-heading">Background job dispatch</h2>
+        <p class="lede">Delegated subagents, scheduled tasks, and proactive sweeps share one BullMQ queue, in that priority order, and one Cloud Run worker pool that grows by adding instances. Each run keeps its own user context; each finished job starts a new main-agent turn in its own chat.</p>
+      </div>
+      <div class="legend" aria-hidden="true">
+        <span><i class="swatch-edge"></i>Request and reply</span>
+        <span><i class="swatch-trigger"></i>Background work</span>
+        <span><i class="swatch-user"></i>User A subagent</span>
+        <span><i class="swatch-user b"></i>User B subagent</span>
+        <span><i class="swatch-user s"></i>Scheduled task</span>
+        <span><i class="swatch-user p"></i>Proactive sweep</span>
+      </div>
+    </header>
+    <div class="stage">
+      <svg id="dispatch" viewBox="0 0 1800 850" role="img" aria-labelledby="dispatch-title dispatch-desc">
+        <title id="dispatch-title">Background job dispatch through one shared queue</title>
+        <desc id="dispatch-desc">Delegated subagents, user-created scheduled tasks, and proactive sweeps share one BullMQ queue across users, at highest, normal, and lowest priority. User A on WhatsApp and user B on iMessage both ask for research; each user's main-agent turn delegates subagents, receives job IDs, acknowledges, and ends: user A delegates one and user B two, within the limit of five open subagents per chat. BullMQ Job Schedulers add other users' scheduled tasks and proactive sweeps to the same queue. Two Cloud Run worker-pool instances with two slots each run user A's subagent, user B's first subagent, a scheduled task, and a proactive sweep, each in its own user context. Waiting jobs sort by priority: user B's second subagent first, then scheduled tasks, then proactive sweeps. Priority affects waiting jobs without pausing active work or reserving capacity, so the high-priority subagent waits while a proactive sweep runs. A dashed third instance shows that raising the pool's instance count would start the next two waiting jobs. Subagents cannot start subagents or message users. When a job finishes, the worker saves its result in PostgreSQL before completing the BullMQ job. The single active chat coordinator subscribes to native BullMQ QueueEvents and orders completions with user messages. For user-requested work, an available originating channel starts a new main-agent turn with a compact summary and result references; the agent reads details when useful. In the illustrated flow, that turn stays quiet while sibling jobs remain, then combines results and replies in the same chat. Proactive results follow the selected eligible delivery channels. Saved results remain authoritative; missed-event recovery and duplicate-delivery handling remain open. Worker count and slots are illustrative.</desc>
+      </svg>
+    </div>
+  </section>
+  <section class="questions" aria-labelledby="questions-heading">
+    <p class="eyebrow">For discussion</p>
+    <h2 id="questions-heading">Open questions</h2>
+    <ol>
+      <li><div><strong>One shared runtime for every user?</strong><span>Does a shared runtime on warm workers make sense, instead of a dedicated runtime or virtual machine for each user?</span></div></li>
+      <li><div><strong>Credential encryption configuration?</strong><span>Trusted API and worker adapters resolve app keys from Secret Manager and decrypt per-user credentials from PostgreSQL using KMS. Which IAM, key, and encryption configuration fits the provider contract?</span></div></li>
+      <li><div><strong>Shared subagent capacity?</strong><span>Does a message queue with shared subagent workers make sense, so all users draw on one pool of subagent capacity?</span></div></li>
+    </ol>
+  </section>
   <script>
     // Diagram data: positions are in viewBox units; connections are two-way unless marked as a one-way trigger.
     const NODES = {
@@ -184,7 +288,7 @@
       C1: { shape: 'medallion', x: 93, y: 258, w: 84,  h: 84,  title: ['WhatsApp'],       icon: 'whatsapp', tone: 'whatsapp', small: true, fan: true },
       C2: { shape: 'medallion', x: 93, y: 408, w: 84,  h: 84,  title: ['iMessage'],       icon: 'imessage', tone: 'imessage', small: true, fan: true },
       C3: { shape: 'medallion', x: 93, y: 558, w: 84,  h: 84,  title: ['Other channels'], sub: 'Future scope', icon: 'apps', tone: 'other', small: true, fan: true },
-      O: { shape: 'hex',      x: 310,  y: 380, w: 240, h: 140, kicker: 'Backend',       title: ['Orchestration', 'layer'],       sub: 'Auth, turns, delivery' },
+      O: { shape: 'hex',      x: 310,  y: 380, w: 240, h: 140, kicker: 'Backend',       title: ['Orchestration', 'layer'],       sub: 'One active coordinator' },
       R: { shape: 'card',     x: 610,  y: 355, w: 290, h: 190, kicker: 'Core · Mastra', title: ['MyStacks Agentic', 'Runtime'], sub: 'Main agent owns replies', hero: true },
       D: { shape: 'folder',   x: 960,  y: 115, w: 270, h: 140, kicker: 'State',         title: ['Shared PostgreSQL', 'database'], sub: 'Application + Mastra tables', icon: 'db' },
       F: { shape: 'card',     x: 960,  y: 380, w: 270, h: 140, kicker: 'Tool',          title: ['Financial tools API'],          sub: 'Authorized read-only access', icon: 'chart' },
@@ -193,7 +297,7 @@
       K: { shape: 'keys',     x: 970,  y: 553, w: 250, h: 58,  title: ['Keys & credentials'], sub: 'Hidden from the agent', small: true },
       S: { shape: 'medallion', x: 1382, y: 672, w: 96, h: 96, glyph: 'sandbox', badge: 'lock', kicker: 'Sandbox',       title: ['Task-scoped sandbox'],      sub: 'E2B · isolated, internet off' },
       Q: { shape: 'queue',    x: 360,  y: 690, w: 120, h: 56,  title: ['Scheduler & job queue'], sub: 'BullMQ · Redis · provisional', small: true },
-      W: { shape: 'workers',  x: 579,  y: 688, w: 122, h: 60,  title: ['Shared worker pool'],    sub: 'Claim and run jobs', small: true },
+      W: { shape: 'workers',  x: 579,  y: 688, w: 122, h: 60,  title: ['Cloud Run pool'],    sub: 'Claim and run jobs', small: true },
     };
     // 24x24 line icons for badges and figures.
     const ICONS = {
@@ -207,6 +311,10 @@
       key: 'M15.5 3.5a5 5 0 1 1 0 10 5 5 0 0 1 0-10z M12 12l-8.5 8.5 M6.5 17.5L9 20 M9 15l2 2 M16.5 7.5h.01',
       eyeOff: 'M3 3l18 18 M10.6 5.1A10.6 10.6 0 0 1 12 5c6 0 9.5 7 9.5 7a17 17 0 0 1-2.6 3.5 M6.6 6.6C3.9 8.3 2.5 12 2.5 12S6 19 12 19a9.7 9.7 0 0 0 5.4-1.6 M9.9 9.9a3 3 0 0 0 4.2 4.2',
       cpu: 'M8.5 6h7A2.5 2.5 0 0 1 18 8.5v7a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 6 15.5v-7A2.5 2.5 0 0 1 8.5 6z M10 2.5V6 M14 2.5V6 M10 18v3.5 M14 18v3.5 M2.5 10H6 M2.5 14H6 M18 10h3.5 M18 14h3.5',
+      search: 'M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13z M15.3 15.3L20 20',
+      bell: 'M6 17v-6a6 6 0 0 1 12 0v6l1.5 1.5h-15z M10 21a2.2 2.2 0 0 0 4 0',
+      route: 'M12 3v18 M12 5.5h6l2.5 2.5-2.5 2.5h-6 M12 12.5H6l-2.5 2.5L6 17.5h6',
+      radar: 'M21 12a9 9 0 1 1-9-9 M16.5 12A4.5 4.5 0 1 1 12 7.5 M12 12l6.4-6.4',
     };
     // MyStacks brand mark, copied from the favicon at docs.mystacks.ai; it spans 14.15 to 49.85 in a 64-unit box.
     const MYSTACKS_MARK = 'M21.5 14.15L42.5 14.15C46.56 14.15 49.85 17.44 49.85 21.5L49.85 42.5C49.85 46.56 46.56 49.85 42.5 49.85L21.5 49.85C17.44 49.85 14.15 46.56 14.15 42.5L14.15 21.5C14.15 17.44 17.44 14.15 21.5 14.15ZM21.5 40.4L32 33.05L42.5 40.4L42.5 33.05L32 25.7L21.5 33.05Z';
@@ -487,6 +595,221 @@
     });
 
     render();
+
+    // Background job dispatch example. User A (WhatsApp) runs along the top lane and user B (iMessage) along the bottom.
+    // Their subagents share one BullMQ queue with other users' scheduled tasks and proactive sweeps, and one Cloud Run worker pool.
+    // Positions are in viewBox units; worker count and slots are illustrative.
+    {
+      const svg = document.getElementById('dispatch');
+      const [boundary, links, figures] = [0, 1, 2].map(() => el('g', {}, svg));
+      // Each user's request, lane centre, reply route, and what each completion turn does.
+      const USERS = [
+        { key: 'a', name: 'User A', channel: 'WhatsApp', y: 270, replyY: 36, ask: ['“Research how NVDA', 'earnings could move', 'my portfolio.”'],
+          turns: 'Turn 2', results: [['a1', 'done, replies']] },
+        { key: 'b', name: 'User B', channel: 'iMessage', y: 610, replyY: 816, ask: ['“Research what is', 'driving SOL and my', 'exposure to it.”'],
+          turns: 'Turns 2–3', results: [['b1', 'quiet, b2 queued'], ['b2', 'combines, replies']] },
+      ];
+      // A job's first letter is its class: a and b are the two users' subagents, s scheduled tasks, p proactive sweeps.
+      // Running jobs fill the four worker slots in order; waiting jobs sort by priority, and the first two would start on an added worker.
+      const RUNNING = [
+        { id: 'a1', task: 'Earnings impact',   sub: 'User A · subagent', icon: 'search' },
+        { id: 's1', task: 'Digest · user C',   sub: 'Scheduled task',    icon: 'clock' },
+        { id: 'b1', task: 'Holdings evidence', sub: 'User B · subagent', icon: 'chart' },
+        { id: 'p1', task: 'Sweep · user F',    sub: 'Proactive sweep',   icon: 'radar' },
+      ];
+      const WAITING = [
+        { id: 'b2', task: 'Ecosystem news' },
+        { id: 's2', task: 'Alert · user D' },
+        { id: 's3', task: 'Review · user E' },
+        { id: 'p2', task: 'Sweep · user G' },
+        { id: 'p3', task: 'Sweep · user H' },
+      ];
+      const QUEUE = { x: 575, y: 195, w: 225, h: 590 }, DONE = { x: 1305, y: 230, w: 212, h: 420 };
+      // Two running instances plus a dashed one that raising the instance count would add; each instance has two job slots.
+      const WORKERS = [205, 373, 541].map((y, i) => ({ x: 882, y, w: 346, h: 150, added: i === 2 }));
+      const slotTop = (worker, slot) => WORKERS[worker].y + 50 + slot * 48;
+
+      // Numbered marker on a figure's top-right corner, giving the walkthrough order.
+      function step(g, cx, cy, n) {
+        el('circle', { cx, cy, r: 13, class: 'figure-bubble' }, g);
+        el('text', { x: cx, y: cy + 4.5, class: 'step-num', 'text-anchor': 'middle' }, g).textContent = n;
+      }
+      // Job tile in its class colour.
+      function jobTile(g, x, y, id, size = 26) {
+        el('rect', { x, y, width: size, height: size, rx: 7, class: `job-tile ${id[0]}` }, g);
+        el('text', { x: x + size / 2, y: y + size / 2 + 4.3, class: 'job-id', 'text-anchor': 'middle' }, g).textContent = id;
+      }
+      // Line icon scaled into a size-by-size box at (x, y).
+      const icon = (g, name, x, y, size, cls) => el('path', { d: ICONS[name], class: cls, transform: `translate(${x} ${y}) scale(${size / 24})` }, g);
+      // Tinted icon tile, as on the main diagram's cards.
+      function tile(g, name, x, y, size = 32) {
+        el('rect', { x, y, width: size, height: size, rx: 10 }, el('g', { class: 'badge' }, g));
+        icon(g, name, x + size * .19, y + size * .19, size * .62, 'badge-icon');
+      }
+      // Solid class-coloured tile with a white icon, for job classes that have no id yet.
+      function classTile(g, key, name, x, y, size = 24) {
+        el('rect', { x, y, width: size, height: size, rx: 7, class: `job-tile ${key}` }, g);
+        icon(g, name, x + size * .2, y + size * .2, size * .6, 'tile-icon');
+      }
+      // MyStacks mark in a size-by-size box at (x, y).
+      function brand(g, x, y, size) {
+        const scale = size / 35.7;
+        el('path', { d: MYSTACKS_MARK, class: 'brand-mark', 'fill-rule': 'evenodd', transform: `translate(${x - 14.15 * scale} ${y - 14.15 * scale}) scale(${scale})` }, g);
+      }
+      // Solid request or reply line, or dashed background-work line, with travelling dots; a ghost line marks work that would start after scaling.
+      function link(d, kind) {
+        const g = el('g', {}, links);
+        if (kind === 'ghost') { el('path', { d, class: 'edge ghost-link', 'marker-end': 'url(#arrow)' }, g); return; }
+        el('path', kind === 'work' ? { d, class: 'edge trigger', 'marker-end': 'url(#arrow-trigger)' } : { d, class: 'edge', 'marker-end': 'url(#arrow)' }, g);
+        el('path', { d, class: 'flow' }, g);
+      }
+
+      // Worker pool boundary, with the rules every run follows.
+      const pool = el('g', {}, boundary);
+      el('rect', { x: 862, y: 160, width: 386, height: 620, rx: 28, class: 'group nested' }, pool);
+      el('text', { x: 886, y: 192, class: 'group-label nested' }, pool).textContent = 'Cloud Run worker pool';
+      [['Each run keeps its own user context', 718], ['No nested subagents or user messages', 738], ['Illustrative: 2 slots per worker', 758]]
+        .forEach(([text, y]) => { el('text', { x: 1055, y, class: 'note', 'text-anchor': 'middle' }, pool).textContent = text; });
+
+      for (const u of USERS) {
+        const mine = [...RUNNING, ...WAITING].filter(job => job.id[0] === u.key).sort((x, y) => x.id.localeCompare(y.id));
+        const channel = u.channel.toLowerCase();
+        // User: channel medallion, name, and a speech bubble with the request.
+        const g = el('g', { class: 'small' }, figures), top = u.y - 46, cx = 56, cy = u.y - 90;
+        el('circle', { cx, cy, r: 30, class: 'ring' }, g);
+        el('circle', { cx, cy, r: 23, class: `medallion ${channel}` }, g);
+        el('path', { d: ICONS[channel], class: 'channel-icon', 'fill-rule': 'evenodd', transform: `translate(${cx - 13} ${cy - 13}) scale(${26 / 24})` }, g);
+        el('text', { x: 98, y: cy - 2, class: 'title' }, g).textContent = u.name;
+        el('text', { x: 98, y: cy + 20, class: 'sub' }, g).textContent = u.channel;
+        el('rect', { x: 30, y: top, width: 195, height: 92, rx: 18, class: 'card' }, g);
+        el('path', { d: `M 46 ${top + 1} L 52 ${top - 10} L 66 ${top + 1} Z`, class: 'bubble-tail' }, g);
+        el('path', { d: `M 46 ${top} L 52 ${top - 10} L 66 ${top}`, class: 'figure-line' }, g);
+        u.ask.forEach((line, k) => { el('text', { x: 48, y: top + 30 + k * 21, class: 'ask' }, g).textContent = line; });
+        step(g, 225, top, 1);
+
+        // Turn 1: the main agent delegates jobs, gets job IDs, acknowledges, and ends; its tiles fill the five-per-chat limit.
+        const a = el('g', { class: 'agent' }, figures), ay = u.y - 85;
+        el('rect', { x: 290, y: ay, width: 215, height: 170, rx: 20, class: 'card' }, a);
+        textBlock({ kicker: 'Turn 1', title: ['Main agent'], sub: `Delegates ${mine.length}, acks` }, a, 312, ay + 18);
+        brand(a, 461, ay + 20, 24);
+        for (let k = 0; k < 5; k++) {
+          if (mine[k]) jobTile(a, 312 + k * 32, ay + 112, mine[k].id);
+          else el('rect', { x: 312.75 + k * 32, y: ay + 112.75, width: 24.5, height: 24.5, rx: 7, class: 'slot-free' }, a);
+        }
+        el('text', { x: 312, y: ay + 158, class: 'agent-note' }, a).textContent = 'Up to 5 open per chat';
+        step(a, 505, ay, 2);
+
+        // Later turns: each completion starts one; the last combines every result and replies.
+        const t = el('g', { class: 'agent' }, figures), ty = u.y - 90;
+        el('rect', { x: 1575, y: ty, width: 205, height: 180, rx: 20, class: 'card' }, t);
+        textBlock({ kicker: u.turns, title: ['Main agent'] }, t, 1597, ty + 18);
+        brand(t, 1736, ty + 20, 24);
+        u.results.forEach(([id, text], k) => {
+          const rowY = ty + 100 + k * 30;
+          jobTile(t, 1597, rowY - 11, id, 22);
+          el('text', { x: 1629, y: rowY + 4.5, class: 'agent-row' }, t).textContent = text;
+        });
+        step(t, 1780, ty, 6);
+
+        link(`M 230 ${u.y} H 285`);
+        link(`M 510 ${u.y} H 570`, 'work');
+        el('text', { x: 540, y: u.y - 10, class: 'edge-label', 'text-anchor': 'middle' }, links).textContent = 'Highest';
+        link(`M ${DONE.x + DONE.w + 5} ${u.y} H 1570`, 'work');
+        // Reply loops back over the top (user A) or under the bottom (user B) into the same chat.
+        const up = u.replyY < u.y, dir = up ? -1 : 1, r = 22, sx = 1677.5, ex = up ? cx : 127.5;
+        const sy = up ? ty - 5 : ty + 185, ey = up ? cy - 35 : top + 97, ry = u.replyY;
+        link(`M ${sx} ${sy} V ${ry - dir * r} Q ${sx} ${ry} ${sx - r} ${ry} H ${ex + r} Q ${ex} ${ry} ${ex} ${ry - dir * r} V ${ey}`);
+        const chip = el('g', {}, figures);
+        el('rect', { x: 860, y: ry - 15, width: 290, height: 30, rx: 15, class: 'chip' }, chip);
+        step(chip, 877, ry, 7);
+        el('text', { x: 899, y: ry + 5, class: 'reply-text' }, chip).textContent = `Reply in the same ${u.channel} chat`;
+      }
+
+      // Shared queue: running jobs link to their worker slots; waiting jobs sort by priority, and the first two point at the added worker.
+      const q = el('g', {}, figures);
+      el('rect', { x: QUEUE.x, y: QUEUE.y, width: QUEUE.w, height: QUEUE.h, rx: 20, class: 'card' }, q);
+      textBlock({ kicker: 'BullMQ · Redis', title: ['Background jobs'], sub: 'One queue, every user' }, q, QUEUE.x + 22, QUEUE.y + 18);
+      step(q, QUEUE.x + QUEUE.w, QUEUE.y, 3);
+      // One queue row; returns its centre line for the claim link.
+      function row(job, y, waiting) {
+        el('rect', { x: QUEUE.x + 16, y, width: QUEUE.w - 32, height: 36, rx: 10, class: waiting ? 'row waiting' : 'row' }, q);
+        jobTile(q, QUEUE.x + 24, y + 6, job.id, 24);
+        el('text', { x: QUEUE.x + 58, y: y + 23, class: 'row-label' }, q).textContent = job.task;
+        return y + 18;
+      }
+      const claim = (sy, ey, kind) => link(`M ${QUEUE.x + QUEUE.w + 5} ${sy} C 850 ${sy} 848 ${ey} 893 ${ey}`, kind);
+      el('text', { x: QUEUE.x + 22, y: QUEUE.y + 127, class: 'queue-label' }, q).textContent = 'Running';
+      RUNNING.forEach((job, i) => claim(row(job, QUEUE.y + 138 + i * 42, false), slotTop(i >> 1, i % 2) + 21, 'work'));
+      el('text', { x: QUEUE.x + 22, y: QUEUE.y + 327, class: 'queue-label' }, q).textContent = 'Waiting, high first';
+      WAITING.forEach((job, i) => {
+        const sy = row(job, QUEUE.y + 338 + i * 42, true);
+        if (i < 2) claim(sy, slotTop(2, i) + 21, 'ghost');
+      });
+      el('text', { x: QUEUE.x + 22, y: QUEUE.y + 572, class: 'note' }, q).textContent = 'Running jobs are never paused';
+
+      // Job Schedulers above the queue: user-created scheduled tasks and proactive sweeps, with their queue priorities.
+      const sched = el('g', {}, figures), schedX = 560, schedW = 255, schedY = 56;
+      el('rect', { x: schedX, y: schedY, width: schedW, height: 104, rx: 18, class: 'card' }, sched);
+      el('text', { x: schedX + 20, y: schedY + 27, class: 'kicker' }, sched).textContent = 'Job Schedulers';
+      [['s', 'clock', 'Scheduled tasks', 'Normal'], ['p', 'radar', 'Proactive sweep', 'Lowest']].forEach(([key, name, label, priority], k) => {
+        const y = schedY + 40 + k * 32;
+        classTile(sched, key, name, schedX + 20, y);
+        el('text', { x: schedX + 54, y: y + 17, class: 'row-label' }, sched).textContent = label;
+        el('text', { x: schedX + schedW - 20, y: y + 17, class: 'priority', 'text-anchor': 'end' }, sched).textContent = priority;
+      });
+      link(`M ${QUEUE.x + QUEUE.w / 2} ${schedY + 109} V ${QUEUE.y - 5}`, 'work');
+
+      // Workers: running instances show their busy slots; the added instance shows the next two waiting jobs it would start.
+      WORKERS.forEach((w, i) => {
+        const g = el('g', {}, figures), fade = w.added ? { opacity: .5 } : {};
+        el('rect', { x: w.x, y: w.y, width: w.w, height: w.h, rx: 18, class: w.added ? 'ghost' : 'card' }, g);
+        el('rect', { x: w.x + 16, y: w.y + 16, width: 30, height: 30, rx: 9 }, el('g', { class: 'badge', ...fade }, g));
+        const chip = el('g', { transform: `translate(${w.x + 19} ${w.y + 19})`, ...fade }, g);
+        el('path', { d: ICONS.cpu, class: 'badge-icon' }, chip);
+        el('rect', { x: 9.5, y: 9.5, width: 5, height: 5, rx: 1, class: 'cpu-die' }, chip);
+        el('text', { x: w.x + 58, y: w.y + 37, class: w.added ? 'worker-name ghost-text' : 'worker-name' }, g).textContent = `Worker ${i + 1}`;
+        if (w.added) {
+          el('text', { x: w.x + w.w - 22, y: w.y + 37, class: 'add-text', 'text-anchor': 'end' }, g).textContent = '+ Add an instance';
+          WAITING.slice(0, 2).forEach((job, s) => {
+            const y = slotTop(i, s);
+            el('rect', { x: w.x + 16, y, width: w.w - 32, height: 42, rx: 12, class: 'ghost' }, g);
+            jobTile(el('g', fade, g), w.x + 28, y + 9, job.id, 24);
+            el('text', { x: w.x + 64, y: y + 18, class: 'slot-title ghost-text' }, g).textContent = job.task;
+            el('text', { x: w.x + 64, y: y + 34, class: 'slot-sub' }, g).textContent = 'Starts once added';
+          });
+          return;
+        }
+        el('text', { x: w.x + w.w - 22, y: w.y + 37, class: 'note', 'text-anchor': 'end' }, g).textContent = '2 of 2 slots busy';
+        step(g, w.x + w.w, w.y, 4);
+        link(`M ${w.x + w.w + 5} ${w.y + 75} H ${DONE.x - 5}`, 'work');
+      });
+      RUNNING.forEach((job, i) => {
+        const w = WORKERS[i >> 1], y = slotTop(i >> 1, i % 2), key = job.id[0], g = el('g', {}, figures);
+        el('rect', { x: w.x + 16, y, width: w.w - 32, height: 42, rx: 12, class: `slot ${key}` }, g);
+        jobTile(g, w.x + 28, y + 9, job.id, 24);
+        el('text', { x: w.x + 64, y: y + 18, class: 'slot-title' }, g).textContent = job.task;
+        el('text', { x: w.x + 64, y: y + 34, class: 'slot-sub' }, g).textContent = job.sub;
+        // Running: the job's tool icon inside a turning ring.
+        const cx = w.x + w.w - 42, cy = y + 21;
+        el('circle', { cx, cy, r: 14, class: `run-track ${key}` }, g);
+        el('circle', { cx, cy, r: 14, class: `run-ring ${key}` }, g);
+        icon(g, job.icon, cx - 8, cy - 8, 16, `tool ${key}`);
+      });
+
+      // Completion: the worker saves the result, BullMQ reports it, and the listener routes it to the job's own channel.
+      const c = el('g', {}, figures);
+      el('rect', { x: DONE.x, y: DONE.y, width: DONE.w, height: DONE.h, rx: 20, class: 'card' }, c);
+      textBlock({ kicker: 'On completion', title: ['Persist, then', 'notify'] }, c, DONE.x + 22, DONE.y + 18);
+      step(c, DONE.x + DONE.w, DONE.y, 5);
+      [['db', 'Result saved', 'PostgreSQL record'], ['bell', 'Completed event', 'BullMQ QueueEvents'], ['route', 'Listener routes', 'to its own channel']]
+        .forEach(([name, title, sub], k) => {
+          const y = DONE.y + 142 + k * 100;
+          if (k) el('path', { d: `M ${DONE.x + 32} ${y - 36} l 6 6 l 6 -6`, class: 'badge-icon' }, c);
+          tile(c, name, DONE.x + 22, y);
+          el('text', { x: DONE.x + 66, y: y + 13, class: 'slot-title' }, c).textContent = title;
+          el('text', { x: DONE.x + 66, y: y + 31, class: 'slot-sub' }, c).textContent = sub;
+        });
+    }
   </script>
 </body>
 </html>

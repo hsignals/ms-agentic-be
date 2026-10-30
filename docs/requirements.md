@@ -47,19 +47,19 @@ Specific investment recommendations remain deferred pending the business's **lic
 
 ### 3.1 Coverage
 
-**Phase 1 coverage** must include EVM and Solana wallets, Binance accounts, and Hyperliquid positions. Connections must support the informational experience without requiring financial execution authority.
+**Phase 1 target sources** are EVM and Solana wallets and accounts at Binance, Coinbase, Interactive Brokers (IBKR), moomoo, and Robinhood for a mixed/global audience. Hyperliquid remains in scope at low priority. Connections must support the informational experience without requiring financial execution authority.
 
 **Hyperliquid support is low priority.** It remains in product scope; delivery sequencing is not selected.
 
-The available accounts, assets, balances, and positions depend on the selected connector and provider. The connection experience must show supported coverage and unavailable or unsupported information clearly; detailed coverage belongs to provider selection.
+Actual availability depends on the provider-supported region, account, and capability. A target source does not promise every account type, instrument, balance, position, or update frequency. The connection experience must show supported coverage, regional limits, and unavailable or unsupported information clearly. The [portfolio design](design/portfolio.md) owns the integration baseline and its coverage limits. Interactive Brokers account-update timing and moomoo coverage outside the US and Canada remain unresolved against the current-portfolio and mixed/global targets.
 
 **EVM and Solana wallet connections require wallet-control verification.** The user must connect a supported wallet on the companion website and sign a readable off-chain message. Only after the backend verifies control may MyStacks save the wallet as a tracked connection and start importing its portfolio data. Entering an address, connecting a wallet without signing, or supplying a file must not establish a verified connection; chat and scheduled tracking must enforce the same boundary.
 
 Verification enables read-only portfolio tracking without granting transaction or token-approval authority. Once connected, routine reads and monitoring must not require daily signatures or an open wallet app. A short-lived verification attempt does not determine the lifetime of the established connection; disconnecting stops future reads through that connection.
 
-Hyperliquid setup must offer eligible wallets the user has already verified, without requiring another wallet-control signature. Users may instead connect and verify another supported wallet, then confirm the account information they want to include.
+Hyperliquid setup must offer eligible EVM wallets the user has already verified, without requiring another wallet-control signature. Users may instead connect and verify another supported EVM wallet with a readable off-chain message, then confirm the actual Hyperliquid account address and supported account information they want to include. A public address alone does not establish an authorized connection.
 
-**Future coverage** is intended to include additional centralized exchanges, such as OKX, and traditional brokerage accounts. The exact supported chains, protocols, wallet types, account types, and instruments remain open.
+**Deferred connections** include Bybit, Upbit, and prediction-market connectors. General financial questions and research about those sources or markets remain within the informational scope. Further exchange and brokerage expansion remains future coverage; exact supported chains, protocols, wallet types, account types, and instruments remain provider-dependent.
 
 ### 3.2 Portfolio understanding
 
@@ -98,7 +98,7 @@ Adding a relevant skill or tool should let the assistant handle new requests **w
 
 **Phase 1 replies and reports are text-first, concise, precise, and readable in chat.** Answers, research summaries, scheduled updates, and proactive messages lead with the main finding and include key numbers, relevant evidence, and only the explanation needed to understand them. Short paragraphs and bullets support reading; follow-up questions provide deeper detail. Concision must preserve information needed to answer correctly rather than impose an arbitrary word limit. Image replies are low priority. Extensive deep-research reports and polished website report artifacts are deferred; available-source research, substantial calculations, and background work remain in scope.
 
-Onboarding follows **phone/SMS signup → dashboard**. From the dashboard, users may connect financial sources and link messaging channels in either order. A verified channel link is required before assistant chat; financial connections remain optional. The searchable chooser presents supported sources, with a **Connect a wallet** option and **Skip for now**. For Binance, the user completes the supported provider’s secure authorization flow and returns to the dashboard with connection status and coverage. Financial authorization may use mobile web or provider apps; OAuth availability and exact setup steps depend on the supported provider. After a connection, users can choose **Add more** or **Continue to chat**; adding one account does not end setup automatically. The same dashboard remains available for later additions.
+Onboarding follows **phone/SMS signup → dashboard**. From the dashboard, users may connect financial sources and link messaging channels in either order. A verified channel link is required before assistant chat; financial connections remain optional. The searchable chooser presents supported sources, with a **Connect a wallet** option and **Skip for now**. For a supported exchange or brokerage, the user completes the provider’s secure authorization flow and returns to the dashboard with connection status and coverage. Financial authorization may use mobile web or provider apps; required setup steps depend on the supported source and provider. After a connection, users can choose **Add more** or **Continue to chat**; adding one account does not end setup automatically. The same dashboard remains available for later additions.
 
 Once useful portfolio data is available after connection, the website must show a preview of available value, holdings, and positions with their included accounts, without waiting for every connected source. Users request portfolio answers in chat. Failed or cancelled setup preserves completed connections and offers an explanation, retry, another source, or continuation in chat from the same dashboard.
 
@@ -176,7 +176,7 @@ The assistant must keep ongoing work within the same domain and informational bo
 
 ### 5.3 Independent initiative and user control
 
-Beyond explicit user tasks, the assistant may **independently surface information** based on the user's portfolio, goals, and remembered interests. Proactive messages require strong evidence of something meaningfully new and useful that meets relevance and attention criteria. They must briefly explain why the finding matters to that user.
+Beyond explicit user tasks, the assistant may **independently surface information** based on the user's portfolio, goals, and remembered interests. Proactive messages require strong evidence of something meaningfully new and useful that meets relevance and attention criteria. They must briefly explain why the finding matters to that user. Any conclusion about the user’s current exposure requires fresh or near-fresh relevant account state under Section 6.2; without it, the assistant must avoid that dependent conclusion.
 
 Proactive investigations begin within **defined financial scopes**. The assistant may reason and choose useful research or analysis within those scopes; their exact coverage requires financial and provider research. This scope selection does not restrict user-created financial tasks to a fixed catalogue.
 
@@ -192,7 +192,7 @@ Before delivering task results, the product must respect **current permissions, 
 
 ### 5.4 Monitoring target and accepted limits
 
-Independent proactive checks target **approximately five investigations per eligible account per day**, with randomized start times between **9 AM and 9 PM in the user's saved timezone**. Times vary across users and occurrences. This is a configurable target, not an exact quota. The window governs investigation starts: a check starting at 8:58 PM may deliver a qualifying result at 9:03 PM. Eligibility and current permissions still apply before delivery.
+Independent proactive checks target **approximately five investigations per eligible account per day**, with randomized start times between **9 AM and 9 PM in the user's saved timezone**. Times vary across users and occurrences. This is periodic investigation, not continuous monitoring, and a configurable target rather than an exact quota. The window governs investigation starts: a check starting at 8:58 PM may deliver a qualifying result at 9:03 PM. Eligibility and current permissions still apply before delivery.
 
 Only one proactive investigation may be active per account. Skip overlapping or missed occurrences rather than building a catch-up backlog. If an investigation fails, record the failure internally and wait for the next scheduled check, without an automatic whole-investigation retry or a routine user failure message. Delivery failures must not restart the investigation; delivery retry policy remains open.
 
@@ -208,13 +208,15 @@ Each eligible proactive check runs an agent investigation within its defined sco
 
 The assistant must ground portfolio statements, calculations, and risk claims in **available evidence**. It must distinguish reported information from assumptions, hypothetical scenarios, and uncertain conclusions. It must not invent holdings, positions, prices, or execution outcomes.
 
-Financial evidence must identify its **source, as-of time or unknown freshness, coverage gaps, and native values and units**. Conversions and aggregation must preserve enough of that evidence to explain the result. The post-connection portfolio preview, chat, reports, and digests must use consistent backend financial evidence. Personalization memory remains separate and must not become the source of current holdings, prices, or account permissions.
+Financial evidence must identify its **source, source as-of time or unknown freshness, retrieval time, coverage gaps, and native values and units**. Retrieval time must remain distinct from when the source observed the account state; fetching a delayed observation now does not make it current. Conversions and aggregation must preserve enough of that evidence to explain the result. The post-connection portfolio preview, chat, reports, and digests must use consistent backend financial evidence. Personalization memory remains separate and must not become the source of current holdings, prices, or account permissions.
 
 The informational scope applies equally to requested answers, generated reports, scheduled work, and unsolicited messages. Professional behavior must come from accurate explanations, relevant information, and clear limits rather than confidence unsupported by evidence.
 
 ### 6.2 Incomplete or stale data
 
-The assistant must give its best useful answer from available information **without routine missing-data warnings**. When the user explicitly asks for unavailable information, it must explain what is unavailable and offer the closest useful answer it can support.
+For **current portfolio analysis** and account-specific proactive insights about current exposure, the assistant must obtain the latest relevant account state at analysis time. Brief reuse is allowed when that state remains fresh or near-fresh for the claim. Fresh market prices do not make older holdings or positions current. Exact reuse windows, maximum evidence age, and service-level targets remain open.
+
+When timely account evidence is unavailable, the assistant must avoid proactive current-exposure conclusions that depend on it. For user-requested answers, including scheduled work, it must give the best useful supported answer and briefly explain material timing or coverage limits. Delayed observations remain usable for accurately dated historical or reporting claims. These limits must not block unrelated answers or add routine missing-data warnings; when the user explicitly asks for unavailable information, explain what is unavailable and offer the closest useful answer.
 
 Answers must describe their actual scope naturally, such as “Across your connected accounts,” and must not imply unsupported completeness or present earlier observations as fresh. Unavailable data must not become a **zero balance or absence of risk**. Financial evidence retains source, freshness, and gap information; connection and portfolio views show loading, unavailable, or unsupported states where applicable.
 
@@ -235,13 +237,13 @@ Useful partial information is preferable to withholding an answer until every co
 | Continuity | User-specific knowledge that improves assistance over time. |
 | Available information | Best-effort useful answers with accurate scope and no routine missing-data warnings. |
 | Lower-priority capabilities | Hyperliquid support, financial file analysis, image replies, phone-number changes, lost-number and email recovery, and alternate display currencies are low priority; steering running background work and historical P&L or reconstruction requiring MyStacks-owned history infrastructure are deferred at low priority. |
-| Deferred capabilities | Extensive deep-research reports, polished website report artifacts, automatic timezone re-detection on later website visits, account deletion, WhatsApp-based login, and cross-channel requested work or task routing from chat. |
+| Deferred capabilities | Bybit, Upbit, and prediction-market connectors; extensive deep-research reports; polished website report artifacts; automatic timezone re-detection on later website visits; account deletion; WhatsApp-based login; and cross-channel requested work or task routing from chat. General financial questions and research about deferred sources or markets remain supported. |
 
 ### 7.2 Scale and unresolved business constraints
 
 Launch planning assumes **1,000 users**, with a growth target of **100,000 users**. Whether these counts refer to registered or active users remains undefined. Phase 2 authority remains a separate product decision.
 
-Operating cost per user, monetization, geographic scope, and other commercial constraints remain undecided. The user target is product context, not a detailed rollout schedule.
+The target audience is mixed/global; exact launch regions and provider-supported availability remain open. Operating cost per user, monetization, and other commercial constraints remain undecided. The user target is product context, not a detailed rollout schedule.
 
 ## 8. Observable acceptance examples
 
@@ -257,7 +259,9 @@ These examples define product behavior without prescribing an implementation or 
 | A user chats through linked iMessage and WhatsApp conversations. | Each keeps its own conversation, jobs, tasks, and results while sharing personal memory and authorized financial connections. |
 | Useful portfolio data becomes ready after connection. | The website shows a preview with Add more and Continue to chat; users request portfolio answers in chat. |
 | A returning user wants another financial connection. | The website uses the same Add account flow, preserving existing connections. |
-| A user connects a wallet and Binance, then asks for total holdings and positions. | The assistant presents a combined portfolio and identifies its source coverage. |
+| A user connects a wallet and supported exchange or brokerage accounts, then asks for current total holdings and positions. | The assistant obtains the latest relevant account state, allowing brief appropriate reuse, and presents a supported combined portfolio with its source coverage and any material timing limits. |
+| A target source is unsupported in the user’s region or for their account. | The website shows that availability limit without promising unsupported coverage; other supported sources remain connectable. |
+| A newly retrieved account observation is delayed while market prices are fresh. | The assistant preserves the account observation’s source as-of time; it does not present old exposure as current, and avoids dependent proactive conclusions. Historical or user-requested supported answers remain available with material limits explained. |
 | The user has a supported leveraged position approaching liquidation. | When monitoring detects a sufficiently supported risk, the assistant sends an informational alert, subject to the best-effort timing and recall limits. |
 | The user receives a morning digest. | The digest explains supported portfolio changes and relevant developments from available data with accurate scope. |
 | The user requests supported financial research requiring several steps. | The assistant gives a useful initial response, continues the work, and returns a concise text report in that chat or explains a limitation; deeper detail is available through follow-ups. |
@@ -291,15 +295,15 @@ These examples define product behavior without prescribing an implementation or 
 
 | Area | Still to determine |
 | --- | --- |
-| Data coverage | Connector and provider selection, wallet eligibility, supported networks, and the coverage and limits exposed by each integration. |
+| Data coverage | Provider-supported regional and account availability, wallet eligibility, supported networks, and capability limits within the accepted target sources. Interactive Brokers update timing and moomoo regional coverage remain gaps against the current-portfolio and mixed/global targets. The portfolio design owns the integration baseline. |
 | Portfolio measures | Provider-supported metrics, valuation sources, performance formulas, and calculation of external cash flows within the accepted USD and evidence rules. |
-| Alert evaluation | Provider-supported risk definitions, evidence and attention thresholds, freshness requirements by claim, repeat-suppression mechanisms, and any numeric precision targets within the accepted precision-first policy. |
+| Alert evaluation | Provider-supported risk definitions, evidence and attention thresholds, exact brief-reuse windows, maximum evidence age and service-level targets within the fresh or near-fresh account-state rule, repeat-suppression mechanisms, and any numeric precision targets within the accepted precision-first policy. |
 | Interaction details | Supported channel identities, linking verification mechanics, device handoff compatibility, and response-time targets. Apple-specific controls remain TBD: meet the minimum applicable requirements without letting them guide general product UX. [TODO](TODO.md#1-apple-messaging) owns service/provider and permitted proactive-scope confirmation. |
 | Human support | Staffing, published hours/timezone, response expectations, out-of-hours handling, staff tooling, and handoff integration; see [TODO](TODO.md#2-human-support). |
 | Account recovery | Low-priority phone changes, lost-number and email recovery, and safe reassigned-number handling. Account deletion is deferred. |
 | Task behavior | Recurrence and daylight-saving mechanics, in-flight interruption, transient-error classification and delay for the single scheduled-execution retry, one-off job and delivery retry policies, repeated delivery, and resource budgets. Scheduled admission, parallel occurrences, and quotas are defined in Section 5.2; proactive behavior is defined in Section 5.4. |
 | Memory | Selection and size budgets for useful context, retention, and native memory integration within the accepted automatic-update, material-clarification, last-successful-save, and profile-only forgetting rules. |
-| Business and data policy | Cost, monetization, geographic scope, retention, and applicable licensing requirements. |
+| Business and data policy | Cost, monetization, exact launch regions within the mixed/global target, retention, and applicable licensing requirements. |
 | Phase 2 | Supported actions, smart-account experience, execution authority, automation limits, and approval behavior. |
 | Architecture | Refine the [Mastra and E2B design](architecture.md), including the provisional queue choice, worker hosting, persistence, sandbox configuration, and operating policies. |
 
