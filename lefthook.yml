@@ -1,0 +1,6 @@
+# Apply safe lint fixes, then format only the staged files.
+pre-commit:
+  jobs:
+    - run: bun run biome check --write --error-on-warnings --no-errors-on-unmatched {staged_files} && DPRINT_CACHE_DIR="$PWD/.cache/dprint" bun run dprint fmt --allow-no-files {staged_files}
+      glob: "*.{ts,json}"
+      stage_fixed: true

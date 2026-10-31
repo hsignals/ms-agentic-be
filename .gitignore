@@ -111,3 +111,17 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Scaffold secrets and local verification artifacts
+.env.*
+!.env.example
+gha-creds-*.json
+*.pem
+*.key
+*.sqlite-shm
+*.sqlite-wal
+.kaioken/
+deployment-artifacts/
+.DS_Store
+.idea/
+.vscode/

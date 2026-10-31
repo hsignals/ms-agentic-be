@@ -1,0 +1,22 @@
+// Biome lint plugin: a ternary in production code is written on three lines: its condition, `? value`, and `: value`.
+// `biome.json` scopes it through `includes` to production files under `src/`.
+`$cond ? $yes : $no` as $ternary where {
+  // A ternary on one line is flagged, and so is one whose `?` shares a line with the end of its condition.
+  // dprint puts `: value` on its own line once `?` starts a line.
+  or {
+    $ternary <: r"^[^\n]*$",
+    and {
+      // The text before the first `?` followed by whitespace must be the whole condition; `[^?]` steps over the
+      // second `?` of `??`.
+      // simplified: a multi-line ternary whose condition holds `?` plus whitespace inside a string, regex, template,
+      // or comment, or that has a block comment before `?`, is not flagged. Tighten the match when such a site appears.
+      $ternary <: r"(?s)^(.*?[^?])(\s*)\?\s.*$"($head, $gap),
+      $head <: $cond,
+      $gap <: r"^[^\n]*$"
+    }
+  },
+  register_diagnostic(
+    span = $ternary,
+    message = "Write this ternary on three lines: the condition, then `? value`, then `: value`."
+  )
+}

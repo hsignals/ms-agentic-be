@@ -1,0 +1,15 @@
+# Images use an explicit runtime allowlist below.
+**
+!package.json
+!bun.lock
+!tsconfig.json
+!src/
+!src/**
+!drizzle/
+!drizzle/**
+!Dockerfile
+# Tests and developer credentials never enter the build context.
+**/*.test.ts
+**/*.spec.ts
+.env
+.env.*

@@ -1,0 +1,2 @@
+# Tests and checks use explicit process inputs; local runtime scripts opt into .env.
+env = false

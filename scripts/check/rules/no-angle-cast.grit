@@ -1,0 +1,8 @@
+// Biome lint plugin: a type assertion is written `value as Type`, never `<Type>value`.
+$assertion where {
+  $assertion <: TsTypeAssertionExpression(),
+  register_diagnostic(
+    span = $assertion,
+    message = "Write this assertion as `value as Type`; the angle-bracket form is not allowed."
+  )
+}

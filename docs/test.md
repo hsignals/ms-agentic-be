@@ -1,17 +1,18 @@
 # Testing and local checks
 
-This document owns the command and suite contract supplied by the runnable-foundation PR. It does not claim those commands have run on a documentation-only candidate. [Verification conventions](conventions/verification.md) own evidence quality; [CONTRIBUTING.md](../CONTRIBUTING.md) owns readiness.
+This document owns local verification commands, prerequisites, and suite boundaries. [Verification conventions](conventions/verification.md) own evidence quality; [CONTRIBUTING.md](../CONTRIBUTING.md) owns readiness.
 
 ## 1. Prerequisites and configuration
 
 Use the Bun version pinned by the repository and install with `bun install --frozen-lockfile`. A Docker-compatible runtime is required for disposable PostgreSQL/Valkey integration suites and container smoke checks. Routine tests use synthetic configuration, disable developer environment loading, and do not require OpenAI or E2B credentials.
 
-Keep actual `.env` values local. Application development may use `docker compose up -d` and `bun run db:migrate`; the test runner owns separate isolated resources and must never infer a live database from a developer URL.
+Keep actual `.env` values local. Application development may use `docker compose up -d --wait` and `bun run db:migrate`; the test runner owns separate isolated resources and must never infer a live database from a developer URL.
 
 ## 2. Check commands
 
 | Command | Purpose |
 | --- | --- |
+| `bun run db:generate` | Generate application migrations and snapshots from Drizzle schemas. |
 | `bun run format` | Apply configured formatting. |
 | `bun run format:check` | Verify formatting without changing files. |
 | `bun run lint` | Run Biome and applicable custom code rules. |

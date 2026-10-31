@@ -1,0 +1,45 @@
+{
+  "lineWidth": 120,
+  "indentWidth": 2,
+  "useTabs": false,
+  "newLineKind": "lf",
+  "typescript": {
+    "quoteStyle": "preferSingle",
+    "quoteProps": "asNeeded",
+    "semiColons": "always",
+    "trailingCommas": "onlyMultiLine",
+    "arrowFunction.useParentheses": "preferNone",
+    "operatorPosition": "nextLine",
+    "conditionalExpression.linePerExpression": true,
+    "module.sortImportDeclarations": "maintain",
+    "module.sortExportDeclarations": "maintain",
+    "importDeclaration.sortNamedImports": "maintain",
+    "exportDeclaration.sortNamedExports": "maintain",
+    "importDeclaration.forceMultiLine": "whenMultiple",
+    "importDeclaration.spaceSurroundingNamedImports": true,
+    "exportDeclaration.spaceSurroundingNamedExports": true,
+    "typeLiteral.separatorKind.singleLine": "comma",
+    "typeLiteral.separatorKind.multiLine": "semiColon",
+    "preferSingleLine": false,
+    "preferHanging": false,
+    "bracePosition": "sameLineUnlessHanging",
+    "nextControlFlowPosition": "sameLine",
+    "useBraces": "always",
+    "spaceSurroundingProperties": true,
+    "typeAnnotation.spaceBeforeColon": false,
+    "commentLine.forceSpaceAfterSlashes": true,
+    "conditionalExpression.preferSingleLine": false
+  },
+  "excludes": [
+    "**/node_modules",
+    "drizzle/**",
+    "docs/**",
+    ".kaioken/**",
+    ".claude/**",
+    ".agents/**",
+    "bun.lock"
+  ],
+  "plugins": [
+    "https://plugins.dprint.dev/typescript-0.96.1.wasm"
+  ]
+}
