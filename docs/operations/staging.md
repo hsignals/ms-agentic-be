@@ -4,7 +4,7 @@
 
 **Target:** the dedicated `ms-agentic-staging` Google Cloud project in `us-east4`. The API service is `ms-agentic-api`; its separate worker pool is `ms-agentic-worker`. One immutable image supplies the API, worker, and migration entrypoints. The application binds synthetic smoke access to one configured account and channel through a high-entropy bearer token stored in Secret Manager.
 
-**Current readiness:** database creation and connection URLs, the E2B key, paid cloud provisioning, deployment, and live acceptance remain pending. A bootstrap deployment exposes public health and reports incomplete readiness with HTTP 503. It does not prove foreground execution, queued execution, file retention/restoration, or redeployment. Full acceptance requires all of those observations on the same candidate.
+**Current readiness:** the project, runtime/migration/deployment identities, and repository-scoped GitHub federation are configured. Billing linkage is blocked by missing `billing.resourceAssociations.create` permission. Database creation and connection URLs, the E2B key, paid cloud provisioning, deployment, and live acceptance remain pending. A bootstrap deployment exposes public health and reports incomplete readiness with HTTP 503. It does not prove foreground execution, queued execution, file retention/restoration, or redeployment. Full acceptance requires all of those observations on the same candidate.
 
 The selected runtime allocation is one manually scaled API instance and one manually scaled worker instance, each with 1 vCPU and 1 GiB RAM. The API uses instance-based billing and public ingress; protected operations require application authentication. The worker has no HTTP ingress.
 
@@ -27,7 +27,7 @@ Queue persistence accepts maintenance downtime and loss of recent unflushed writ
 
 The operator must use an authenticated Google Cloud CLI account with project, organization, billing, network, and IAM permissions. Provisioning derives the organization and billing account from `mystacks-staging`, verifies the target relationship, and changes only this project's resources. If billing linkage is denied, the operator must obtain `billing.resourceAssociations.create` or link the project through an authorized billing administrator before creating billable resources.
 
-The provisioning command contract is:
+Provisioning requires `gcloud`, `jq`, `openssl`, and Bash; release/smoke also require Bun, Docker, `curl`, and Python 3. The provisioning command contract is:
 
 ```sh
 bash scripts/cloud/configure-identity.sh
@@ -37,7 +37,25 @@ bash scripts/cloud/configure-runtime.sh
 
 The first command configures identities and GitHub federation without creating billable runtime resources. The second resumes an existing target project and provisions the selected resources. The third stores the provider's public Valkey CA bundle. The Valkey client verifies the certificate against that bundle; operators must refresh it before an announced CA rotation.
 
-### 2.1 Secret ownership
+Local GCS SDK calls use Application Default Credentials, configured with `gcloud auth application-default login`. This is separate from CLI login; Cloud Run uses its attached service account. [Google credential setup](https://docs.cloud.google.com/docs/authentication/provide-credentials-adc)
+
+### 2.1 Database permissions
+
+When the dedicated Tiger service is available, its administrator creates login roles `ms_agentic_migrate` and `ms_agentic_runtime`, sets their passwords through `psql`'s interactive `\password`, and runs `deploy/database-grants.sql` with the target `DBNAME`. Store the two resulting TLS connection URLs in their separate secrets. The SQL grants the migration role schema creation and ownership, and grants the runtime role only schema usage, table data access, and sequence usage. Default grants cover future objects created by the migration role.
+
+The migration job applies the checked-in Drizzle migrations and initializes native Mastra tables in `mastra`; application tables stay in `public`. Application startup disables native Mastra DDL and verifies read access to existing storage. Its runtime credential must not own schema upgrades. Run the grants against existing tables before launching a runtime candidate. Role creation and password entry use the administrator's encrypted `psql` session:
+
+```sql
+CREATE ROLE ms_agentic_migrate LOGIN;
+CREATE ROLE ms_agentic_runtime LOGIN;
+\password ms_agentic_migrate
+\password ms_agentic_runtime
+\i deploy/database-grants.sql
+```
+
+The database URL used for the first initialization must connect as `ms_agentic_migrate`; the API and worker URL must connect as `ms_agentic_runtime`. The grants script removes public-schema creation through the database's default `PUBLIC` grant and does not give the runtime role schema ownership.
+
+### 2.2 Secret ownership
 
 | Secret | Consumer | Approved source |
 | --- | --- | --- |
@@ -48,11 +66,15 @@ The first command configures identities and GitHub federation without creating b
 | `e2b-api-key` | API and worker | Intended E2B account; pending |
 | `valkey-ca-cert` | API and worker | Public CA bundle returned by this project's Valkey instance |
 
-Secret containers do not imply usable versions. Add secret values through local files or stdin with `gcloud secrets versions add`; never put values in workflow variables, command arguments, Git, logs, or chat. Runtime identities cannot read the migration secret. The deployment identity can read only the smoke bearer secret; Cloud Run resolves the other secret references using its assigned runtime identities.
+Secret containers do not imply usable versions. Add secret values through local files or stdin with `gcloud secrets versions add`; never put values in workflow variables, command arguments, Git, logs, or chat. Runtime identities cannot read the migration secret. The deployment identity can inspect version metadata for each container and read only the smoke bearer secret; Cloud Run resolves the other secret references using its assigned runtime identities.
 
 GitHub federation must restrict numeric owner `280283955`, numeric repository `1432887469`, and the exact subject `repo:hsignals/ms-agentic-be:environment:staging`. The GitHub `staging` environment owns deployment access. No service-account key file is needed.
 
 ## 3. Releases and recovery
+
+An authorized repository administrator applies the selected GitHub settings with `bash scripts/cloud/configure-github.sh`; `--dry-run` reads the remote state and prints the exact intended settings without writing. The script configures the `staging` environment, squash-only merges, automatic branch deletion, and classic `main` protection with one approval, administrator enforcement, the `shunjizhan` review bypass, retained approvals after new commits, and blocked force pushes/deletion.
+
+Required checks activate only when `.github/workflows/ci.yml` exists on remote `main` and publishes the stable `typecheck`, `test`, and `container-smoke` job names for pull requests. Before then, the script applies the other protections with `required_status_checks: null` and reports activation as pending; this keeps the initial documentation PR from waiting for checks that do not exist. Re-run the command after the real CI workflow reaches `main`. The script does not merge a PR or create substitute checks.
 
 The manual `Deploy ms-agentic staging` workflow owns releases once its definition exists on the default branch. GitHub cannot dispatch a workflow that exists only on an unmerged feature branch. Initial authorized staging verification can run the same release script locally with a recorded commit, immutable digest, and deployment identity; it does not prove GitHub Actions deployment or authorize merging. It serializes runs without cancelling an active deployment, verifies code and the container, builds once, resolves an immutable digest, and uses that same digest for migration, API, and worker. An optional existing `sha256:` digest selects a recovery image; it does not rebuild that image.
 
@@ -61,15 +83,39 @@ The manual `Deploy ms-agentic staging` workflow owns releases once its definitio
 
 A bootstrap request must fail if an existing live worker would otherwise be silently left running. Database changes must be compatible with the previous application image. Recovery never down-migrates a database.
 
-### 3.1 Stop/start handoff
+### 3.1 Initial CLI deployment
+
+Before the workflow is available on `main`, one operator may run the same release from a clean tested checkout. The operator must record the exact committed source, run its checks, and ensure no other release is active. These commands require registry/provisioning access and enabled OpenAI and bearer-token secret versions:
+
+```sh
+bun --no-env-file install --frozen-lockfile
+bun --no-env-file run check
+bun --no-env-file run test
+source deploy/staging.env
+source_commit="$(git rev-parse HEAD)"
+image="us-east4-docker.pkg.dev/ms-agentic-staging/backend/backend:$source_commit"
+gcloud auth configure-docker us-east4-docker.pkg.dev --quiet
+docker build --platform=linux/amd64 --build-arg BUILD_COMMIT="$source_commit" --tag "$image" .
+bash scripts/deploy/smoke-image.sh "$image"
+docker push "$image"
+immutable="$(docker inspect "$image" --format '{{index .RepoDigests 0}}')"
+export IMAGE_DIGEST="${immutable##*@}"
+export DEPLOYMENT_ID="$source_commit-cli"
+export DEPLOY_MODE=bootstrap
+bash scripts/deploy/release.sh
+```
+
+An existing digest must be pulled before local recovery. The release requires its `org.opencontainers.image.revision` label to contain the actual image source commit and records that separately from the workflow source and deployment identity.
+
+### 3.2 Stop/start handoff
 
 The API has foreground operations and queue submission; the worker is the sole background consumer. Product channel-coordinator behavior remains future work.
 
 Before replacement, the release saves the previous digest and configuration, removes API revision tags, sets native service scaling to zero, and disables the worker pool. Tagged API revisions remain callable when only service scaling is disabled, so clearing tags is required. The release must observe a fresh zero-instance sample from Cloud Monitoring before starting a replacement. A successful scaling command alone is insufficient evidence.
 
-If the provider does not emit an explicit zero sample within the bounded wait, the release stops with the resources disabled and reports the evidence gap. It must not infer shutdown from missing metrics. For a first deployment with no previous resource, this drain gate is unnecessary. Cloud Run documents [manual zero scaling and tagged revision behavior](https://docs.cloud.google.com/run/docs/configuring/services/manual-scaling) and [worker-pool shutdown by scaling to zero](https://docs.cloud.google.com/run/docs/managing/workerpools).
+The metric `run.googleapis.com/container/instance_count` is sampled every 60 seconds and can arrive up to 120 seconds later. The release checks every observed active/idle series for a complete post-disable alignment interval at zero; it keeps earlier series in view so missing data cannot count as shutdown. See the [published metric contract](https://docs.cloud.google.com/monitoring/api/metrics_gcp_p_z). If the provider does not emit an explicit zero sample within the ten-minute wait, the release stops with the resources disabled and reports the evidence gap. It must not infer shutdown from missing metrics. For a first deployment with no previous resource, this drain gate is unnecessary. Cloud Run documents [manual zero scaling and tagged revision behavior](https://docs.cloud.google.com/run/docs/configuring/services/manual-scaling) and [worker-pool shutdown by scaling to zero](https://docs.cloud.google.com/run/docs/managing/workerpools).
 
-If deployment or verification fails, use the saved image digest and configuration to recover through the same serialized release path. If only the shutdown evidence gate failed and the image was never replaced, the operator may restore the unchanged resources with:
+If deployment or verification fails after replacement starts, use the recorded previous digest through the same serialized release workflow. This runs the shutdown gate again before starting the previous application. If the configuration itself needs recovery, disable the failed resources, obtain the same zero-instance evidence, then apply the saved `previous-api.yaml` and `previous-worker.yaml` with native `gcloud run services replace` and `gcloud run worker-pools replace`. These snapshots contain immutable image references and the previous numeric secret-version references. Keep the previous configuration's one-instance settings. A failed first deployment has no previous application to restore. If only the shutdown evidence gate failed and the image was never replaced, the operator may restore the unchanged resources with:
 
 ```sh
 gcloud run services update ms-agentic-api --project=ms-agentic-staging --region=us-east4 --scaling=1
@@ -80,10 +126,16 @@ Restore the worker only when it existed and its database and E2B configuration r
 
 ## 4. Acceptance evidence
 
-Run operational smoke tests against the deployed URL with the bearer token loaded from Secret Manager into the runner's environment. The test runner must never print it. The command contract is:
+Run operational smoke tests against the deployed URL with the bearer token loaded from Secret Manager into the runner's environment. The test runner must never print it. Load the public service URL and expected deployment ID from the successful release result, then run:
 
 ```sh
+export STAGING_URL=https://SERVICE_URL
+export EXPECTED_DEPLOYMENT_ID=RECORDED_DEPLOYMENT_ID
+export SMOKE_MODE=full
+STAGING_AUTH_TOKEN="$(gcloud secrets versions access latest --secret=staging-auth-token --project=ms-agentic-staging)"
+export STAGING_AUTH_TOKEN
 bun --no-env-file scripts/smoke/staging.ts
+unset STAGING_AUTH_TOKEN
 ```
 
 The full test requires public health, unauthenticated rejection, real authenticated foreground execution, queued execution with native E2B tool activity, known calculation output, retained-file retrieval, and restoration in a fresh sandbox. Readiness and result checks must verify the expected deployment identity. Synthetic endpoints do not implement customer identity onboarding or channel linking.

@@ -1,0 +1,140 @@
+# Manual staging release; the image digest is shared by all runtime entrypoints.
+name: Deploy ms-agentic staging
+run-name: "Staging ${{ inputs.mode }}: ${{ github.ref_name }} @ ${{ github.sha }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Bootstrap health only or full dependencies and live smoke
+        required: true
+        default: bootstrap
+        type: choice
+        options:
+          - bootstrap
+          - full
+      image_digest:
+        description: Optional existing sha256 digest for redeployment or recovery
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-ms-agentic-staging
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify release source
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.2
+      - name: Validate recovery digest
+        env:
+          REQUESTED_DIGEST: ${{ inputs.image_digest }}
+        run: |
+          if [[ -n "$REQUESTED_DIGEST" && ! "$REQUESTED_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo 'Invalid immutable image digest.' >&2
+            exit 1
+          fi
+      - run: bun --no-env-file install --frozen-lockfile
+      - run: bun --no-env-file run check
+      - run: bun --no-env-file run test
+      - run: shellcheck --external-sources --source-path=SCRIPTDIR scripts/cloud/*.sh scripts/deploy/*.sh
+
+  release:
+    name: Build and release staging
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: staging
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      IMAGE_URI: us-east4-docker.pkg.dev/ms-agentic-staging/backend/backend
+      DEPLOY_MODE: ${{ inputs.mode }}
+      DEPLOYMENT_ID: ${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+      DEPLOY_ARTIFACT_DIR: ${{ github.workspace }}/deployment-artifacts
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.2
+      - run: bun --no-env-file install --frozen-lockfile
+      - id: auth
+        name: Authenticate exact staging repository identity
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: projects/1033076458060/locations/global/workloadIdentityPools/github/providers/github
+          service_account: github-deploy@ms-agentic-staging.iam.gserviceaccount.com
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+      - name: Configure registry authentication
+        run: gcloud auth configure-docker us-east4-docker.pkg.dev --quiet
+      - id: image
+        name: Build or select immutable candidate
+        env:
+          REQUESTED_DIGEST: ${{ inputs.image_digest }}
+        run: |
+          set -euo pipefail
+          if [[ -n "$REQUESTED_DIGEST" ]]; then
+            image="$IMAGE_URI@$REQUESTED_DIGEST"
+            docker pull "$image"
+            bash scripts/deploy/smoke-image.sh "$image"
+            digest="$REQUESTED_DIGEST"
+          else
+            image="$IMAGE_URI:${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            docker build --platform=linux/amd64 --build-arg BUILD_COMMIT="$GITHUB_SHA" --tag "$image" .
+            bash scripts/deploy/smoke-image.sh "$image"
+            docker push "$image"
+            immutable="$(docker inspect "$image" --format '{{index .RepoDigests 0}}')"
+            digest="${immutable##*@}"
+          fi
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo 'Image did not resolve to an immutable digest.' >&2; exit 1; }
+          source_commit="$(docker inspect "$image" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')"
+          [[ "$source_commit" =~ ^[0-9a-f]{40}$ ]] || { echo 'Image has no valid source commit label.' >&2; exit 1; }
+          if [[ -z "$REQUESTED_DIGEST" && "$source_commit" != "$GITHUB_SHA" ]]; then
+            echo 'Built image source differs from the verified checkout.' >&2
+            exit 1
+          fi
+          echo "source_commit=$source_commit" >> "$GITHUB_OUTPUT"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+      - id: deploy
+        name: Migrate, stop/start, and verify exact image
+        env:
+          IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
+        run: bash scripts/deploy/release.sh
+      - name: Summarize observed deployment
+        if: ${{ always() }}
+        env:
+          IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
+          SERVICE_URL: ${{ steps.deploy.outputs.service_url }}
+          API_REVISION: ${{ steps.deploy.outputs.api_revision }}
+          WORKER_REVISION: ${{ steps.deploy.outputs.worker_revision }}
+          IMAGE_SOURCE_COMMIT: ${{ steps.image.outputs.source_commit }}
+        run: |
+          {
+            printf 'Staging mode: %s\n\n' "$DEPLOY_MODE"
+            printf -- '- Workflow source: %s\n' "$GITHUB_SHA"
+            printf -- '- Image source: %s\n' "$IMAGE_SOURCE_COMMIT"
+            printf -- '- Image: %s@%s\n' "$IMAGE_URI" "$IMAGE_DIGEST"
+            printf -- '- API URL: %s\n' "$SERVICE_URL"
+            printf -- '- API revision: %s\n' "$API_REVISION"
+            printf -- '- Worker revision: %s\n' "$WORKER_REVISION"
+            printf -- '- Deployment identity: %s\n' "$DEPLOYMENT_ID"
+            printf -- '- Full delivery acceptance: pending redeployment evidence and personal acceptance.\n'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve release and recovery evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: staging-deployment-${{ github.run_id }}-${{ github.run_attempt }}
+          path: deployment-artifacts
+          if-no-files-found: ignore
+          retention-days: 30
