@@ -23,7 +23,11 @@ SnapTrade lists the five target institutions in its [broker access guide](https:
 
 Let validated provider capabilities define the supported scope. Do not promise a complete product taxonomy across assets, instruments, protocols, or account types. Adapters preserve provider identity, native values, source times, retrieval times, coverage gaps, and financial meaning. A successful connection or empty response cannot establish unsupported coverage or absence of risk.
 
-Website previews, chat, scheduled tasks, and proactive investigations use the same backend-authorized connectors. The backend resolves the current user's active connection and permitted read scope. Provider credentials and proxy credentials remain in trusted backend code and never enter agent context or E2B. Private connection authority remains separate from the public availability of blockchain data.
+Website previews, chat, scheduled tasks, and proactive investigations use the same backend-authorized provider capabilities and evidence contract. The backend resolves the current user's active connection and permitted read scope.
+
+E2B may use supported provider SDKs or APIs through **programmatic tool calling** under backend-controlled provider egress. **Credential brokering** supplies supported provider authentication through native egress-proxy injection outside the VM; application signing or proxy-incompatible authentication uses a user-bound backend read bridge. The backend chooses the user, destination, read scope, and object authority. Raw provider secrets stay outside sandbox environments, files, and prompts; read-only access cannot expose other users' private data or keys.
+
+Provider integration and evidence validation remain MyStacks responsibilities; broad SDK/API access does not require a separate bespoke tool for each analysis. The [credential decision](0002-backend-owned-financial-credentials.md) owns persistence and brokering, including processing by the selected external secret/proxy layer. The [capability decision](0006-composable-agent-capabilities.md) owns programmatic composition; the [sandbox decision](0003-sandboxed-code-execution.md) owns the accepted current-user financial-data exposure trade-off. Private connection authority remains separate from public blockchain data.
 
 ### 2.3 Hyperliquid account reads and Webshare transport
 
@@ -32,6 +36,12 @@ Hyperliquid setup reuses an eligible verified EVM wallet without another wallet-
 Normalize supported [account abstraction modes](https://hyperliquid.gitbook.io/hyperliquid-docs/trading/account-abstraction-modes) before valuation or risk analysis. Unified and portfolio-margin modes change how balances and collateral are represented. Shared collateral and overlapping Zerion evidence must not be counted twice. History remains bounded by documented endpoint coverage and pagination; connection support does not establish complete historical reconstruction.
 
 **Use Webshare for the trusted backend connector's outbound proxy transport.** Webshare documents [multiple connection types](https://help.webshare.io/en/articles/8375305-understanding-proxy-connection-types-direct-rotating-and-backbone); proxy type, count, region, rotation, routing, and rate-limit implementation remain open. Hyperliquid's [per-IP limits](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/rate-limits-and-user-limits), including its shared weighted REST budget, still apply to each exit IP. Workers using the same exit share that budget. Vendor selection establishes neither capacity nor freshness guarantees. Adopt WebSockets only when a concrete need justifies them beyond on-demand REST reads.
+
+### 2.4 SnapTrade product and authentication model
+
+**Commercial versus Personal OAuth remains open.** Commercial reads require backend application signing, so use a user-bound backend read bridge for that model, with no arbitrary-signing or unrestricted-forwarding capability. Personal OAuth can provide a standalone per-user read token for compatible egress-proxy injection, but users own their connections through SnapTrade Personal. The product choice must settle that lifecycle, not follow only from authentication convenience. Personal API keys must independently meet the required read-only authority. [Authentication methods](https://docs.snaptrade.com/docs/authentication-methods), [OAuth lifecycle and tokens](https://docs.snaptrade.com/docs/oauth-apps)
+
+OAuth client secrets and refresh handling remain backend-owned. Exact narrow run-bound authorization for programmatic calls from E2B to the backend read bridge remains open; a model-facing tool call is a different interface.
 
 ## 3. Rationale and trade-offs
 
@@ -62,4 +72,4 @@ Normalize supported [account abstraction modes](https://hyperliquid.gitbook.io/h
 - **Provider eligibility:** validate each target's supported regions and account scopes, read-only setup, reconnect behavior, and material exclusions through vendor confirmation and representative integration evidence.
 - **Current claims:** establish that selected reads can provide suitable account-state and price evidence for each offered current claim, including delayed-source and unknown-freshness cases.
 - **Usage compatibility:** resolve polling, proactive-use, and licensing constraints without reducing accepted product behavior or silently substituting stale account state.
-- **Integration:** select exact APIs and SDKs, supported fields and mappings, freshness limits, permitted persistence and reuse, and Hyperliquid proxy configuration and shared exit-IP budget handling. The runtime and worker-hosting decisions remain unchanged.
+- **Integration:** choose SnapTrade Commercial or Personal OAuth, validate native egress-proxy authentication compatibility or backend signing requirements, and select the run-bound backend read authorization, exact APIs and SDKs, supported fields and mappings, freshness limits, permitted persistence and reuse, and Hyperliquid proxy configuration and shared exit-IP budget handling. The runtime and worker-hosting decisions remain unchanged.

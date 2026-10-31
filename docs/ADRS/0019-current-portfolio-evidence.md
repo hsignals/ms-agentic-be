@@ -10,13 +10,15 @@ The [requirements](../requirements.md) own product behavior. The [portfolio desi
 
 ### 2.1 Obtain relevant account state at analysis time
 
-When a claim depends on the user's present holdings, balances, positions, collateral, or account risk, obtain the latest available relevant state through the trusted backend connector at analysis time. Brief reuse is allowed only while the evidence remains suitable for that claim. Website previews, requested answers, scheduled work, and proactive investigations share this boundary.
+When a claim depends on the user's present holdings, balances, positions, collateral, or account risk, obtain the latest available relevant state at analysis time through a backend-authorized provider read. This includes supported direct SDK or API reads in the current user's E2B run and user-bound backend reads when application signing is required; both retain the same evidence contract. Brief reuse is allowed only while the evidence remains suitable for that claim. Website previews, requested answers, scheduled work, and proactive investigations share this boundary.
 
 **Fresh prices do not make old holdings current.** A current-exposure claim needs suitable account state as well as suitable price or market evidence. A new retrieval, successful refresh request, provider plan name, personalization memory, or earlier report does not establish current account state by itself.
 
 ### 2.2 Keep source time, retrieval time, and price time distinct
 
-Retain source as-of time where established, backend retrieval time, relevant coverage, native values and units, and explicit unknown freshness. Track account-state and price freshness separately. Interpret provider update fields only after confirming what the fields mean for the selected endpoint and claim.
+Retain source as-of time where established, retrieval time, relevant coverage, native values and units, and explicit unknown freshness. Track account-state and price freshness separately. Interpret provider update fields only after confirming what the fields mean for the selected endpoint and claim.
+
+Useful saved evidence and files follow the [analysis retention decision](0023-analysis-data-retention-and-object-storage.md). Saving or restoring evidence does not change its source as-of time; saved time and retrieval time cannot make it current. A later run must still obtain or reuse evidence suitable for its claim under this freshness boundary.
 
 Select maximum evidence ages, refresh behavior, and brief cache durations by provider, evidence type, and supported claim before presenting that claim as current. A successful fetch may still return delayed upstream evidence. Reuse does not change its source age, coverage, or permitted use.
 
@@ -32,7 +34,7 @@ For user-requested answers, use available information and state concise material
 
 **The trade-off is fewer eligible current claims when a provider is delayed.** Treating the most recently retrieved response as current would increase apparent coverage by hiding upstream delay. Requiring all sources to be current before answering would unnecessarily withhold supported information. MyStacks instead matches each claim to its evidence and reports material limits concisely.
 
-Approximately five daily periodic proactive investigations remain best effort under the accepted scheduling policy. This freshness boundary does not add continuous monitoring, an indexer, or a stronger event-detection guarantee.
+Approximately five daily periodic iMessage proactive investigations remain best effort under the accepted scheduling policy. This freshness boundary does not add continuous monitoring, an indexer, or a stronger event-detection guarantee.
 
 ## 4. Remaining choices and acceptance evidence
 

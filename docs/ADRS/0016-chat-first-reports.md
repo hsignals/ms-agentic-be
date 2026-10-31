@@ -2,7 +2,7 @@
 
 ## 1. Status and scope
 
-**Status: ACCEPTED Phase 1 presentation direction.** Assistant answers, research summaries, reports, scheduled results, and proactive insights are concise, precise, and text-first in iMessage and WhatsApp. The overall runtime architecture remains tentative.
+**Status: ACCEPTED Phase 1 presentation direction.** Assistant answers, research summaries, and one-off analysis reports are concise, precise, and text-first in iMessage and WhatsApp. Scheduled results and proactive insights use the same presentation in iMessage; those capabilities are deferred for WhatsApp. The overall runtime architecture remains tentative.
 
 The [requirements](../requirements.md#42-interaction-surfaces-and-responsiveness) and [assistant stories](../user-stories/assistant.md) own observable behavior. The [channel and memory decision](0008-channel-scoped-work-and-shared-memory.md) owns channel scope and website controls; the [channel-turn decision](0009-channel-turns-and-background-subagents.md) owns agent-authored reply authority and background-result handling.
 
@@ -16,7 +16,7 @@ The same presentation applies to direct answers, research, substantial calculati
 
 ### 2.2 Messaging and website roles
 
-Chat is the ongoing assistant and task-management surface. The persistent website dashboard provides signup, financial connections, channel controls, proactive insight delivery channels, and portfolio previews. Requested work and scheduled results stay in their originating channel; proactive insights follow the user's selected delivery channels.
+Chat is the ongoing assistant surface, with saved-task management available in iMessage. The persistent website dashboard provides signup, financial connections, channel controls, the **proactive insights** on/off setting, and portfolio previews. Requested one-off work stays in its originating channel; iMessage schedules and eligible proactive insights deliver through iMessage. The [Apple messaging decision](0021-apple-messages-with-bird.md) owns the channel capability boundary.
 
 Available-source research, generated-code analysis, and background work remain in scope. Extensive deep-research reports, polished website report artifacts, full report pages, and long-form report exports are deferred. Image replies remain low priority.
 

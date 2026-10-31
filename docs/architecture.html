@@ -36,22 +36,23 @@
       color: #111a24;
       font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
-    main, .dispatch { height: 100svh; display: grid; grid-template-rows: auto 1fr; padding: clamp(20px, 3vw, 48px) clamp(20px, 4vw, 64px); gap: 12px; }
+    main, .dispatch, .sandbox { height: 100svh; display: grid; grid-template-rows: auto 1fr; padding: clamp(20px, 3vw, 48px) clamp(20px, 4vw, 64px); gap: 12px; }
     header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px 32px; }
     .eyebrow { margin: 0 0 10px; font-size: 13px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: #0f8a6a; }
     h1, h2 { margin: 0; font-size: clamp(26px, 2.6vw, 40px); font-weight: 700; letter-spacing: -.02em; }
-    .lede { margin: 10px 0 0; max-width: 70ch; font-size: clamp(14px, 1.1vw, 17px); line-height: 1.5; color: #55606d; }
     .legend { display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: 13px; color: #55606d; white-space: nowrap; }
     .legend span { display: inline-flex; align-items: center; gap: 8px; }
     .swatch-edge { width: 26px; height: 0; border-top: 1.5px solid #8b96a3; }
     .swatch-trigger { width: 26px; height: 0; border-top: 1.5px dashed #0f8a6a; }
     .swatch-boundary { width: 18px; height: 12px; border: 1.5px dashed #b9c2cc; border-radius: 4px; }
+    .swatch-link { width: 26px; height: 0; border-top: 1.3px solid #b4bec8; }
+    .swatch-blocked { width: 26px; height: 0; border-top: 1.5px dashed #b9c2cc; }
     .swatch-user { width: 12px; height: 12px; border-radius: 4px; background: var(--user-a); }
     .swatch-user.b { background: var(--user-b); }
     .swatch-user.s { background: var(--sched); }
     .swatch-user.p { background: var(--sweep); }
     .stage { position: relative; min-height: 0; }
-    #diagram, #dispatch { display: block; width: 100%; height: 100%; overflow: visible; }
+    #diagram, #dispatch, #sandbox { display: block; width: 100%; height: 100%; overflow: visible; }
 
     /* Section picker: pill toggles over the empty top-right corner of the diagram. */
     .sections { position: absolute; top: 0; right: 0; z-index: 1; display: flex; gap: 6px; }
@@ -67,7 +68,7 @@
     .sections button[aria-pressed="true"] kbd { color: #ffffff; background: #ffffff2e; }
     @media (max-width: 959px) {
       .sections { position: static; flex-wrap: wrap; margin-bottom: 12px; }
-      #diagram, #dispatch { height: auto; }
+      #diagram, #dispatch, #sandbox { height: auto; }
     }
 
     /* Parts outside the chosen sections fade back; layout never moves. */
@@ -179,24 +180,30 @@
     .ghost-text { fill: #8a94a0; }
     .add-text { fill: var(--accent); font-size: 13.5px; font-weight: 600; }
     .edge.ghost-link { stroke: #b9c2cc; stroke-dasharray: 3 5; }
+
+    /* Sandbox execution: the run-owned microVM gets a tinted boundary; code and files use monospace. */
+    .group.vm { fill: #eef8f3b3; stroke: var(--accent); stroke-opacity: .45; }
+    .code { fill: var(--text); font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre; }
+    .code.out { fill: var(--accent); }
+    .code.comment { fill: #8a94a0; }
+    .file { fill: #3b4652; font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .file-dir { fill: var(--accent); font: 600 14px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .loop-step { fill: #ffffff10; stroke: #22d3ae66; stroke-width: 1.2; }
+    .loop-text { fill: #e3f1ec; font-size: 13.5px; font-weight: 500; }
+    .loop-arrow { fill: none; stroke: var(--mint); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: .8; }
+    .blocked-ring { fill: #fdecec; stroke: #f3b4b4; }
+    .blocked-icon, .check-icon { fill: none; stroke: #d14343; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .check-icon { stroke: var(--accent); }
+    .life-text { fill: var(--text); font-size: 14px; font-weight: 500; }
     .badge-icon.muted { stroke: #8a94a0; }
     .step-num { fill: var(--mint); font-size: 12.5px; font-weight: 700; }
     .reply-text { fill: var(--accent); font-size: 14px; font-weight: 600; }
-
-    /* Open questions under the dispatch diagram. */
-    .questions { padding: 8px clamp(20px, 4vw, 64px) clamp(32px, 4vw, 64px); }
-    .questions h2 { font-size: clamp(22px, 2vw, 30px); }
-    .questions ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 20px 0 0; padding: 0; list-style: none; counter-reset: question; }
-    .questions li { counter-increment: question; display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: start; padding: 20px 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; font-size: 16px; line-height: 1.5; color: var(--text); }
-    .questions li::before { content: counter(question); display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; font: 700 13px Inter, sans-serif; color: var(--mint); background: var(--ink); }
-    .questions strong { display: block; margin-bottom: 4px; font-weight: 600; }
-    .questions span { color: #55606d; font-size: 15px; }
 
     @media print {
       @page { size: landscape; margin: 0; }
       body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
       .flow { display: none; }
-      .dispatch, .questions { break-before: page; }
+      .dispatch, .sandbox { break-before: page; }
     }
   </style>
 </head>
@@ -206,7 +213,6 @@
       <div>
         <p class="eyebrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4z"/></svg>MyStacks · Agentic runtime · Phase 1</p>
         <h1>Custom runtime architecture</h1>
-        <p class="lede">Shared Mastra runtime; one active backend coordinator serves concurrent channels, with one main-agent turn per channel. Native channel compaction and an account-shared profile use PostgreSQL. Background results start a new main-agent turn, which owns the reply. Credentials stay in the backend; generated code runs in E2B. Financial data uses SnapTrade, Zerion, and low-priority Hyperliquid reads through Webshare, with provider-dependent coverage and fresh account evidence for current analysis. <a href="ADRS/0009-channel-turns-and-background-subagents.md">Turn and delegation decisions</a>.</p>
       </div>
       <div class="legend" aria-hidden="true">
         <span><i class="swatch-edge"></i>Request and response</span>
@@ -218,7 +224,7 @@
     <nav class="sections" aria-label="Diagram sections"></nav>
     <svg id="diagram" viewBox="0 0 1800 900" role="img" aria-labelledby="diagram-title diagram-desc">
       <title id="diagram-title">MyStacks custom runtime architecture</title>
-      <desc id="diagram-desc">WhatsApp and iMessage are the launch channels; other channels are future scope. One active ordinary backend coordinator verifies and stores inbound messages and executes chat directly for all users. Different channels run concurrently, while each channel has one ordered event stream and one foreground main-agent turn. User messages and background completions enter the same channel handler. A turn can contain several model and tool rounds. Process interruption can leave an acknowledged turn without a reply. Phase 1 uses stop-and-start coordinator deployments and accepts brief chat or traffic interruption. Distributed coordinator ownership and additional traffic-switching mechanisms wait for observed need. The runtime uses durable user-scoped state, the financial tools API, and the E2B execution tool. Backend-held financial credentials reach only the financial tools API. Application-wide keys use GCP Secret Manager; per-user provider credentials are encrypted in PostgreSQL using GCP KMS. Trusted API and background-worker adapters resolve and decrypt credentials after user and connection authorization; models and E2B receive data only. A compromised backend process can expose credentials within its service permissions. A separate financial service is deferred until a concrete need. Exact provider fields, schema, IAM, key configuration, and encryption mechanism remain open. SnapTrade targets Binance, Coinbase, Interactive Brokers, moomoo, and Robinhood for a mixed, global audience; Zerion supplies supported EVM and Solana wallet data. Direct Hyperliquid stays low priority and uses on-demand REST through Webshare after binding an eligible verified EVM account address. Public read endpoints need no user private, OAuth, or trading key; product authorization still requires the verified connection. Proxy credentials stay in the backend, configuration remains open, and Hyperliquid limits apply per exit IP. Actual coverage, IBKR freshness, moomoo regions, provider polling and permitted use remain validation gaps. DeBank is an optional future EVM complement; Bybit, Upbit, and prediction-market connectors are deferred. Current portfolio analysis requests fresh or near-fresh relevant account evidence with brief appropriate reuse. Source-data time differs from retrieval time, and fresh prices cannot make old holdings current. Proactive work avoids current-exposure conclusions without timely evidence; requested answers remain useful with concise material limits. Exact age limits remain open, and periodic proactive checks do not imply continuous monitoring. One shared background execution queue across accounts uses BullMQ as the baseline with provisional Redis integration, with explicit priorities ordered as main-agent-delegated subagents, user-created scheduled occurrences, then proactive investigations. Priority orders waiting work without interrupting active runs or reserving capacity. The queue dispatches work to a GCP Cloud Run worker pool deployed separately from API/chat, starting with one or two manually scaled instances; the backend database owns task definitions and job statuses and results. Main-agent turns may delegate up to five outstanding queued or running subagents per chat; terminal jobs and scheduler-started runs are excluded. Background agents cannot spawn children or send messages. User-created recurring schedules allow five enabled tasks per chat, excluding paused tasks, and a minimum one-hour interval. Each eligible occurrence admits one independent background agent run even while an earlier occurrence remains queued or running; actual start depends on worker capacity. User-requested background work has at most two whole-job execution attempts per job or scheduled occurrence. Interrupted unfinished work restarts from the beginning only if it remains active and authorized and has an attempt left; this shares the allowance for the existing scheduled temporary-failure retry. Cancelled or no-longer-authorized work does not restart. Completed saved results are reused, without checkpoints inside agent reasoning, model calls, or tool steps. Delivery failure must not rerun successful analysis. Completion persists internal findings and triggers a new main-agent turn through the channel handler, waiting if the channel is busy. The main agent can continue tools or code execution and owns the reply. Eligible proactive checks each run a bounded agent investigation, targeting approximately five randomized starts per account each day within 09:00–21:00 in its saved timezone. This window limits starts, not delivery. Only one proactive investigation runs per account; overlap and missed checks are skipped. Proactive investigation failure or interruption is recorded internally for the next scheduled check without a routine message or whole-investigation retry. Configurable execution limits and recorded run duration, model usage, and outcome guide capacity tuning from queue delay and resource usage. Exact limits await representative runs; per-user spending budgets are deferred. Proactive finding and notification history stays separate from shared personal memory. Each channel uses native Mastra Observational Memory token-based compaction; model context combines recent raw messages, that channel’s compact notes, and the account-shared structured profile. Compaction does not delete stored raw history or automatically update the shared profile. Only main-agent turns write the profile. Native partial updates preserve distinct fields; for the same field, the last successful save wins, including older turns overwriting corrections or deletions. Forget removes a profile detail and forgetall clears the profile through the same update tool; histories and compact notes remain unchanged and can still influence answers or cause relearning. Phase 1 provides neither vector retrieval nor cross-channel history retrieval. One PostgreSQL database holds separate application-owned and Mastra-owned tables under backend authorization, not a database per user. Exact profile schema and budgets, compaction token thresholds and models, database hosting, retention, package versions, and framework integration remain open.</desc>
+      <desc id="diagram-desc">iMessage is the priority channel for chat, requested analysis and background work, user-created schedules, and proactive reports. WhatsApp supports user-initiated chat and one-off requested work; scheduled tasks, proactive reports, and template messaging are deferred. Unsupported WhatsApp scheduling requests direct the user to linked iMessage without creating or managing iMessage tasks or retargeting work. Normal WhatsApp sending still follows its provider window. Other channels are future scope. iMessage is the product shorthand for Apple Messages for Business through Bird, the selected primary Messaging Service Provider for MyStacks' own Apple account. Bird carries messages through native APIs and webhooks; the backend owns Mastra, memory, and scheduling. Photon is a backup integration plan, without automatic failover or an assumed same-number or thread migration. Apple account approval, experience review, exact API configuration, permitted financial notifications, notices, and opt-outs remain validation items. Privy phone signup and login use Twilio Verify. The backend verifies the Privy access token with its native SDK and maps its subject through a unique privy_user_id to a stable MyStacks account, creating that account idempotently on the first authenticated API request. Verified phone data comes from Privy. Website login and independently verified channel bindings remain separate. Bird Conversations is the Apple staff UI. The backend enforces one conversation owner: human takeover pauses automated replies until staff explicitly return control; new inbound messages do not silently resume AI. Running requested analyses and user-created schedules continue and save results while their automated reports wait. Proactive investigations do not start while automated delivery is unavailable. Running proactive results cannot interrupt staff; after explicit return, the main agent considers pending results only if still useful and eligible, using their timestamps and current evidence. Staff, working hours, SLAs, and WhatsApp support integration remain open. One active coordinator in a Cloud Run Service with always-allocated CPU verifies and stores inbound messages and executes chat directly for all users. Different channels run concurrently, while each channel has one ordered event stream and one foreground main-agent turn. User messages and background completions enter the same channel handler. A turn can contain several model and tool rounds. Process interruption can leave an acknowledged turn without a reply. Phase 1 accepts stop/start deployment and brief chat or traffic interruption. How Cloud Run replacement preserves one active coordinator remains open; an instance limit alone does not establish exclusive ownership. Distributed ownership and extra traffic switching are not selected. This project owns its resources; sibling backends are deployment references only. The runtime uses durable user-scoped state, the financial tools API, and the E2B execution tool. Programmatic tool calling lets one script compose API reads, loops, pagination, concurrency, and analysis without model resampling for each request. Phase 1 financial credentials and admitted provider operations are read-only. Credential brokering keeps raw provider secrets outside the sandbox VM: the native egress proxy inserts credentials on allowed outbound requests. Where application signing or proxy-incompatible authentication is required, a thin user-bound backend read API bridge keeps that authority in trusted code and admits only permitted reads. The backend binds access to the user, run, destination, read-only operation, account, and object. It is not an arbitrary signer or unrestricted forward proxy. The sandbox receives only its current user’s authorized financial data; this exposure is an accepted, necessary tradeoff for analysis. SnapTrade Commercial userId and userSecret require application consumerKey signing and therefore use this bridge; the Commercial versus Personal OAuth integration choice remains open. Application-wide provider and proxy keys, database credentials, model keys, E2B management keys, OAuth client secrets, exchange, and refresh handling stay outside the sandbox VM. The backend owns credential storage and authorization; E2B’s external Secrets and proxy services may process brokered provider secrets, so sandbox isolation does not imply that the provider cannot access them. Application-wide keys use GCP Secret Manager; durable per-user provider credentials are encrypted in PostgreSQL using GCP KMS. Trusted API and background-worker adapters resolve and decrypt credentials after user, connection, and object authorization, then configure the run’s credential brokering. Credentials stay out of intentional prompts, skills, durable job payloads, memory, and traces. Generated code receives no raw provider secret. A narrow run-scoped bridge credential or proxy placeholder may enter the workspace; its exact form remains open. Authorized financial data is visible to sandbox code and can appear in outputs; read-only access and restricted destinations do not guarantee data confidentiality. A compromised backend process can expose credentials within its service permissions. A separate financial service is deferred until a concrete need. Exact provider scope validation, broker bindings, renewal, run-to-bridge authentication, schema, IAM, key configuration, and encryption mechanism remain open. SnapTrade targets Binance, Coinbase, Interactive Brokers, moomoo, and Robinhood for a mixed, global audience; Zerion supplies supported EVM and Solana wallet data. Direct Hyperliquid stays low priority and uses on-demand REST through Webshare after binding an eligible verified EVM account address. Public read endpoints need no user private, OAuth, or trading key; product authorization still requires the verified connection. Webshare proxy credentials stay outside the sandbox VM, configuration remains open, and Hyperliquid limits apply per exit IP. Actual coverage, IBKR freshness, moomoo regions, provider polling and permitted use remain validation gaps. DeBank is an optional future EVM complement; Bybit, Upbit, and prediction-market connectors are deferred. Current portfolio analysis requests fresh or near-fresh relevant account evidence with brief appropriate reuse. Source-data time differs from retrieval time, and fresh prices cannot make old holdings current. Proactive work avoids current-exposure conclusions without timely evidence; requested answers remain useful with concise material limits. Exact age limits remain open, and periodic proactive checks do not imply continuous monitoring. The shared Mastra runtime owns the agent and subagent reasoning loops; E2B runs shell commands and generated code, rather than a full agent runtime. Model-directed shell commands and generated code run only in E2B, never on shared backend compute. Each foreground main-agent invocation or background job attempt owns at most one lazily created E2B sandbox. Successive shell, file, Python, and JavaScript calls reuse its workspace. The backend conservatively retains useful provider inputs actually used, reusable intermediate calculations, final results, and supporting evidence. Useful retained analysis files are saved to private Google Cloud Storage before sandbox destruction; a later authorized run may restore chosen files into a fresh sandbox. PostgreSQL holds application and Mastra records, small structured results, and file metadata and references. Storage follows purpose, without mandatory file conversion or size thresholds. Metadata identifies account, channel, run, data type, saved and retrieval times, source as-of time when known, provider and connection, size, and storage reference. Automatic pruning is deferred; provider retention and data rights still apply. Backend-controlled account and channel authorization and run-scoped transfers keep broad cloud credentials and unrestricted bucket access out of the agent and sandbox. Exact transport and schema remain open. Saved data supports follow-ups without replacing fresh evidence for current claims or requiring every scratch file or log to persist. This does not provide exact process replay or durable reasoning checkpoints. A main-agent continuation or retried attempt is a new run with a fresh workspace if needed; it can read saved results but does not inherit live processes or interpreter state. Shell command names do not define the security boundary. Trusted backend policy explicitly denies outbound access except admitted destinations through credential brokering; runs without external API needs may remain offline. Provider SDKs and API guidance support programmatic tool calling without a bespoke tool for each analysis. Public search and page reading use separate backend tools without access to private infrastructure or other users’ objects; sensitive queries and URLs can still disclose data. Large authorized datasets can be materialized as run files while the model receives compact summaries and paths. Exact native proxy and Secrets integration, network enforcement, resource limits, deadlines, cleanup, and provider data and credential terms remain open. One shared background execution queue across accounts uses BullMQ with a dedicated Google Cloud Memorystore for Valkey instance, with explicit priorities ordered as main-agent-delegated subagents, user-created scheduled occurrences, then proactive investigations. Priority orders waiting work without interrupting active runs or reserving capacity. Valkey starts with one custom-pico 1.25 GB node, cluster mode disabled, zero replicas, AOF flushed every second, noeviction, private VPC connectivity, and TLS. Maintenance or node recovery can interrupt queue access, and recent unflushed writes can be lost. Capacity and availability upgrades require measured need. The queue dispatches work to a GCP Cloud Run worker pool deployed separately from API/chat, starting with one or two manually scaled instances; the backend database owns task definitions and job statuses and results. Main-agent turns may delegate up to five outstanding queued or running subagents per chat; terminal jobs and scheduler-started runs are excluded. Background agents cannot spawn children or send messages. User-created recurring schedules allow five enabled tasks per chat, excluding paused tasks, and a minimum one-hour interval. Each eligible occurrence admits one independent background agent run even while an earlier occurrence remains queued or running; actual start depends on worker capacity. User-requested background work has at most two whole-job execution attempts per job or scheduled occurrence. Interrupted unfinished work restarts from the beginning only if it remains active and authorized and has an attempt left; this shares the allowance for the existing scheduled temporary-failure retry. Cancellation requests or revoked authority prevent restart. Native BullMQ shutdown, reconnection, and stalled-job recovery use existing queue state; deployment does not recreate every pending job or require an empty queue. Exact shared-attempt accounting remains open. Completed saved results are reused, without checkpoints inside agent reasoning, model calls, or tool steps. Delivery failure must not rerun successful analysis. Workers persist results before completing BullMQ jobs, and native QueueEvents wakes the coordinator. Saved completions retain pending or handled state; startup and periodic checks route pending results through the same channel handler with current authorization, cancellation, and delivery checks. Empty checks invoke no model. The main agent can continue tools or code execution and owns the reply. Exact recovery bookkeeping and duplicate handling remain open without exactly-once guarantees. Cancellation is acknowledged as a request; stopped execution is confirmed only when known, and unsent late results are suppressed. An in-flight provider request may still finish. If a message submission remains uncertain after supported idempotency or status checks, record uncertainty without blind automatic resend; the saved result remains available on request. Already-submitted messages may not be recallable. The shared proactive insights setting enables or disables eligible linked iMessage only and is enabled by default subject to channel permissions. Website and supported chat controls update that account setting; linking WhatsApp does not enable proactive work. Eligible proactive checks each run a bounded agent investigation, targeting approximately five randomized starts per account each day within 09:00–21:00 in its saved timezone. This window limits starts, not delivery. Only one proactive investigation runs per account; overlap and missed checks are skipped. Proactive investigation failure or interruption is recorded internally for the next scheduled check without a routine message or whole-investigation retry. Configurable execution limits and recorded run duration, model usage, and outcome guide capacity tuning from queue delay and resource usage. Exact limits await representative runs; per-user spending budgets are deferred. Proactive finding and notification history stays separate from shared personal memory. Each channel uses native Mastra Observational Memory token-based compaction; model context combines recent raw messages, that channel’s compact notes, and the account-shared structured profile. Compaction does not delete stored raw history or automatically update the shared profile. Only main-agent turns write the profile. Native partial updates preserve distinct fields; for the same field, the last successful save wins, including older turns overwriting corrections or deletions. Forget removes a profile detail and forgetall clears the profile through the same update tool; histories and compact notes remain unchanged and can still influence answers or cause relearning. Phase 1 provides neither vector retrieval nor cross-channel history retrieval. One dedicated Tiger Cloud PostgreSQL database holds separate application-owned and Mastra-owned tables under backend authorization, not a database per user. The selected TimescaleDB-enabled service uses ordinary application and Mastra tables; future portfolio-history tables begin as hypertables from their first write when that infrastructure is built. Phase 1 still defers a MyStacks indexer. GCP application compute and Tiger Cloud in AWS or Azure form a cross-cloud boundary. Exact profile schema and budgets, compaction token thresholds and models, Tiger Cloud plan, region, sizing, backups, package versions, and framework integration remain open.</desc>
       <defs>
         <linearGradient id="solana" x1="0" y1="1" x2="1" y2="0">
           <stop offset="0" stop-color="#9945ff"/>
@@ -245,7 +251,34 @@
         <g class="spin reverse"><circle class="orbit" cx="755" cy="450" r="225"/><circle class="orbit-dot" cx="755" cy="225" r="3.5"/></g>
       </g>
       <g id="edges"></g>
-      <g id="nodes"></g>
+      <g id="nodes">
+        <g data-node="O">
+          <text x="335" y="146" class="kicker">Phone signup / login</text>
+          <text x="335" y="173" class="sub">Privy + Twilio Verify</text>
+          <text x="335" y="196" class="note">Stable account · separate channel linking</text>
+          <text x="335" y="246" class="kicker">Apple support · Bird Conversations</text>
+          <text x="335" y="273" class="sub">Backend owns AI / staff handoff</text>
+          <text x="335" y="296" class="note">Staff takeover pauses replies until explicit return</text>
+          <text x="335" y="318" class="note">Requested work continues · reports wait</text>
+          <text x="335" y="340" class="note">Proactive starts skip while AI delivery is paused</text>
+        </g>
+        <g data-node="R">
+          <text x="650" y="146" class="kicker">Public web research</text>
+          <text x="650" y="173" class="sub">Backend search + page reading</text>
+          <text x="650" y="196" class="note">Public evidence · no private infrastructure</text>
+        </g>
+        <g data-node="P">
+          <text x="1300" y="310" class="sub">SnapTrade · Zerion</text>
+          <text x="1300" y="332" class="note">Hyperliquid / Webshare · low priority</text>
+        </g>
+        <g data-node="S">
+          <text x="1095" y="834" class="note" text-anchor="middle">Reuse within a run; retain useful files, then destroy</text>
+          <text x="1095" y="856" class="note" text-anchor="middle">Fresh workspace; restore chosen saved files when useful</text>
+        </g>
+        <g data-node="Q">
+          <text x="520" y="835" class="note" text-anchor="middle">iMessage schedules · proactive insights enabled / disabled</text>
+        </g>
+      </g>
     </svg>
     </div>
   </main>
@@ -254,7 +287,6 @@
       <div>
         <p class="eyebrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4z"/></svg>Background work · Two-user example</p>
         <h2 id="dispatch-heading">Background job dispatch</h2>
-        <p class="lede">Delegated subagents, scheduled tasks, and proactive sweeps share one BullMQ queue, in that priority order, and one Cloud Run worker pool that grows by adding instances. Each run keeps its own user context; each finished job starts a new main-agent turn in its own chat.</p>
       </div>
       <div class="legend" aria-hidden="true">
         <span><i class="swatch-edge"></i>Request and reply</span>
@@ -268,35 +300,47 @@
     <div class="stage">
       <svg id="dispatch" viewBox="0 0 1800 850" role="img" aria-labelledby="dispatch-title dispatch-desc">
         <title id="dispatch-title">Background job dispatch through one shared queue</title>
-        <desc id="dispatch-desc">Delegated subagents, user-created scheduled tasks, and proactive sweeps share one BullMQ queue across users, at highest, normal, and lowest priority. User A on WhatsApp and user B on iMessage both ask for research; each user's main-agent turn delegates subagents, receives job IDs, acknowledges, and ends: user A delegates one and user B two, within the limit of five open subagents per chat. BullMQ Job Schedulers add other users' scheduled tasks and proactive sweeps to the same queue. Two Cloud Run worker-pool instances with two slots each run user A's subagent, user B's first subagent, a scheduled task, and a proactive sweep, each in its own user context. Waiting jobs sort by priority: user B's second subagent first, then scheduled tasks, then proactive sweeps. Priority affects waiting jobs without pausing active work or reserving capacity, so the high-priority subagent waits while a proactive sweep runs. A dashed third instance shows that raising the pool's instance count would start the next two waiting jobs. Subagents cannot start subagents or message users. When a job finishes, the worker saves its result in PostgreSQL before completing the BullMQ job. The single active chat coordinator subscribes to native BullMQ QueueEvents and orders completions with user messages. For user-requested work, an available originating channel starts a new main-agent turn with a compact summary and result references; the agent reads details when useful. In the illustrated flow, that turn stays quiet while sibling jobs remain, then combines results and replies in the same chat. Proactive results follow the selected eligible delivery channels. Saved results remain authoritative; missed-event recovery and duplicate-delivery handling remain open. Worker count and slots are illustrative.</desc>
+        <desc id="dispatch-desc">Delegated subagents, user-created scheduled tasks, and proactive sweeps share one BullMQ queue backed by a separate single-node Valkey instance, at highest, normal, and lowest priority. User A on WhatsApp and user B on iMessage both ask for research; each user's main-agent turn delegates subagents, receives job IDs, acknowledges, and ends: user A delegates one and user B two, within the limit of five open subagents per chat. BullMQ Job Schedulers add other users' iMessage scheduled tasks and eligible proactive sweeps to the same queue. WhatsApp admits only user-requested one-off work. Two Cloud Run worker-pool instances with two slots each run user A's subagent, user B's first subagent, a scheduled task, and a proactive sweep, each in its own user context. Waiting jobs sort by priority: user B's second subagent first, then scheduled tasks, then proactive sweeps. Priority affects waiting jobs without pausing active work or reserving capacity, so the high-priority subagent waits while a proactive sweep runs. A dashed third instance shows that raising the pool's instance count would start the next two waiting jobs. Subagents cannot start subagents or message users. When a job finishes, the worker saves small structured results and metadata in PostgreSQL and useful retained analysis files in private Google Cloud Storage before completing the BullMQ job. The single active chat coordinator subscribes to native BullMQ QueueEvents and orders completions with user messages. For user-requested work, an available originating channel starts a new main-agent turn with a compact summary and result references; the agent reads details when useful. In the illustrated flow, that turn stays quiet while sibling jobs remain, then combines results and replies in the same chat. Proactive insights is enabled or disabled for eligible linked iMessage only. During human takeover, requested analyses and user-created schedules continue, but automated reports wait for explicit staff return. Proactive starts are skipped while automated delivery is unavailable, and running proactive results cannot interrupt staff. On explicit return, the main agent checks pending results for usefulness and eligibility with current evidence and correct timestamps. Saved results remain authoritative. Pending or handled completion state supports startup and periodic recovery through the same channel handler, without repeating research or invoking a model for an empty check. Current permission, cancellation, and delivery checks apply. Unsent late results are suppressed after cancellation requests; uncertain message submissions are recorded without blind automatic resend. Recovery bookkeeping and deduplication details remain open. Worker count and slots are illustrative; the queue store has one node and no replica.</desc>
       </svg>
     </div>
   </section>
-  <section class="questions" aria-labelledby="questions-heading">
-    <p class="eyebrow">For discussion</p>
-    <h2 id="questions-heading">Open questions</h2>
-    <ol>
-      <li><div><strong>One shared runtime for every user?</strong><span>Does a shared runtime on warm workers make sense, instead of a dedicated runtime or virtual machine for each user?</span></div></li>
-      <li><div><strong>Credential encryption configuration?</strong><span>Trusted API and worker adapters resolve app keys from Secret Manager and decrypt per-user credentials from PostgreSQL using KMS. Which IAM, key, and encryption configuration fits the provider contract?</span></div></li>
-      <li><div><strong>Shared subagent capacity?</strong><span>Does a message queue with shared subagent workers make sense, so all users draw on one pool of subagent capacity?</span></div></li>
-    </ol>
+  <section class="sandbox" aria-labelledby="sandbox-heading">
+    <header>
+      <div>
+        <p class="eyebrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4z"/></svg>Code execution · One run</p>
+        <h2 id="sandbox-heading">Sandbox execution</h2>
+      </div>
+      <div class="legend" aria-hidden="true">
+        <span><i class="swatch-edge"></i>Request and data</span>
+        <span><i class="swatch-link"></i>Credential setup</span>
+        <span><i class="swatch-blocked"></i>Blocked</span>
+        <span><i class="swatch-boundary"></i>Boundary</span>
+      </div>
+    </header>
+    <div class="stage">
+      <svg id="sandbox" viewBox="0 0 1800 880" role="img" aria-labelledby="sandbox-title sandbox-desc">
+        <title id="sandbox-title">Sandbox execution for one run</title>
+        <desc id="sandbox-desc">One execution run's Mastra agent loop stays in the trusted API or worker process: it plans, calls tools, reads outputs, and checks results, and generated code never runs in that process. Backend data and web tools fetch selected data into run files. The E2B adapter's execution tools create one sandbox on the first shell or code call and reuse it for every call in the run. Inside the sandbox, the workspace holds input, script, and output files; shell commands and Python or JavaScript run against them; a generated program can loop, paginate, and make concurrent provider reads without a model round per read. Provider reads leave the sandbox through E2B's egress proxy, which adds the user's authentication outside the VM, or through the MyStacks read bridge, which checks the user and object. The backend credential store sets up that authentication, so raw provider secrets never enter the sandbox. Other outbound traffic, including the public internet, is denied by default; web research uses backend tools. Each sandbox has CPU, memory, and time limits and is never shared between runs. Before destroying the sandbox, the backend saves useful provider inputs actually used, reusable calculations, final results, and supporting evidence as private Google Cloud Storage files. PostgreSQL holds small structured results, application and Mastra records, and file metadata and references. Later authorized runs may restore chosen files into fresh sandboxes through backend-controlled, account- and channel-scoped transfers, without broad cloud credentials or unrestricted bucket access. Automatic pruning is deferred, and provider retention and data rights still apply. Saved and retrieval times do not establish source freshness, and saved evidence does not replace fresh inputs for current claims. The backend still checks results before replying, authorizes the user and object for every read, and keeps use read-only and in scope. File names, commands, and code are illustrative.</desc>
+      </svg>
+    </div>
   </section>
   <script>
-    // Diagram data: positions are in viewBox units; connections are two-way unless marked as a one-way trigger.
+    // Diagram data: positions are in viewBox units; request/response edges are two-way, while backend credential bindings and work triggers flow one way.
     const NODES = {
       // shape picks the drawing function in SHAPES; x, y, w, h is the box edges attach to.
-      C1: { shape: 'medallion', x: 93, y: 258, w: 84,  h: 84,  title: ['WhatsApp'],       icon: 'whatsapp', tone: 'whatsapp', small: true, fan: true },
-      C2: { shape: 'medallion', x: 93, y: 408, w: 84,  h: 84,  title: ['iMessage'],       icon: 'imessage', tone: 'imessage', small: true, fan: true },
+      C1: { shape: 'medallion', x: 93, y: 258, w: 84,  h: 84,  title: ['WhatsApp'], sub: 'Chat + one-off work only', icon: 'whatsapp', tone: 'whatsapp', small: true, fan: true },
+      C2: { shape: 'medallion', x: 93, y: 408, w: 84,  h: 84,  title: ['iMessage'], sub: 'Bird · primary Apple MSP', icon: 'imessage', tone: 'imessage', small: true, fan: true },
       C3: { shape: 'medallion', x: 93, y: 558, w: 84,  h: 84,  title: ['Other channels'], sub: 'Future scope', icon: 'apps', tone: 'other', small: true, fan: true },
-      O: { shape: 'hex',      x: 310,  y: 380, w: 240, h: 140, kicker: 'Backend',       title: ['Orchestration', 'layer'],       sub: 'One active coordinator' },
+      O: { shape: 'hex',      x: 310,  y: 380, w: 240, h: 140, kicker: 'Backend',       title: ['Orchestration', 'layer'],       sub: 'AI / staff ownership' },
       R: { shape: 'card',     x: 610,  y: 355, w: 290, h: 190, kicker: 'Core · Mastra', title: ['MyStacks Agentic', 'Runtime'], sub: 'Main agent owns replies', hero: true },
-      D: { shape: 'folder',   x: 960,  y: 115, w: 270, h: 140, kicker: 'State',         title: ['Shared PostgreSQL', 'database'], sub: 'Application + Mastra tables', icon: 'db' },
-      F: { shape: 'card',     x: 960,  y: 380, w: 270, h: 140, kicker: 'Tool',          title: ['Financial tools API'],          sub: 'Authorized read-only access', icon: 'chart' },
-      P: { shape: 'medallion', x: 1382, y: 402, w: 96, h: 96, glyph: 'bank', kicker: 'Provider',      title: ['Financial providers'],          sub: 'Connected accounts' },
-      E: { shape: 'terminal', x: 960,  y: 645, w: 270, h: 150, kicker: 'Tool',          title: ['Code execution tool'],          sub: 'Runs generated code' },
-      K: { shape: 'keys',     x: 970,  y: 553, w: 250, h: 58,  title: ['Keys & credentials'], sub: 'Hidden from the agent', small: true },
-      S: { shape: 'medallion', x: 1382, y: 672, w: 96, h: 96, glyph: 'sandbox', badge: 'lock', kicker: 'Sandbox',       title: ['Task-scoped sandbox'],      sub: 'E2B · isolated, internet off' },
-      Q: { shape: 'queue',    x: 360,  y: 690, w: 120, h: 56,  title: ['Scheduler & job queue'], sub: 'BullMQ · Redis · provisional', small: true },
+      D: { shape: 'folder',   x: 960,  y: 115, w: 270, h: 140, kicker: 'State · TimescaleDB', title: ['Tiger Cloud', 'PostgreSQL'], sub: 'Records + file references', icon: 'db' },
+      G: { shape: 'folder',   x: 1300, y: 115, w: 450, h: 140, kicker: 'Retained analysis files', title: ['Private Google Cloud Storage'], sub: 'Keep useful data · automatic pruning deferred', icon: 'folder' },
+      F: { shape: 'card',     x: 960,  y: 380, w: 270, h: 140, kicker: 'Credential brokering', title: ['Financial tools API'],          sub: 'Proxy bindings + read bridge', icon: 'chart' },
+      P: { shape: 'medallion', x: 1382, y: 402, w: 96, h: 96, glyph: 'bank', kicker: 'Provider',      title: ['Provider APIs'],                 sub: 'Authorized accounts' },
+      E: { shape: 'terminal', x: 960,  y: 645, w: 270, h: 150, kicker: 'Tool · scripts', title: ['Programmatic', 'tool calling'], sub: 'Shell · Python / JavaScript' },
+      K: { shape: 'keys',     x: 970,  y: 553, w: 250, h: 58,  title: ['Credential store'], sub: 'Raw secrets outside VM', small: true },
+      S: { shape: 'medallion', x: 1382, y: 672, w: 96, h: 96, glyph: 'sandbox', badge: 'lock', kicker: 'Sandbox',       title: ['Run-owned sandbox'],       sub: 'E2B · no raw provider secrets' },
+      Q: { shape: 'queue',    x: 360,  y: 690, w: 120, h: 56,  title: ['Scheduler & job queue'], sub: 'BullMQ · Valkey', small: true },
       W: { shape: 'workers',  x: 579,  y: 688, w: 122, h: 60,  title: ['Cloud Run pool'],    sub: 'Claim and run jobs', small: true },
     };
     // 24x24 line icons for badges and figures.
@@ -309,16 +353,25 @@
       lock: 'M7 11V8a5 5 0 0 1 10 0v3 M5 11h14v9H5z',
       clock: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M12 7v5l3.5 2',
       key: 'M15.5 3.5a5 5 0 1 1 0 10 5 5 0 0 1 0-10z M12 12l-8.5 8.5 M6.5 17.5L9 20 M9 15l2 2 M16.5 7.5h.01',
-      eyeOff: 'M3 3l18 18 M10.6 5.1A10.6 10.6 0 0 1 12 5c6 0 9.5 7 9.5 7a17 17 0 0 1-2.6 3.5 M6.6 6.6C3.9 8.3 2.5 12 2.5 12S6 19 12 19a9.7 9.7 0 0 0 5.4-1.6 M9.9 9.9a3 3 0 0 0 4.2 4.2',
       cpu: 'M8.5 6h7A2.5 2.5 0 0 1 18 8.5v7a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 6 15.5v-7A2.5 2.5 0 0 1 8.5 6z M10 2.5V6 M14 2.5V6 M10 18v3.5 M14 18v3.5 M2.5 10H6 M2.5 14H6 M18 10h3.5 M18 14h3.5',
       search: 'M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13z M15.3 15.3L20 20',
       bell: 'M6 17v-6a6 6 0 0 1 12 0v6l1.5 1.5h-15z M10 21a2.2 2.2 0 0 0 4 0',
       route: 'M12 3v18 M12 5.5h6l2.5 2.5-2.5 2.5h-6 M12 12.5H6l-2.5 2.5L6 17.5h6',
+      folder: 'M3.5 6.5a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z',
       radar: 'M21 12a9 9 0 1 1-9-9 M16.5 12A4.5 4.5 0 1 1 12 7.5 M12 12l6.4-6.4',
     };
     // MyStacks brand mark, copied from the favicon at docs.mystacks.ai; it spans 14.15 to 49.85 in a 64-unit box.
     const MYSTACKS_MARK = 'M21.5 14.15L42.5 14.15C46.56 14.15 49.85 17.44 49.85 21.5L49.85 42.5C49.85 46.56 46.56 49.85 42.5 49.85L21.5 49.85C17.44 49.85 14.15 46.56 14.15 42.5L14.15 21.5C14.15 17.44 17.44 14.15 21.5 14.15ZM21.5 40.4L32 33.05L42.5 40.4L42.5 33.05L32 25.7L21.5 33.05Z';
-    const EDGES = [['C1', 'O'], ['C2', 'O'], ['C3', 'O'], ['O', 'R'], ['R', 'D'], ['R', 'F'], ['F', 'P'], ['R', 'E'], ['E', 'S'], ['R', 'Q', 'trigger', { label: 'Delegates / schedules', at: [497, 662] }], ['Q', 'W', 'trigger'], ['W', 'R', 'trigger', { label: 'Runs subagents', at: [700, 616] }], ['K', 'F', 'key']];
+    // Custom sandbox routes keep provider labels and the account-chip fan clear.
+    const EDGES = [
+      ['C1', 'O'], ['C2', 'O'], ['C3', 'O'], ['O', 'R'], ['R', 'D'],
+      ['R', 'G', undefined, { path: 'M 850 350 V 302 Q 850 280 872 280 H 1243 Q 1265 280 1265 258 V 207 Q 1265 185 1287 185 H 1295', label: 'Backend-scoped save / restore', at: [1095, 306] }],
+      ['R', 'F'], ['F', 'P'], ['R', 'E'], ['E', 'S'],
+      ['S', 'P', undefined, { path: 'M 1483 720 H 1496 Q 1518 720 1518 698 V 510 Q 1518 500 1507 497 L 1468 488', label: 'Egress proxy inserts credentials', at: [1640, 710] }],
+      ['S', 'F', undefined, { path: 'M 1392 682 L 1311 601 Q 1298 588 1298 570 V 552 Q 1298 530 1276 530 H 1222 Q 1200 530 1200 525', label: 'User/run-bound read bridge', at: [1425, 606] }],
+      ['R', 'Q', 'trigger', { label: 'Delegates / schedules', at: [497, 662] }], ['Q', 'W', 'trigger'],
+      ['W', 'R', 'trigger', { label: 'Runs subagents', at: [700, 616] }], ['K', 'F', 'key'],
+    ];
     // Account chips fan out from the providers figure. Each mark is the brand's own logo in a 32-unit circle:
     // Binance, Robinhood, and Solana glyphs from Simple Icons 16.36.0 (CC0); Ethereum from cryptocurrency-icons 0.18.1 (CC0);
     // the Coinbase C from Coinbase's static assets; IBKR from the interactivebrokers.com home-screen icon.
@@ -343,7 +396,7 @@
     const GROUPS = [
       { x: 30,   y: 215, w: 210, h: 500, label: 'User channels', members: ['C1', 'C2', 'C3'] },
       { x: 285,  y: 60,  w: 970, h: 815, label: 'MyStacks backend · trusted' },
-      { x: 1275, y: 240, w: 505, h: 635, label: 'External · isolated', members: ['P', 'S'] },
+      { x: 1275, y: 60, w: 505, h: 815, label: 'External services · isolated', members: ['G', 'P', 'S'] },
       { x: 305,  y: 590, w: 430, h: 262, label: 'Background work', nested: true, members: ['Q', 'W'] },
     ];
 
@@ -386,10 +439,10 @@
 
     const edges = document.getElementById('edges');
     for (const [from, to, kind, note] of EDGES) {
-      const d = edgePath(NODES[from], NODES[to]), line = el('g', { 'data-edge': `${from} ${to}` }, edges);
+      const d = note?.path || edgePath(NODES[from], NODES[to]), line = el('g', { 'data-edge': `${from} ${to}` }, edges);
       if (note) el('text', { x: note.at[0], y: note.at[1], class: 'edge-label', 'text-anchor': 'middle' }, line).textContent = note.label;
       if (kind === 'trigger') el('path', { d, class: 'edge trigger', 'marker-end': 'url(#arrow-trigger)' }, line);
-      // Keys only flow one way, into the tools that use them, so they get a quiet line without traffic dots.
+      // Raw provider secrets stay outside the sandbox VM; this edge configures backend credential brokering.
       else if (kind === 'key') el('path', { d, class: 'edge link', 'marker-end': 'url(#arrow)' }, line);
       else el('path', { d, class: 'edge', 'marker-start': 'url(#arrow)', 'marker-end': 'url(#arrow)' }, line);
       if (kind !== 'key') el('path', { d, class: 'flow' }, line);
@@ -462,7 +515,7 @@
         el('path', { d: `M ${n.x} ${cy} L ${n.x + i} ${n.y} H ${n.x + n.w - i} L ${n.x + n.w} ${cy} L ${n.x + n.w - i} ${n.y + n.h} H ${n.x + i} Z`, class: 'figure', 'stroke-linejoin': 'round' }, g);
         textBlock(n, g, n.x + n.w / 2, n.y + (n.h - blockHeight(n)) / 2, 'middle');
       },
-      // Folder silhouette for shared PostgreSQL state. The tab rises above the box.
+      // Folder silhouette for records or retained files. The tab rises above the box.
       folder(n, g) {
         const { x, y, w, h } = n, t = 14, tw = 96, r = 18;
         el('path', { d: `M ${x + 8} ${y - t} H ${x + tw - 8} Q ${x + tw} ${y - t} ${x + tw + 5} ${y - t + 6} L ${x + tw + 12} ${y} H ${x + w - r} Q ${x + w} ${y} ${x + w} ${y + r} V ${y + h - r} Q ${x + w} ${y + h} ${x + w - r} ${y + h} H ${x + r} Q ${x} ${y + h} ${x} ${y + h - r} V ${y - t + 8} Q ${x} ${y - t} ${x + 8} ${y - t} Z`, class: 'card' }, g);
@@ -476,14 +529,14 @@
         el('text', { x: n.x + n.w - 18, y: n.y + 21, class: 'prompt', 'text-anchor': 'end' }, g).textContent = '>_';
         textBlock(n, g, n.x + 26, n.y + 32 + (n.h - 32 - blockHeight(n)) / 2);
       },
-      // Credential store: pill with a key icon and an eye-off badge, because the agent never sees what is inside.
+      // Credential store: the lock marks backend authorization for brokering; raw secrets never enter the sandbox VM.
       keys(n, g) {
         el('rect', { x: n.x, y: n.y, width: n.w, height: n.h, rx: n.h / 2, class: 'card' }, g);
         const ix = n.x + n.h / 2, iy = n.y + n.h / 2;
         el('circle', { cx: ix, cy: iy, r: 18, class: 'key-disc' }, g);
         el('path', { d: ICONS.key, class: 'badge-icon', transform: `translate(${ix - 10.8} ${iy - 10.8}) scale(.9)` }, g);
         textBlock(n, g, n.x + n.h + 4, n.y + (n.h - blockHeight(n, false)) / 2, 'start', false);
-        badge(g, n.x + n.w - 10, n.y + 4, 'eyeOff');
+        badge(g, n.x + n.w - 10, n.y + 4, 'lock');
       },
       // Job tray with queued jobs fading out, plus a clock badge for the scheduler; label sits underneath.
       queue(n, g) {
@@ -533,9 +586,9 @@
     // Presentation sections: each highlights its components, and the runtime anchors every section.
     const SECTIONS = [
       { key: 'channels',   label: 'Channels',        nodes: ['C1', 'C2', 'C3', 'O', 'R'] },
-      { key: 'memory',     label: 'Memory',          nodes: ['R', 'D'] },
-      { key: 'financial',  label: 'Financial data',  nodes: ['R', 'F', 'P', 'K'] },
-      { key: 'sandbox',    label: 'Code sandbox',    nodes: ['R', 'E', 'S'] },
+      { key: 'memory',     label: 'Memory & storage', nodes: ['R', 'D', 'G'] },
+      { key: 'financial',  label: 'Financial data',  nodes: ['R', 'F', 'P', 'K', 'S'] },
+      { key: 'sandbox',    label: 'Shell & code',     nodes: ['R', 'E', 'S', 'K', 'F', 'P', 'G', 'D'] },
       { key: 'background', label: 'Background work', nodes: ['R', 'Q', 'W'] },
     ];
     // Keys of the selected sections; an empty set shows everything.
@@ -613,9 +666,9 @@
       // Running jobs fill the four worker slots in order; waiting jobs sort by priority, and the first two would start on an added worker.
       const RUNNING = [
         { id: 'a1', task: 'Earnings impact',   sub: 'User A · subagent', icon: 'search' },
-        { id: 's1', task: 'Digest · user C',   sub: 'Scheduled task',    icon: 'clock' },
+        { id: 's1', task: 'Digest · user C',   sub: 'iMessage schedule', icon: 'clock' },
         { id: 'b1', task: 'Holdings evidence', sub: 'User B · subagent', icon: 'chart' },
-        { id: 'p1', task: 'Sweep · user F',    sub: 'Proactive sweep',   icon: 'radar' },
+        { id: 'p1', task: 'Sweep · user F',    sub: 'iMessage proactive', icon: 'radar' },
       ];
       const WAITING = [
         { id: 'b2', task: 'Ecosystem news' },
@@ -624,7 +677,7 @@
         { id: 'p2', task: 'Sweep · user G' },
         { id: 'p3', task: 'Sweep · user H' },
       ];
-      const QUEUE = { x: 575, y: 195, w: 225, h: 590 }, DONE = { x: 1305, y: 230, w: 212, h: 420 };
+      const QUEUE = { x: 575, y: 195, w: 225, h: 590 }, DONE = { x: 1305, y: 230, w: 225, h: 420 };
       // Two running instances plus a dashed one that raising the instance count would add; each instance has two job slots.
       const WORKERS = [205, 373, 541].map((y, i) => ({ x: 882, y, w: 346, h: 150, added: i === 2 }));
       const slotTop = (worker, slot) => WORKERS[worker].y + 50 + slot * 48;
@@ -728,7 +781,7 @@
       // Shared queue: running jobs link to their worker slots; waiting jobs sort by priority, and the first two point at the added worker.
       const q = el('g', {}, figures);
       el('rect', { x: QUEUE.x, y: QUEUE.y, width: QUEUE.w, height: QUEUE.h, rx: 20, class: 'card' }, q);
-      textBlock({ kicker: 'BullMQ · Redis', title: ['Background jobs'], sub: 'One queue, every user' }, q, QUEUE.x + 22, QUEUE.y + 18);
+      textBlock({ kicker: 'BullMQ · Valkey', title: ['Background jobs'], sub: 'One queue, every user' }, q, QUEUE.x + 22, QUEUE.y + 18);
       step(q, QUEUE.x + QUEUE.w, QUEUE.y, 3);
       // One queue row; returns its centre line for the claim link.
       function row(job, y, waiting) {
@@ -749,15 +802,16 @@
 
       // Job Schedulers above the queue: user-created scheduled tasks and proactive sweeps, with their queue priorities.
       const sched = el('g', {}, figures), schedX = 560, schedW = 255, schedY = 56;
-      el('rect', { x: schedX, y: schedY, width: schedW, height: 104, rx: 18, class: 'card' }, sched);
-      el('text', { x: schedX + 20, y: schedY + 27, class: 'kicker' }, sched).textContent = 'Job Schedulers';
+      el('rect', { x: schedX, y: schedY, width: schedW, height: 124, rx: 18, class: 'card' }, sched);
+      el('text', { x: schedX + 20, y: schedY + 27, class: 'kicker' }, sched).textContent = 'iMessage Job Schedulers';
       [['s', 'clock', 'Scheduled tasks', 'Normal'], ['p', 'radar', 'Proactive sweep', 'Lowest']].forEach(([key, name, label, priority], k) => {
         const y = schedY + 40 + k * 32;
         classTile(sched, key, name, schedX + 20, y);
         el('text', { x: schedX + 54, y: y + 17, class: 'row-label' }, sched).textContent = label;
         el('text', { x: schedX + schedW - 20, y: y + 17, class: 'priority', 'text-anchor': 'end' }, sched).textContent = priority;
       });
-      link(`M ${QUEUE.x + QUEUE.w / 2} ${schedY + 109} V ${QUEUE.y - 5}`, 'work');
+      el('text', { x: schedX + 20, y: schedY + 113, class: 'slot-sub' }, sched).textContent = 'Proactive insights enabled / disabled';
+      link(`M ${QUEUE.x + QUEUE.w / 2} ${schedY + 129} V ${QUEUE.y - 5}`, 'work');
 
       // Workers: running instances show their busy slots; the added instance shows the next two waiting jobs it would start.
       WORKERS.forEach((w, i) => {
@@ -801,7 +855,7 @@
       el('rect', { x: DONE.x, y: DONE.y, width: DONE.w, height: DONE.h, rx: 20, class: 'card' }, c);
       textBlock({ kicker: 'On completion', title: ['Persist, then', 'notify'] }, c, DONE.x + 22, DONE.y + 18);
       step(c, DONE.x + DONE.w, DONE.y, 5);
-      [['db', 'Result saved', 'PostgreSQL record'], ['bell', 'Completed event', 'BullMQ QueueEvents'], ['route', 'Listener routes', 'to its own channel']]
+      [['db', 'Results + files', 'PostgreSQL / private GCS'], ['bell', 'Event or recovery', 'QueueEvents / DB check'], ['route', 'Handler checks', 'Owner + permissions']]
         .forEach(([name, title, sub], k) => {
           const y = DONE.y + 142 + k * 100;
           if (k) el('path', { d: `M ${DONE.x + 32} ${y - 36} l 6 6 l 6 -6`, class: 'badge-icon' }, c);
@@ -809,6 +863,155 @@
           el('text', { x: DONE.x + 66, y: y + 13, class: 'slot-title' }, c).textContent = title;
           el('text', { x: DONE.x + 66, y: y + 31, class: 'slot-sub' }, c).textContent = sub;
         });
+      el('text', { x: DONE.x + 22, y: DONE.y + 398, class: 'slot-sub' }, c).textContent = 'Human takeover: reports wait';
+      el('text', { x: DONE.x + 22, y: DONE.y + 413, class: 'slot-sub' }, c).textContent = 'Staff explicitly return AI control';
+    }
+
+    // Sandbox execution example: one run's agent loop stays in the trusted backend while E2B runs its generated shell and code.
+    // Positions are in viewBox units; file names, commands, and code are illustrative.
+    {
+      const svg = document.getElementById('sandbox');
+      const [boundary, links, figures] = [0, 1, 2].map(() => el('g', {}, svg));
+      const NODES = {
+        tools:    { shape: 'card',      x: 285,  y: 140, w: 210, h: 140, kicker: 'Backend tools', title: ['Data + web'], sub: 'Fetch into run files', icon: 'chart' },
+        exec:     { shape: 'terminal',  x: 285,  y: 330, w: 210, h: 180, kicker: 'E2B adapter', title: ['Execution', 'tools'], sub: 'Shell · files · code' },
+        store:    { shape: 'folder',    x: 50,   y: 590, w: 445, h: 110, kicker: 'Private Google Cloud Storage', title: ['Retained analysis files'], sub: 'Useful inputs · calculations · evidence', icon: 'folder' },
+        keys:     { shape: 'keys',      x: 1220, y: 120, w: 250, h: 58,  title: ['Credential store'], sub: 'Backend-held', small: true },
+        proxy:    { shape: 'card',      x: 1220, y: 225, w: 250, h: 120, kicker: 'E2B · outside VM', title: ['Egress proxy'], sub: "Adds the user's auth", icon: 'key' },
+        bridge:   { shape: 'card',      x: 1220, y: 390, w: 250, h: 120, kicker: 'MyStacks backend', title: ['Read bridge'], sub: 'Checks user and object', icon: 'lock' },
+        provider: { shape: 'medallion', x: 1597, y: 319, w: 96,  h: 96,  glyph: 'bank', title: ['Provider APIs'], sub: 'SnapTrade · Zerion' },
+      };
+      // Rounded horizontal-vertical-horizontal route that turns at column mx.
+      function elbow(sx, sy, mx, ex, ey, r = 14) {
+        if (sy === ey) return `M ${sx} ${sy} H ${ex}`;
+        const dir = Math.sign(ey - sy), h = Math.sign(ex - sx);
+        return `M ${sx} ${sy} H ${mx - h * r} Q ${mx} ${sy} ${mx} ${sy + dir * r} V ${ey - dir * r} Q ${mx} ${ey} ${mx + h * r} ${ey} H ${ex}`;
+      }
+      // Connection kinds: two-way request and data, one-way data, quiet credential setup, or a blocked route.
+      function link(d, kind = 'both') {
+        const g = el('g', {}, links);
+        if (kind === 'key') { el('path', { d, class: 'edge link', 'marker-end': 'url(#arrow)' }, g); return; }
+        if (kind === 'blocked') { el('path', { d, class: 'edge ghost-link' }, g); return; }
+        el('path', { d, class: 'edge', 'marker-end': 'url(#arrow)', ...(kind === 'both' && { 'marker-start': 'url(#arrow)' }) }, g);
+        el('path', { d, class: 'flow' }, g);
+      }
+      // Mini console: header dots, a label, then command lines and their output.
+      function terminalCard(g, x, y, w, h, label, lines) {
+        el('rect', { x, y, width: w, height: h, rx: 14, class: 'figure' }, g);
+        el('path', { d: `M ${x} ${y + 32} H ${x + w}`, class: 'figure-line' }, g);
+        [0, 1, 2].forEach(k => el('circle', { cx: x + 20 + k * 16, cy: y + 16, r: 5, class: 'term-dot' }, g));
+        el('text', { x: x + w - 18, y: y + 21, class: 'prompt', 'text-anchor': 'end' }, g).textContent = label;
+        lines.forEach(([text, kind], k) => { el('text', { x: x + 20, y: y + 58 + k * 23, class: `code ${kind || ''}` }, g).textContent = text; });
+      }
+
+      // Boundaries: the trusted process that owns the loop, and the run-owned E2B microVM.
+      const groups = [
+        { x: 25, y: 80, w: 490, h: 710, label: 'Trusted backend · API or worker', cls: 'group' },
+        { x: 560, y: 80, w: 600, h: 710, label: 'E2B sandbox · one per run', cls: 'group vm' },
+      ].map(b => {
+        const g = el('g', {}, boundary);
+        el('rect', { x: b.x, y: b.y, width: b.w, height: b.h, rx: 28, class: b.cls }, g);
+        el('text', { x: b.x + 24, y: b.y + 32, class: b.cls === 'group' ? 'group-label' : 'group-label nested' }, g).textContent = b.label;
+        return g;
+      });
+      badge(groups[1], 1160, 80, 'lock');
+      el('text', { x: 270, y: 760, class: 'note', 'text-anchor': 'middle' }, groups[0]).textContent = 'Generated code never runs in this process';
+
+      for (const n of Object.values(NODES)) SHAPES[n.shape](n, el('g', { class: n.small ? 'small' : '' }, figures));
+      el('text', { x: 272.5, y: 721, class: 'note', 'text-anchor': 'middle' }, figures).textContent = 'PostgreSQL: small results + file metadata / references';
+      el('text', { x: 272.5, y: 741, class: 'note', 'text-anchor': 'middle' }, figures).textContent = 'Useful data retained · automatic pruning deferred';
+
+      // Agent loop: the model plans, calls tools, reads outputs, and checks them inside the trusted process.
+      const loop = el('g', { class: 'agent' }, figures), L = { x: 50, y: 140, w: 190, h: 370 };
+      el('rect', { x: L.x, y: L.y, width: L.w, height: L.h, rx: 20, class: 'card' }, loop);
+      textBlock({ kicker: 'Mastra', title: ['Agent loop'], sub: 'Model stays here' }, loop, L.x + 20, L.y + 18);
+      const markScale = 22 / 35.7, mx = L.x + L.w - 18 - 22, my = L.y + 20;
+      el('path', { d: MYSTACKS_MARK, class: 'brand-mark', 'fill-rule': 'evenodd', transform: `translate(${mx - 14.15 * markScale} ${my - 14.15 * markScale}) scale(${markScale})` }, loop);
+      ['Plan', 'Call a tool', 'Read output', 'Check result'].forEach((label, k) => {
+        const y = L.y + 128 + k * 50;
+        el('rect', { x: L.x + 20, y, width: 150, height: 32, rx: 16, class: 'loop-step' }, loop);
+        el('text', { x: L.x + 36, y: y + 21, class: 'loop-text' }, loop).textContent = label;
+        if (k) el('path', { d: `M ${L.x + 89} ${y - 13} l 6 5 l 6 -5`, class: 'loop-arrow' }, loop);
+      });
+      const top = L.y + 144, bottom = L.y + 294, rx = L.x + 170;
+      el('path', { d: `M ${rx} ${bottom} H ${rx + 4} Q ${rx + 10} ${bottom} ${rx + 10} ${bottom - 6} V ${top + 6} Q ${rx + 10} ${top} ${rx + 4} ${top} H ${rx + 1} M ${rx + 6} ${top - 4} L ${rx + 1} ${top} L ${rx + 6} ${top + 4}`, class: 'loop-arrow' }, loop);
+      el('text', { x: L.x + 20, y: L.y + 348, class: 'agent-note' }, loop).textContent = 'Repeats until done';
+
+      // Workspace files shared by every call in the run.
+      const ws = el('g', {}, figures), W = { x: 590, y: 140, w: 540, h: 150 };
+      el('rect', { x: W.x, y: W.y, width: W.w, height: W.h, rx: 18, class: 'card' }, ws);
+      el('text', { x: W.x + 22, y: W.y + 30, class: 'kicker' }, ws).textContent = 'Workspace files';
+      [['inputs/', ['positions.json', 'prices.csv']], ['scripts/', ['concentration.py']], ['outputs/', ['result.json', 'chart.png']]].forEach(([dir, files], k) => {
+        const x = W.x + 22 + k * 172;
+        el('path', { d: ICONS.folder, class: 'badge-icon', transform: `translate(${x} ${W.y + 48}) scale(.8)` }, ws);
+        el('text', { x: x + 26, y: W.y + 63, class: 'file-dir' }, ws).textContent = dir;
+        files.forEach((file, j) => { el('text', { x: x + 26, y: W.y + 92 + j * 24, class: 'file' }, ws).textContent = file; });
+      });
+
+      // Shell and interpreter calls reuse those files.
+      const term = el('g', {}, figures);
+      terminalCard(term, 590, 320, 260, 150, 'shell', [['$ jq length positions.json'], ['42', 'out'], ['$ grep -c BTC prices.csv'], ['365', 'out']]);
+      terminalCard(term, 870, 320, 260, 150, 'python', [['$ python concentration.py'], ['top 3 = 61% of value', 'out'], ['USD · as of 09:30 UTC', 'out']]);
+
+      // Programmatic tool calling: one generated program loops, paginates, and reads concurrently without a model round per read.
+      const prog = el('g', {}, figures), P = { x: 590, y: 500, w: 540, h: 150 };
+      el('rect', { x: P.x, y: P.y, width: P.w, height: P.h, rx: 18, class: 'card' }, prog);
+      el('text', { x: P.x + 22, y: P.y + 30, class: 'kicker' }, prog).textContent = 'Programmatic tool calling';
+      [['# reads leave through the proxy or the bridge', 'comment'], ['for page in snaptrade.positions(paginate=True):'], ['    rows.extend(page)'], ['prices = await gather(*map(zerion.price, tokens))']]
+        .forEach(([text, kind], k) => { el('text', { x: P.x + 22, y: P.y + 60 + k * 23, class: `code ${kind || ''}` }, prog).textContent = text; });
+
+      // Guarantees that hold for every sandbox.
+      [['key', 'No raw provider secrets'], ['lock', 'Default-deny egress'], ['cpu', 'CPU, memory, time limits'], ['clock', 'New sandbox each run']].forEach(([name, label], k) => {
+        const g = el('g', {}, figures), x = 590 + (k % 2) * 280, y = 680 + (k >> 1) * 48;
+        el('rect', { x, y, width: 260, height: 38, rx: 19, class: 'chip' }, g);
+        el('path', { d: ICONS[name], class: 'badge-icon', transform: `translate(${x + 14} ${y + 10}) scale(.75)` }, g);
+        el('text', { x: x + 42, y: y + 24.5, class: 'chip-label' }, g).textContent = label;
+      });
+
+      // Everything else outbound is denied; web research uses backend tools instead.
+      const blocked = el('g', {}, figures), X = { x: 1220, y: 545, w: 250, h: 60 };
+      el('rect', { x: X.x, y: X.y, width: X.w, height: X.h, rx: 16, class: 'ghost' }, blocked);
+      el('circle', { cx: X.x + 30, cy: X.y + 30, r: 13, class: 'blocked-ring' }, blocked);
+      el('path', { d: `M ${X.x + 25} ${X.y + 25} l 10 10 m 0 -10 l -10 10`, class: 'blocked-icon' }, blocked);
+      el('text', { x: X.x + 54, y: X.y + 26, class: 'slot-title' }, blocked).textContent = 'Public internet';
+      el('text', { x: X.x + 54, y: X.y + 45, class: 'slot-sub' }, blocked).textContent = 'Blocked unless allowed';
+
+      // Isolation does not replace these backend checks.
+      const checks = el('g', {}, figures), C = { x: 1530, y: 545, w: 245, h: 160 };
+      el('rect', { x: C.x, y: C.y, width: C.w, height: C.h, rx: 18, class: 'card' }, checks);
+      el('text', { x: C.x + 20, y: C.y + 30, class: 'kicker' }, checks).textContent = 'Backend still checks';
+      ['Results before replying', 'User and object per read', 'Read-only, in scope'].forEach((label, k) => {
+        const y = C.y + 62 + k * 34;
+        el('path', { d: `M ${C.x + 22} ${y - 4} l 5 5 l 9 -10`, class: 'check-icon' }, checks);
+        el('text', { x: C.x + 46, y, class: 'row-label' }, checks).textContent = label;
+      });
+
+      // Lifecycle along the bottom: create lazily, reuse, retain useful files, then destroy.
+      const life = el('g', {}, figures);
+      el('text', { x: 49, y: 841, class: 'group-label' }, life).textContent = 'Sandbox lifecycle';
+      el('path', { d: 'M 560 835 H 1460', class: 'edge link' }, life);
+      ['Create on first call', 'Reuse for every call', 'Save useful files', 'Destroy the sandbox'].forEach((label, k) => {
+        const x = 560 + k * 230;
+        el('rect', { x, y: 818, width: 210, height: 34, rx: 17, class: 'chip' }, life);
+        el('circle', { cx: x + 18, cy: 835, r: 11, class: 'figure-bubble' }, life);
+        el('text', { x: x + 18, y: 839.5, class: 'step-num', 'text-anchor': 'middle' }, life).textContent = k + 1;
+        el('text', { x: x + 38, y: 840, class: 'life-text' }, life).textContent = label;
+      });
+
+      // Connections.
+      link(`M 245 210 H 280`);
+      link(`M 245 420 H 280`);
+      link(`M 500 210 H 585`, 'one');
+      link(`M 500 420 H 585`);
+      link(`M 390 515 V 585`);
+      el('text', { x: 400, y: 548, class: 'edge-label' }, links).textContent = 'Save / restore chosen files';
+      link(`M 1345 183 V 220`, 'key');
+      el('text', { x: 1356, y: 206, class: 'edge-label' }, links).textContent = 'Sets the auth';
+      link(elbow(1135, 575, 1178, 1215, 285));
+      link(elbow(1135, 575, 1178, 1215, 450));
+      link(`M 1135 575 H 1215`, 'blocked');
+      link(elbow(1475, 285, 1520, 1592, 367));
+      link(elbow(1475, 450, 1520, 1592, 367));
     }
   </script>
 </body>

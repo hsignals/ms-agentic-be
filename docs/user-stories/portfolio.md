@@ -69,9 +69,10 @@ Portfolio answers and reports must be concise, precise, and readable directly in
 
 - For the same observations and calculation basis, the surfaces report consistent holdings, positions, valuations, and coverage.
 - If two outputs use different observation times or coverage, each makes that difference clear enough to explain a changed result.
-- Linked channels can use the same account-wide financial connections and portfolio evidence. Conversation history, jobs, scheduled tasks, and their results remain within their originating channel.
+- Linked channels can use the same account-wide financial connections and portfolio evidence. Conversation history, jobs, and their results remain within their originating channel; schedules and proactive reports are supported only in iMessage.
 - A portfolio explanation or digest identifies the underlying sources and distinguishes reported facts, calculations, assumptions, and uncertain conclusions.
 - A remembered preference may change presentation, but it cannot replace current financial evidence or expand account access.
+- Follow-up analysis can use useful retained provider inputs, calculations, final results, and supporting evidence from that channel, within current authorization, provider retention rights, and privacy constraints. Retained inputs preserve source as-of and retrieval times; their saved time does not make them current. Automatic pruning is deferred, and retained analysis does not create a continuous portfolio-history archive or remove the fresh-evidence requirement for current claims.
 
 Phase 1 aggregates current supported provider data and metrics with best-effort calculations in code, without a MyStacks indexer. Correct aggregation requires compatible identities, units, valuation, and treatment of overlapping provider views. Suitable provider-calculated values, including historical metrics, may be reused; additional supported calculations use common definitions across the preview, chat, and tasks. Available inputs limit the answers the product can support. Historical P&L or reconstruction requiring MyStacks to build its own indexer or dedicated history infrastructure is **deferred and low priority**.
 

@@ -6,7 +6,7 @@
 
 Memory supports continuity and personalization within **wealth and assets**. It must not expand Phase 1 authority, establish account access, or replace current financial evidence. The [runtime design](../design/runtime.md) and [architecture](../architecture.md) remain **tentative pending the overall architecture design round**; the product agreements in these stories remain accepted.
 
-Remembered personal context is shared across the MyStacks account. Useful personal facts learned in one channel can shape relevant answers in another. Each linked channel keeps separate recent history, a compact summary of older history, jobs, scheduled tasks, and results. Its context combines that same-channel history and summary with the shared personal profile and relevant request or job inputs. Shared memory must not become a copy of transcripts or work records. Forgetting clears only saved profile content; retained channel context can still influence answers or cause a fact to be learned again. The [context](../ADRS/0010-native-channel-context-compaction.md), [forgetting](../ADRS/0011-profile-only-forgetting.md), and [save-order](../ADRS/0012-last-save-wins-profile-updates.md) decisions own these trade-offs.
+Remembered personal context is shared across the MyStacks account. Useful personal facts learned in one channel can shape relevant answers in another. Each linked channel keeps separate recent history, a compact summary of older history, jobs, and results; schedules are supported only in iMessage. Its context combines that same-channel history and summary with the shared personal profile and relevant request or job inputs. Shared memory must not become a copy of transcripts or work records. Forgetting clears only saved profile content; retained channel context can still influence answers or cause a fact to be learned again. The [context](../ADRS/0010-native-channel-context-compaction.md), [forgetting](../ADRS/0011-profile-only-forgetting.md), and [save-order](../ADRS/0012-last-save-wins-profile-updates.md) decisions own these trade-offs.
 
 ## 2. User stories
 
@@ -59,7 +59,8 @@ As a user, I want remembered context to be distinguishable from current evidence
 - When remembered context and current evidence differ, the assistant does not silently treat either as a corrected goal or preference. Current financial evidence remains the basis for financial facts.
 - A newer user statement about holdings, balances, prices, or account access remains user-supplied context; it does not overwrite provider financial evidence or establish current access.
 - Remembering a past balance or connected account does not make it current or accessible. When the user explicitly requests unavailable current information, the assistant explains the gap and offers the closest useful supported answer.
-- Shared memory can retain useful personal facts learned in chat while discussing work, but it does not expose another channel's transcripts, task records, or results. Background research can use authorized personal memory without changing it. Task inspection and controls remain within the current channel.
+- Shared memory can retain useful personal facts learned in chat while discussing work, but it does not expose another channel's transcripts, task records, or results. Background research can use authorized personal memory without changing it. Each chat controls only its own jobs, and only iMessage can create or manage its schedules.
+- Useful retained analysis inputs, calculations, results, and supporting evidence remain distinct from the personal profile. They can support authorized follow-ups within the originating channel, subject to provider retention rights and privacy constraints. Conservative retention and deferred automatic pruning do not make saved data current account evidence or change profile-only forgetting.
 
 ## 3. Observable acceptance examples
 
@@ -84,6 +85,7 @@ These examples establish observable continuity, account scope, and control.
 | An earlier authorized turn saves the same profile field after a newer correction or removal. | Its later successful save wins and can replace the correction or restore the removed content, regardless of user-message order. |
 | A removed preference still appears in retained channel context. | It can influence an answer or be learned again; the assistant does not promise that profile-only forgetting prevents this. |
 | “Forget everything you remember about me.” | The assistant clears the saved personal profile across the account and explains that transcripts, summaries, financial data, and other retained records are unchanged. |
+| The user asks a follow-up based on saved analysis data. | The assistant uses authorized evidence from the originating channel with its source and timing context, without copying it into shared memory or presenting old holdings as current. |
 | The user disconnects an account mentioned in memory. | The assistant does not claim present access or present an old balance as current evidence. |
 | The user's newest balance statement differs from available provider financial evidence. | The assistant keeps the statement distinct from provider evidence and does not replace the provider's financial facts with remembered context. |
 
