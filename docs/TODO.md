@@ -108,7 +108,7 @@ Phone changes and recovery remain low priority; account deletion remains deferre
 
 The [storage decision](ADRS/0013-shared-postgresql-storage.md) selects a dedicated TimescaleDB-enabled Tiger Cloud service. Application and Mastra tables remain ordinary PostgreSQL tables; when deferred portfolio-history infrastructure is built, its history tables start as hypertables before their first write.
 
-- [ ] Select the service plan, region, size, GCP-to-Tiger connectivity, backup and recovery configuration, and permissions for the dedicated project resource.
+- [ ] When database setup is resumed, validate and provision the [selected staging service](design/scaffolding.md), including actual price/availability, GCP-to-Tiger connectivity, backup/recovery, and permissions. Service creation and its URL are deferred for the current scaffold; production capacity remains a separate decision.
 - [ ] Define ordinary application and Mastra schemas and migration ownership. Keep portfolio-history collection and reconstruction deferred; any future populated-table conversion must account for migration, locking, and constraint requirements.
 
 ## 7. Sandbox and credential-broker data handling
@@ -133,3 +133,16 @@ The [analysis storage decision](ADRS/0023-analysis-data-retention-and-object-sto
 - [ ] Confirm provider-specific retention rights and operating controls for saved financial inputs. Saved data does not replace fresh evidence for current claims.
 
 Future pruning rules can use this metadata when measured growth or an explicit data-policy requirement justifies them; no automatic age-based cleanup is selected now. Conversation/profile retention and account deletion retain their separate decisions.
+
+## 9. Scaffold live acceptance
+
+### 9.1 Deferred inputs and evidence
+
+The implementer owns these checks when the deferred inputs become available. The [delivery specification](design/scaffolding.md) owns their scope; the [staging runbook](operations/staging.md) owns commands and recovery.
+
+- [ ] Supply the dedicated database URL through a local secret file or Secret Manager, initialize application and native Mastra storage, and verify cross-cloud connectivity without exposing credentials.
+- [ ] Supply the E2B key securely and verify real queued calculation, private GCS persistence, authorized retrieval/restoration, and sandbox cleanup with the complete integration code.
+- [ ] Verify full foreground/background and redeployment behavior on identified commit/digest/API/worker revisions, including retained state and the attempt ceiling.
+- [ ] Record model comparison, measured resource/usage costs, and the author's personal expected/observed acceptance before readiness.
+
+Bootstrap deployment health is available evidence only for its exercised scope. Keep missing live proof visible and the runtime/cloud PRs draft until required acceptance or an explicitly accepted exception.

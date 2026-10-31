@@ -29,7 +29,7 @@ Google's [node specification](https://docs.cloud.google.com/memorystore/docs/val
 
 Configure `noeviction` explicitly. Arbitrary eviction can remove keys BullMQ needs; its [production guidance](https://docs.bullmq.io/guide/going-to-production#max-memory-policy) requires this policy. The managed service [returns errors at the memory limit instead of evicting data](https://docs.cloud.google.com/memorystore/docs/valkey/supported-instance-configurations), so sizing and observed memory pressure remain operational responsibilities.
 
-Private connectivity and TLS are required. Region, network attachment, authentication method, exact permissions, and client connection details remain open; this decision does not choose IAM or token authentication.
+Private connectivity and TLS are required. The [scaffolding delivery](../design/scaffolding.md#41-initial-configuration) owns the initial staging project and region. Network attachment, authentication method, exact permissions, and client connection details remain open; this decision does not choose IAM or token authentication.
 
 ### 2.3 Persistence and failure limits
 
@@ -56,6 +56,6 @@ AOF with one-second flushing balances durability and write overhead. It preserve
 ## 4. Remaining decisions and acceptance evidence
 
 - **Integration:** pin BullMQ, client, and managed Valkey versions; verify supported commands and native scheduling, explicit priorities, QueueEvents, retries, reconnection, and process restarts against that combination. Redis compatibility alone is not this evidence.
-- **Operations:** select the GCP project and region, private network configuration, TLS client setup, authentication, permissions, exact provisioning settings, backup and restore policy, and relevant queue retention settings.
+- **Operations:** provision the selected staging project and region, and settle private network configuration, TLS client setup, authentication, permissions, exact provisioning settings, backup and restore policy, and relevant queue retention settings.
 - **Recovery:** verify native stalled-job and retry behavior respects the shared two-total-attempt ceiling, preserves waiting jobs through application stop/start, and suppresses cancelled or revoked work. Saved completions must return through the same ordered handler without repeating their analysis; exact pending/handled and duplicate-handling mechanics remain open under the existing owners.
 - **Capacity:** record representative memory use, queue delay, command throughput, and maintenance or recovery impact before claiming capacity or changing size, replica count, or cluster topology. No workload-capacity or uninterrupted-service guarantee follows from the initial node size.

@@ -2,7 +2,7 @@
 
 ## 1. Status and scope
 
-**Status: ACCEPTED Phase 1 storage direction.** MyStacks uses one PostgreSQL database hosted on Tiger Cloud for application records and Mastra runtime state, with separate tables for their respective owners. Application and Mastra tables use ordinary PostgreSQL. When portfolio-history infrastructure is built, its history tables begin as hypertables before their first write; the indexer remains deferred. The overall architecture and concrete hosting configuration remain tentative.
+**Status: ACCEPTED Phase 1 storage direction.** MyStacks uses one PostgreSQL database hosted on Tiger Cloud for application records and Mastra runtime state, with separate tables for their respective owners. Application and Mastra tables use ordinary PostgreSQL. When portfolio-history infrastructure is built, its history tables begin as hypertables before their first write; the indexer remains deferred. The overall product architecture and production hosting configuration remain tentative; the scaffold selects the initial staging target.
 
 The [architecture](../architecture.md) owns state responsibilities. The [runtime design](../design/runtime.md) and [task design](../design/tasks.md) own the contracts that use these records.
 
@@ -34,6 +34,10 @@ Use a new TimescaleDB-enabled Tiger Cloud service dedicated to this project, whi
 
 Use ordinary PostgreSQL tables for the initial application and Mastra records. MyStacks may later build an indexer to collect users' historical balances, positions, and portfolio-value snapshots. When that infrastructure is built, create its portfolio-history tables as hypertables before their first write. Ordinary application and Mastra tables remain alongside them. The indexer and financial calculation code remain application responsibilities; the database provides storage and query capabilities. The exact history schema, collection cadence, and TimescaleDB feature use remain open.
 
+### 2.4 Application driver and migrations
+
+Application persistence uses Postgres.js (`postgres`) with Drizzle's `drizzle-orm/postgres-js` adapter and checked-in Drizzle migrations. This keeps the Bun application runtime and Node-based Vitest integration suite on one driver path, so persistence contracts exercise the application implementation instead of a separate test adapter. Mastra retains its native PostgreSQL storage adapter and separate table ownership. Keep transactions short and release connections before external work.
+
 ## 3. Rationale and alternatives
 
 **One database keeps the initial operating model small.** Application state and Mastra state both need durable records, and the selected PostgreSQL adapter supports the native memory behavior. Separate application and runtime databases would introduce another deployment, backup, and connection-management boundary without a current requirement that justifies it.
@@ -51,6 +55,6 @@ Use ordinary PostgreSQL tables for the initial application and Mastra records. M
 ## 4. Consequences and open choices
 
 - **Selected:** A TimescaleDB-enabled Tiger Cloud service hosts the project's PostgreSQL database for durable application and Mastra records. Ordinary application and Mastra tables serve Phase 1; future portfolio-history tables start as hypertables when that deferred infrastructure is built.
-- **Integration:** exact tables, migration ownership, adapter versions, connection handling, and permissions remain implementation design work.
-- **Operations:** service plan, region, sizing, connectivity, backup and recovery configuration, and concrete storage configuration remain open under the analysis retention decision. The project owns its database independently of other projects.
+- **Integration:** the application driver and migration workflow are selected in section 2.4. Full product schemas, runtime storage mapping, connection sizing, and database permissions remain implementation design work.
+- **Operations:** the [scaffolding delivery](../design/scaffolding.md) selects the initial staging plan, region, and size. Validate service availability and connectivity, and settle backup/recovery and concrete storage configuration under the analysis retention decision. The project owns its database independently of other projects.
 - **Queue consistency:** using one PostgreSQL database does not make PostgreSQL and Valkey updates one transaction. The definition-to-queue update contract remains open. Pending saved completions are checked on startup and periodically; exact schemas, intervals, handled boundary, crash behavior, and duplicate-handling mechanics remain part of the task design.
