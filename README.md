@@ -10,14 +10,16 @@ The accepted financial-data baseline uses **SnapTrade** for target exchange and 
 
 ## 2. Local development
 
-The runnable-foundation candidate supplies this command contract. Use Bun and `bun.lock`. If `.env` is absent, create it from `.env.example`; preserve an existing file. For the local Compose resources, set `DATABASE_URL=postgres://agentic:agentic_local@127.0.0.1:5432/agentic` and `REDIS_URL=redis://127.0.0.1:6379`. These are local development credentials; cloud secrets remain separate.
+The repository provides the runnable API, background worker, and local storage setup. Use Bun and `bun.lock`. If `.env` is absent, create it from `.env.example`; preserve an existing file. For the local Compose resources, set `DATABASE_URL=postgres://agentic:agentic_local@127.0.0.1:5432/agentic` and `REDIS_URL=redis://127.0.0.1:6379`. These are local development credentials; cloud secrets remain separate.
 
 ```sh
 bun install --frozen-lockfile
-docker compose up -d
+docker compose up -d --wait
 bun run db:migrate
 bun run dev
 ```
+
+After editing application schemas, run `bun run db:generate` and review the SQL and generation metadata together. Commit both before running `bun run db:migrate`, which initializes application and native Mastra storage under their separate owners.
 
 After configuring the remaining values in `.env.example`, run `bun run worker` in another terminal. Without provider/storage credentials, bootstrap health remains available and protected work reports incomplete configuration. Install staged-file hooks explicitly with `bun run hooks:install`. [Testing](docs/test.md) lists required checks, isolated integration resources, and container verification. The [staging runbook](docs/operations/staging.md) owns provisioning and manual deployment.
 

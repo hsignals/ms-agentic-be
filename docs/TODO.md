@@ -128,8 +128,8 @@ The [sandbox decision](ADRS/0003-sandboxed-code-execution.md) gives generated co
 The [analysis storage decision](ADRS/0023-analysis-data-retention-and-object-storage.md) retains useful inputs, reusable calculations, and results for follow-ups. Private GCS stores retained datasets and workspace files; PostgreSQL stores ordinary records, small results, metadata, and references. Automatic pruning is deferred.
 
 - [ ] Configure the dedicated private bucket and backend access, preserving account/channel/run authorization without exposing broad storage credentials to generated code.
-- [ ] Define the retained-file metadata and references, including ownership, data type, saved/retrieval/source times, provider/connection, and size. Unknown source freshness remains explicit.
-- [ ] Integrate native upload/download and E2B file transfer so useful files are saved before destruction and later authorized runs can restore selected files. Pin exact packages and failure behavior for required-output persistence.
+- [x] Define retained-file metadata and references for ownership, data type, saved/retrieval/source times, provider/connection, size, and explicitly unknown source freshness.
+- [x] Implement native GCS/E2B transfers, required-output persistence before cleanup, and authorized restoration with pinned packages and local failure tests. Live transfer acceptance remains in section 9.
 - [ ] Confirm provider-specific retention rights and operating controls for saved financial inputs. Saved data does not replace fresh evidence for current claims.
 
 Future pruning rules can use this metadata when measured growth or an explicit data-policy requirement justifies them; no automatic age-based cleanup is selected now. Conversation/profile retention and account deletion retain their separate decisions.

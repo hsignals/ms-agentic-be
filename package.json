@@ -1,0 +1,62 @@
+{
+  "name": "ms-agentic-be",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Agentic backend foundation",
+  "packageManager": "bun@1.4.2",
+  "engines": {
+    "bun": "1.4.2",
+    "node": ">=22.19.0"
+  },
+  "trustedDependencies": [],
+  "scripts": {
+    "dev": "bun --env-file=.env run src/index.ts",
+    "worker": "bun --env-file=.env run src/worker.ts",
+    "db:migrate": "bun --env-file=.env run src/db/migrate.ts",
+    "db:generate": "bun --no-env-file run drizzle-kit generate",
+    "check": "bun --no-env-file run format:check && bun --no-env-file run lint && bun --no-env-file run typecheck && bun --no-env-file run check:repository",
+    "format": "DPRINT_CACHE_DIR=\"$PWD/.cache/dprint\" dprint fmt",
+    "format:check": "DPRINT_CACHE_DIR=\"$PWD/.cache/dprint\" dprint check",
+    "lint": "biome ci --error-on-warnings .",
+    "lint:fix": "biome check --write --error-on-warnings .",
+    "typecheck": "tsc --noEmit",
+    "check:repository": "bun --no-env-file run scripts/check/index.ts",
+    "check:docs": "bun --no-env-file run scripts/check/docs.ts",
+    "check:imports": "bun --no-env-file run scripts/check/imports.ts",
+    "check:names": "bun --no-env-file run scripts/check/names.ts",
+    "check:logs": "bun --no-env-file run scripts/check/logs.ts",
+    "test": "bun --no-env-file run test:unit && bun --no-env-file run test:integration",
+    "test:unit": "bun --no-env-file run scripts/test/unit.ts",
+    "test:integration": "bun --no-env-file run scripts/test/integration.ts",
+    "test:container": "bun --no-env-file run scripts/test/container.ts",
+    "hooks:install": "lefthook install",
+    "start:api": "bun --no-env-file run src/index.ts",
+    "start:worker": "bun --no-env-file run src/worker.ts",
+    "check:comments": "bun --no-env-file run scripts/check/comments.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "4.0.106",
+    "@google-cloud/storage": "8.4.0",
+    "@mastra/core": "1.81.0",
+    "@mastra/pg": "1.34.0",
+    "bullmq": "6.5.3",
+    "drizzle-orm": "0.45.4",
+    "e2b": "2.62.0",
+    "hono": "4.13.14",
+    "ioredis": "6.0.0",
+    "pino": "10.4.0",
+    "postgres": "4.0.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.4",
+    "@types/bun": "1.4.4",
+    "@types/node": "22.19.0",
+    "dprint": "0.64.3",
+    "drizzle-kit": "0.31.11",
+    "lefthook": "2.2.2",
+    "typescript": "7.0.2",
+    "vitest": "5.0.5"
+  }
+}

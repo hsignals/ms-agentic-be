@@ -1,0 +1,8 @@
+// Biome lint plugin: a catch binds its cause and uses it, or drops it under a suppression that says why.
+// `biome.json` scopes it through `includes` to production files under `src/`.
+JsCatchClause(declaration = .) as $clause where {
+  register_diagnostic(
+    span = $clause,
+    message = "Bind the cause and preserve it in the owning failure contract, or suppress this rule with the reason the cause is dropped."
+  )
+}

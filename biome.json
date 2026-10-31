@@ -1,0 +1,114 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "formatter": {
+    "enabled": false
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "off"
+      }
+    }
+  },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": [
+      "**",
+      "!drizzle",
+      "!docs",
+      "!.kaioken",
+      "!.claude",
+      "!.agents",
+      "!**/fixtures"
+    ]
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "suspicious": {
+        "noExplicitAny": "error",
+        "noTsIgnore": "error",
+        "noEvolvingTypes": "error",
+        "useArraySortCompare": "error",
+        "noImportCycles": {
+          "level": "error",
+          "options": {
+            "ignoreTypes": false
+          }
+        }
+      },
+      "complexity": {
+        "noUselessUndefined": "error",
+        "noForEach": "error",
+        "useWhile": "error",
+        "noUselessStringConcat": "error",
+        "noUselessCatchBinding": "error"
+      },
+      "style": {
+        "useImportType": {
+          "level": "error",
+          "options": {
+            "style": "separatedType"
+          }
+        },
+        "useAtIndex": "error",
+        "useNumberNamespace": "error",
+        "useExplicitLengthCheck": "error",
+        "useConsistentArrayType": {
+          "level": "error",
+          "options": {
+            "syntax": "shorthand"
+          }
+        },
+        "noUnusedTemplateLiteral": "error",
+        "useBlockStatements": "error",
+        "noNestedTernary": "error",
+        "noParameterAssign": "error",
+        "useObjectSpread": "error",
+        "useForOf": "error",
+        "useTrimStartEnd": "error",
+        "noSubstr": "error",
+        "useShorthandAssign": "error",
+        "useCollapsedElseIf": "error",
+        "useCollapsedIf": "error",
+        "noUselessElse": "error",
+        "useConsistentBuiltinInstantiation": "error",
+        "noCommonJs": "error",
+        "useThrowNewError": "error",
+        "noRestrictedTypes": {
+          "level": "error",
+          "options": {
+            "types": {
+              "ReturnType": "Declare the result type beside the function, or import the library's type.",
+              "Parameters": "Declare the parameter type beside the function, or import the library's type.",
+              "ConstructorParameters": "Import the library's options type or declare our own.",
+              "InstanceType": "Import or declare the instance type by name."
+            }
+          }
+        }
+      },
+      "preset": "recommended"
+    }
+  },
+  "plugins": [
+    "./scripts/check/rules/no-angle-cast.grit",
+    {
+      "path": "./scripts/check/rules/no-bare-catch.grit",
+      "includes": [
+        "**/src/**/*.ts",
+        "!**/*.test.ts"
+      ]
+    },
+    {
+      "path": "./scripts/check/rules/no-single-line-ternary.grit",
+      "includes": [
+        "**/src/**/*.ts",
+        "!**/*.test.ts"
+      ]
+    }
+  ]
+}
